@@ -1,4 +1,4 @@
-"""GLUE data for G3/G4: fixed dev split, low-resource subset, tokenisation and loaders.
+"""GLUE data for G7: fixed dev split, low-resource subset, tokenisation and loaders.
 
 The split constants below must be identical for all six members (agree with A once, then never change).
 """

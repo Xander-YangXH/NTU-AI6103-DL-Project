@@ -4,7 +4,7 @@
 
 负责人：Liyouran，分支 `liyouran`。本目录包含 G7 的代码、Slurm 执行脚本与结果。
 
-实验遵循 main 的公共约定，并复用 `yinchenyu_g3g4:G3G4/src/` 的数据划分和训练流程。[参数核对表](docs/protocol-audit.zh-CN.md) 记录了采用的设置及来源。
+实验遵循 main 的公共约定，数据与训练管线源自共享提交 `26616379899f0abce7d693e227ad4e03138312ab`。[实验协议](docs/experiment-protocol.zh-CN.md) 记录 G7 的方法、数据与执行设置。
 
 ## 方法
 
@@ -12,7 +12,7 @@
 
 对梯度 `G = U S Vᵀ`，作者版 `ArB2r` 初始化为 `A = c V[:, :r]ᵀ`、`B = c U[:, r:2r]`，其中 `c = d_out**0.25 / sqrt(16)`。两侧均使用奇异向量，不把奇异值乘入 B。随后执行 `W = W₀ − (α/r)B₀A₀`，保持有效初始权重等于 W₀。实现记录补偿误差，并把初始 A/B 与最后的 adapter 保存在本地缓存，供模型重建。
 
-初始化依据 [LoRA-GA 作者源码](https://github.com/Outsider565/LoRA-GA/tree/c4cd5372c75b290924214b348008891f744512ef) 的 `peft/src/peft/tuners/lora/layer.py::lora_ga_init`。G7 的 B 非零；G5/G6 的 GW-EVA 则只初始化 A、保持 B 为零。
+初始化依据 [LoRA-GA 作者源码](https://github.com/Outsider565/LoRA-GA/tree/c4cd5372c75b290924214b348008891f744512ef) 的 `peft/src/peft/tuners/lora/layer.py::lora_ga_init`。A、B 从第一次更新开始共同训练。
 
 ## 统一参数
 
@@ -35,7 +35,7 @@
 
 分类头预热保留参考实现 AdamW 默认的 weight decay 0.01，正式微调则显式设为 0。预热和正式训练连续复用同一个带种子的 train loader。逐 epoch 诊断使用 dev，每次 main run 仅在训练结束后评估一次官方 validation；结果 JSON 的 `per_epoch_eval_split` 标明诊断集。
 
-总共 9 次调参、13 次独立正式训练。提案的低资源 SST-2 属于 G1/G3/G5，本轮 G7 不包含该任务。
+三个完整数据任务共执行 9 次调参、13 次独立正式训练。
 
 ## 运行
 
@@ -55,11 +55,19 @@ sbatch jobs/run_g7.sbatch
 
 每次 run 的公共格式 JSON 写入 `results/tune/` 或 `results/main/`；再次提交会跳过已完成 run。缓存、权重、原始数据和日志不进入 Git。
 
-## 结果与比较
+## 结果与分析
 
-[结果汇总](results/summary.md) 包含完成数量、学习率选择、均值与样本标准差、耗时、loss 曲线，以及同种子的 G7−G3/G4 配对差值和 95% t 区间。[参照指标快照](results/reference_metrics.json) 保存其他成员的必要标量和来源提交，下载本分支后即可重新统计。
+| 任务 | 种子数 | 准确率 (%) | F1 (%) |
+|---|---:|---:|---:|
+| SST-2 | 3 | 93.96 ± 0.46 | — |
+| MRPC | 5 | 88.53 ± 0.74 | 91.83 ± 0.46 |
+| RTE | 5 | 56.68 ± 8.85 | — |
 
-G7 使用 Python 3.9、torch 2.4.0、Transformers 4.52.4、PEFT 0.17.1 和 L40S；已有 G3/G4 结果来自 A40、torch 2.11.0、Transformers 5.21.0、PEFT 0.21.2。每次 run 的 JSON 保存实际版本和 GPU。配对比较统一了种子与训练设置，同时保留这些环境差异；G3 的 rank 重分配还会改变实际 LoRA 参数量。
+三个任务均选择学习率 2e-4。提高到 1e-3 后，seed 0 的 dev 主指标分别下降 2.44、8.63、18.07 个百分点。RTE 的正式准确率范围为 47.29–66.43%；seed 1 在 277 条官方验证样本上全部预测 label 1。已记录 loss 均为有限值，反映分类退化现象。
+
+[完整 G7 分析](results/summary.md) 仅从本组 JSON 生成，包含任务解读、均值置信区间、precision/recall、学习率搜索、逐种子预测、初始化误差、开销和前 500 步曲线。[中文结果解读](docs/analysis.zh-CN.md) 提供完整叙述。
+
+G7 使用 Python 3.9、torch 2.4.0、Transformers 4.52.4、PEFT 0.17.1 和 L40S；每次 run 的 JSON 保存实际版本和 GPU。Slurm 作业 48482 用两进程共享一张卡，在 1,179 秒内完成 22 次训练。
 
 ## 目录
 
@@ -68,4 +76,5 @@ G7 使用 Python 3.9、torch 2.4.0、Transformers 4.52.4、PEFT 0.17.1 和 L40S�
 - `src/init_g7.py`：带标签均值梯度 SVD 与权重补偿。
 - `jobs/`：数据准备、Slurm 执行与汇总。
 - `results/`：run JSON、CSV、汇总和图。
-- `docs/protocol-audit.zh-CN.md`：旧协议与小组协议的逐项核对。
+- `docs/experiment-protocol.zh-CN.md`：方法、数据与执行协议。
+- `docs/analysis.zh-CN.md`：G7 实验结果与解读。

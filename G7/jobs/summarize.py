@@ -1,9 +1,4 @@
-"""Summarise team-protocol G7 runs and same-seed differences from G3/G4.
-
-Run from any directory: python G7/jobs/summarize.py
-The small reference_metrics.json preserves the source metrics needed when this
-branch is downloaded without the other members' Git refs.
-"""
+"""Summarise and analyse G7 using only its own tuning and main-run JSONs."""
 
 import argparse
 import csv
@@ -12,14 +7,11 @@ import math
 import os
 from pathlib import Path
 import statistics
-import subprocess
 
 
 G7 = Path(__file__).resolve().parents[1]
-REPO = G7.parent
 TASK_SEEDS = {"sst2": list(range(3)), "mrpc": list(range(5)), "rte": list(range(5))}
 LR_GRID = [2e-4, 5e-4, 1e-3]
-REFERENCE_BRANCH = "origin/yinchenyu_g3g4"
 T95 = {1: 12.7062047364, 2: 4.3026527297, 3: 3.1824463053, 4: 2.7764451052}
 
 
@@ -53,32 +45,6 @@ def interval(stat, signed=False):
     sign = "+" if signed else ""
     lo, hi = stat["ci95"]
     return f"[{lo:{sign}.2f}, {hi:{sign}.2f}]"
-
-
-def reference_snapshot(results):
-    destination = results / "reference_metrics.json"
-    if destination.exists():
-        return json.loads(destination.read_text())
-    commit = subprocess.check_output(["git", "rev-parse", REFERENCE_BRANCH], cwd=REPO, text=True).strip()
-    paths = subprocess.check_output(
-        ["git", "ls-tree", "-r", "--name-only", commit, "G3G4/results/main"], cwd=REPO, text=True,
-    ).splitlines()
-    runs = []
-    for path in paths:
-        if not path.endswith(".json"):
-            continue
-        run = json.loads(subprocess.check_output(["git", "show", f"{commit}:{path}"], cwd=REPO, text=True))
-        if run.get("group") not in {"G3", "G4"}:
-            continue
-        runs.append({key: run[key] for key in (
-            "run_id", "group", "task", "seed", "lr", "final", "lora_params", "budget_dev", "gpu", "versions"
-        )} | {"source_path": path})
-    snapshot = {"repository": "https://github.com/Xander-YangXH/NTU-AI6103-DL-Project",
-                "branch": "yinchenyu_g3g4", "commit": commit,
-                "attribution": "G3/G4 measurements by the owner of yinchenyu_g3g4; copied as scalar references only",
-                "runs": runs}
-    write_json(destination, snapshot)
-    return snapshot
 
 
 def read_runs(results, stage):
@@ -166,46 +132,47 @@ def make_plot(runs, results):
 
 
 def write_report(summary, tune, main, results):
-    lines = ["# G7 LoRA-GA: team-protocol results", "",
+    lines = ["# G7 LoRA-GA: results and analysis", "",
              f"Completed: **{summary['main_completed']}/13 main runs**, **{len(tune)}/9 tuning runs**.", "",
              "Results use the last epoch. Accuracy and F1 below are percentages; ± denotes sample standard deviation across seeds. "
-             "MRPC's primary metric is F1. Hyperparameters are selected on the internal dev split.", "",
-             "| Task | Seeds | LR | Accuracy | F1 |", "|---|---:|---:|---|---|"]
+             "MRPC's primary metric is F1. Hyperparameters are selected on the internal dev split. "
+             "The 95% Student t intervals quantify variation of the mean across training seeds on a fixed validation set "
+             "(df=n−1). [Method and full protocol](../docs/experiment-protocol.zh-CN.md).", "",
+             "| Task | Seeds | LR | Accuracy | Accuracy 95% CI | F1 | F1 95% CI |",
+             "|---|---:|---:|---|---|---|---|"]
     for task, item in summary["tasks"].items():
         lr = item["chosen_lr"]
         lines.append(f"| {task.upper()} | {item['completed']}/{len(TASK_SEEDS[task])} | "
                      f"{f'{lr:g}' if lr is not None else 'pending'} | {fmt(item['acc'], 100)} | "
-                     f"{fmt(item['f1'], 100) if task == 'mrpc' else '—'} |")
-    lines.extend(["", "## Same-seed differences", "",
-                  "Differences are G7 minus the reference, in percentage points. The two-sided 95% interval uses "
-                  "Student t with n−1 degrees of freedom. Completed seed intersections are listed explicitly.", "",
-                  "| Reference | Task | Paired seeds | Primary difference | 95% CI |",
-                  "|---|---|---|---|---|"])
-    for group in ("G3", "G4"):
-        for task in TASK_SEEDS:
-            item = summary["paired"][group][task]
-            lines.append(f"| {group} | {task.upper()} | {', '.join(map(str, item['seeds'])) or 'pending'} | "
-                         f"{fmt(item['primary_pp'], signed=True)} | {interval(item['primary_pp'], signed=True)} |")
-    for group in ("G3", "G4"):
-        categories = {"include zero": [], "lie above zero": [], "lie below zero": []}
-        for task, seeds in TASK_SEEDS.items():
-            item = summary["paired"][group][task]
-            if len(item["seeds"]) != len(seeds):
-                continue
-            lo, hi = item["primary_pp"]["ci95"]
-            category = "lie above zero" if lo > 0 else "lie below zero" if hi < 0 else "include zero"
-            categories[category].append(task.upper())
-        clauses = [f"{', '.join(tasks)} intervals {category}" for category, tasks in categories.items() if tasks]
-        if clauses:
-            lines.extend(["", f"**G7−{group}:** " + "; ".join(clauses) + "."])
-    ref = summary["reference"]
-    lines.extend(["", f"Reference measurements: `{ref['branch']}` at `{ref['commit']}`. "
-                  "The scalar source metrics and file paths are preserved in [reference_metrics.json](reference_metrics.json). "
-                  "The experimental protocol is shared; hardware and library versions are recorded for each run. "
-                  "G3/G4 used an A40 and torch 2.11 / Transformers 5.21 / PEFT 0.21; this G7 run uses an L40S "
-                  "and the project's Python 3.9 environment (torch 2.4 / Transformers 4.52 / PEFT 0.17). "
-                  "G3 redistributes ranks and its actual adapter count varies; this comparison retains those recorded counts.", "",
-                  "## Tuning", "",
+                     f"{interval(describe([r['final']['acc'] for r in main if r['task']==task], True))} | "
+                     f"{fmt(item['f1'], 100) if task == 'mrpc' else '—'} | "
+                     f"{interval(describe([r['final']['f1'] for r in main if r['task']==task], True)) if task == 'mrpc' else '—'} |")
+    lines.extend(["", "## Task-level findings", ""])
+    for task in ("sst2", "mrpc"):
+        runs = [run for run in main if run["task"] == task]
+        if not runs:
+            continue
+        key = "f1" if task == "mrpc" else "acc"
+        values = [run["final"][key] * 100 for run in runs]
+        lines.append(f"**{task.upper()}:** Final {'F1' if key=='f1' else 'accuracy'} spans "
+                     f"{min(values):.2f}–{max(values):.2f}%, a {max(values)-min(values):.2f} pp seed range.")
+        if task == "mrpc":
+            precision, recall = [], []
+            for run in runs:
+                pred, labels = run["predictions"]["predictions"], run["predictions"]["labels"]
+                tp = sum(p == y == 1 for p, y in zip(pred, labels))
+                precision.append(tp / max(sum(p == 1 for p in pred), 1))
+                recall.append(tp / max(sum(y == 1 for y in labels), 1))
+            lines.append(f"Positive-class precision is {fmt(describe(precision),100)}% and recall "
+                         f"{fmt(describe(recall),100)}%. Validation contains {sum(labels)}/{len(labels)} "
+                         f"({sum(labels)/len(labels)*100:.2f}%) positive examples. Higher recall than precision "
+                         "records a tendency to recover positive pairs while accepting more false positives. "
+                         "F1 and accuracy describe different aspects of this confusion pattern.")
+        else:
+            lines.append("The three seeds reach similar final scores. The t multiplier for three seeds is "
+                         "4.30265, so the confidence interval remains informative alongside the small observed SD.")
+        lines.append("")
+    lines.extend(["## Tuning", "",
                   "All candidates use seed 0 and the final dev metric. Equal primary scores select the smaller learning rate.", "",
                   "| Task | LR | Final dev primary (%) | Chosen |", "|---|---:|---:|---|"])
     by_tune = {(r["task"], r["lr"]): r for r in tune}
@@ -304,11 +271,35 @@ def write_report(summary, tune, main, results):
                       "[Verification record](verification.json)."])
     if summary["loss_plot"]:
         lines.extend(["", "## First 500 steps", "",
+                      "| Task | First-50 mean loss | Steps 451–500 mean loss | Epochs covered by 500 steps |",
+                      "|---|---|---|---:|"])
+        for task in TASK_SEEDS:
+            runs = [run for run in main if run["task"] == task]
+            if runs:
+                first = describe([statistics.mean(run["loss_first_steps"][:50]) for run in runs])
+                last = describe([statistics.mean(run["loss_first_steps"][-50:]) for run in runs])
+                epochs = 500 * runs[0]["reported_epoch"] / runs[0]["steps"]
+                lines.append(f"| {task.upper()} | {fmt(first)} | {fmt(last)} | {epochs:.2f} |")
+        lines.extend(["", "SST-2 and MRPC show falling loss during this window. RTE separates into nearly flat "
+                      "and improving trajectories, consistent with its larger final seed variation. "
+                      "The same 500 optimizer steps cover different fractions of the full training schedule across tasks.", "",
                       "Thin lines show individual batches; thick lines show a 20-step moving mean. "
                       "Each task has its own y-axis. Curves include main runs at the selected learning rate.", "",
                       "![First 500 training steps](first500-loss.png)", "",
                       "[PDF figure](first500-loss.pdf)"])
-    lines.extend(["", "[Protocol and reproduction instructions](../README.md)", ""])
+    lines.extend(["", "## Findings and scope", "",
+                  "The lowest tested LR wins on all three tasks. SST-2 and MRPC have small measured seed ranges, "
+                  "while RTE shows both LR sensitivity and large seed variation, including an observed single-class "
+                  "prediction failure. Head initialisation, calibration sampling and training randomness vary together; "
+                  "these runs measure their combined effect. The selected rate is tuned on seed 0, and the remaining "
+                  "seeds measure transfer of that choice to other initialisations.", "",
+                  "These findings describe RoBERTa-base, the grid 2e-4–1e-3, uniform r=8, α/r=1, no clipping "
+                  "and last-epoch reporting. The mean confidence intervals describe training-seed variation on "
+                  "fixed validation sets of 872/408/277 examples. Calibration and effective-weight compensation "
+                  "are measured in FP32; training uses BF16 autocast. The recorded environment is Python 3.9, "
+                  "torch 2.4.0, Transformers 4.52.4, PEFT 0.17.1 and datasets 2.20.0 on an L40S. "
+                  "[Environment](environment.json) and [pinned model/data sources](data_sources.json).", "",
+                  "[Protocol and reproduction instructions](../README.md)", ""])
     (results / "summary.md").write_text("\n".join(lines))
 
 
@@ -318,17 +309,15 @@ def main():
     args = parser.parse_args()
     results = args.results.resolve()
     results.mkdir(parents=True, exist_ok=True)
-    references = reference_snapshot(results)
     tune, main_runs = read_runs(results, "tune"), read_runs(results, "main")
     chosen_path = results / "chosen_lr.json"
     chosen = json.loads(chosen_path.read_text()) if chosen_path.exists() else {}
     summary = {"group": "G7", "main_completed": len(main_runs), "main_expected": 13,
                "tune_completed": len(tune), "tune_expected": 9,
                "status": "completed" if len(main_runs) == 13 and len(tune) == 9 else "in_progress",
-               "reference": {key: references[key] for key in ("repository", "branch", "commit", "attribution")},
                "tuning_findings": tuning_findings(tune),
                "initialization_diagnostics": initialization_diagnostics(tune + main_runs),
-               "tasks": {}, "paired": {"G3": {}, "G4": {}}}
+               "tasks": {}}
     summary["rte_prediction_breakdown"] = []
     for run in sorted((item for item in main_runs if item["task"] == "rte"), key=lambda item: item["seed"]):
         predictions = run["predictions"]["predictions"]
@@ -357,15 +346,6 @@ def main():
             "peak_mem_gb": describe([r["peak_mem_gb"] for r in runs]),
             "lora_params": describe([r["lora_params"] for r in runs]),
         }
-        for group in ("G3", "G4"):
-            baseline = {r["seed"]: r for r in references["runs"] if r["group"] == group and r["task"] == task}
-            paired_seeds = sorted(set(by_seed) & set(baseline))
-            metrics = ("acc", "f1", "primary") if task == "mrpc" else ("acc", "primary")
-            summary["paired"][group][task] = {
-                "seeds": paired_seeds,
-                **{metric + "_pp": describe([by_seed[s]["final"][metric] - baseline[s]["final"][metric]
-                                             for s in paired_seeds], percentage_points=True) for metric in metrics},
-            }
     fields = ["run_id", "stage", "group", "task", "lr", "seed", "eval_split", "acc", "f1", "primary",
               "step0_grad_B", "lora_params", "head_params", "budget_dev", "init_s", "total_s", "peak_mem_gb", "slurm_job"]
     with (results / "runs.csv").open("w", newline="") as stream:

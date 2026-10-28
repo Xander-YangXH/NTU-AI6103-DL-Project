@@ -1,33 +1,22 @@
-# G7 LoRA-GA: team-protocol results
+# G7 LoRA-GA: results and analysis
 
 Completed: **13/13 main runs**, **9/9 tuning runs**.
 
-Results use the last epoch. Accuracy and F1 below are percentages; ± denotes sample standard deviation across seeds. MRPC's primary metric is F1. Hyperparameters are selected on the internal dev split.
+Results use the last epoch. Accuracy and F1 below are percentages; ± denotes sample standard deviation across seeds. MRPC's primary metric is F1. Hyperparameters are selected on the internal dev split. The 95% Student t intervals quantify variation of the mean across training seeds on a fixed validation set (df=n−1). [Method and full protocol](../docs/experiment-protocol.zh-CN.md).
 
-| Task | Seeds | LR | Accuracy | F1 |
-|---|---:|---:|---|---|
-| SST2 | 3/3 | 0.0002 | 93.96 ± 0.46 | — |
-| MRPC | 5/5 | 0.0002 | 88.53 ± 0.74 | 91.83 ± 0.46 |
-| RTE | 5/5 | 0.0002 | 56.68 ± 8.85 | — |
+| Task | Seeds | LR | Accuracy | Accuracy 95% CI | F1 | F1 95% CI |
+|---|---:|---:|---|---|---|---|
+| SST2 | 3/3 | 0.0002 | 93.96 ± 0.46 | [92.81, 95.11] | — | — |
+| MRPC | 5/5 | 0.0002 | 88.53 ± 0.74 | [87.61, 89.45] | 91.83 ± 0.46 | [91.25, 92.40] |
+| RTE | 5/5 | 0.0002 | 56.68 ± 8.85 | [45.69, 67.67] | — | — |
 
-## Same-seed differences
+## Task-level findings
 
-Differences are G7 minus the reference, in percentage points. The two-sided 95% interval uses Student t with n−1 degrees of freedom. Completed seed intersections are listed explicitly.
+**SST2:** Final accuracy spans 93.69–94.50%, a 0.80 pp seed range.
+The three seeds reach similar final scores. The t multiplier for three seeds is 4.30265, so the confidence interval remains informative alongside the small observed SD.
 
-| Reference | Task | Paired seeds | Primary difference | 95% CI |
-|---|---|---|---|---|
-| G3 | SST2 | 0, 1, 2 | -0.23 ± 0.90 | [-2.45, +2.00] |
-| G3 | MRPC | 0, 1, 2, 3, 4 | -0.19 ± 0.46 | [-0.76, +0.37] |
-| G3 | RTE | 0, 1, 2, 3, 4 | -18.12 ± 8.65 | [-28.87, -7.38] |
-| G4 | SST2 | 0, 1, 2 | +0.31 ± 0.58 | [-1.13, +1.74] |
-| G4 | MRPC | 0, 1, 2, 3, 4 | +0.33 ± 0.71 | [-0.55, +1.20] |
-| G4 | RTE | 0, 1, 2, 3, 4 | -16.90 ± 7.93 | [-26.74, -7.05] |
-
-**G7−G3:** SST2, MRPC intervals include zero; RTE intervals lie below zero.
-
-**G7−G4:** SST2, MRPC intervals include zero; RTE intervals lie below zero.
-
-Reference measurements: `yinchenyu_g3g4` at `26616379899f0abce7d693e227ad4e03138312ab`. The scalar source metrics and file paths are preserved in [reference_metrics.json](reference_metrics.json). The experimental protocol is shared; hardware and library versions are recorded for each run. G3/G4 used an A40 and torch 2.11 / Transformers 5.21 / PEFT 0.21; this G7 run uses an L40S and the project's Python 3.9 environment (torch 2.4 / Transformers 4.52 / PEFT 0.17). G3 redistributes ranks and its actual adapter count varies; this comparison retains those recorded counts.
+**MRPC:** Final F1 spans 91.19–92.44%, a 1.25 pp seed range.
+Positive-class precision is 89.59 ± 1.22% and recall 94.19 ± 0.59%. Validation contains 279/408 (68.38%) positive examples. Higher recall than precision records a tendency to recover positive pairs while accepting more false positives. F1 and accuracy describe different aspects of this confusion pattern.
 
 ## Tuning
 
@@ -111,10 +100,24 @@ Verification recomputed all **6,041** predictions from **13** main runs, checked
 
 ## First 500 steps
 
+| Task | First-50 mean loss | Steps 451–500 mean loss | Epochs covered by 500 steps |
+|---|---|---|---:|
+| SST2 | 0.44 ± 0.02 | 0.30 ± 0.00 | 0.26 |
+| MRPC | 0.58 ± 0.01 | 0.21 ± 0.02 | 4.81 |
+| RTE | 0.70 ± 0.00 | 0.63 ± 0.07 | 7.04 |
+
+SST-2 and MRPC show falling loss during this window. RTE separates into nearly flat and improving trajectories, consistent with its larger final seed variation. The same 500 optimizer steps cover different fractions of the full training schedule across tasks.
+
 Thin lines show individual batches; thick lines show a 20-step moving mean. Each task has its own y-axis. Curves include main runs at the selected learning rate.
 
 ![First 500 training steps](first500-loss.png)
 
 [PDF figure](first500-loss.pdf)
+
+## Findings and scope
+
+The lowest tested LR wins on all three tasks. SST-2 and MRPC have small measured seed ranges, while RTE shows both LR sensitivity and large seed variation, including an observed single-class prediction failure. Head initialisation, calibration sampling and training randomness vary together; these runs measure their combined effect. The selected rate is tuned on seed 0, and the remaining seeds measure transfer of that choice to other initialisations.
+
+These findings describe RoBERTa-base, the grid 2e-4–1e-3, uniform r=8, α/r=1, no clipping and last-epoch reporting. The mean confidence intervals describe training-seed variation on fixed validation sets of 872/408/277 examples. Calibration and effective-weight compensation are measured in FP32; training uses BF16 autocast. The recorded environment is Python 3.9, torch 2.4.0, Transformers 4.52.4, PEFT 0.17.1 and datasets 2.20.0 on an L40S. [Environment](environment.json) and [pinned model/data sources](data_sources.json).
 
 [Protocol and reproduction instructions](../README.md)

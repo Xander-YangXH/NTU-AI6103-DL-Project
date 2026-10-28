@@ -1,6 +1,6 @@
 """One team-protocol G7 run: head warm-up, LoRA-GA, training, last-epoch JSON.
 
-The data and training loop follow G3G4/src at origin/yinchenyu_g3g4.
+The data and training loop follow shared source commit 26616379899f0abce7d693e227ad4e03138312ab.
 Run only through Slurm. Completed result JSONs are skipped on resubmission.
 """
 import argparse

@@ -12,12 +12,12 @@
     "matplotlib": "3.9.4"
   },
   "shared_main_commit": "6546cb1258a2aeb5ba878f2f711653daaf535296",
-  "reference_pipeline_commit": "26616379899f0abce7d693e227ad4e03138312ab",
   "lora_ga_author_commit": "c4cd5372c75b290924214b348008891f744512ef",
   "training_precision": "FP32 parameters with BF16 autocast",
   "gradient_calibration_precision": "FP32; eval mode; frozen classifier",
   "data_loader_workers_per_process": 2,
   "torch_threads_per_process": 2,
   "concurrent_processes_on_one_gpu": 2,
-  "slurm_job_id": "48482"
+  "slurm_job_id": "48482",
+  "shared_pipeline_commit": "26616379899f0abce7d693e227ad4e03138312ab"
 }

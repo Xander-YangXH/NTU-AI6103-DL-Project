@@ -54,7 +54,7 @@ $$
 | G4 | 激活协方差 | 按参数成本 | 只换分配（H3） | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
 | G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | – | 未开始 |
 | G6 GW-EVA | $\Sigma_g$ | 按参数成本 | 方向与分配的组合 | – | 未开始 |
-| G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | [`liyouran`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/liyouran/G7) | 已完成 |
+| G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | – | 未开始 |
 | G8 EVA-generic | 通用语料（wikitext-103）的激活协方差 | 按 rank 个数 | 任务无关的一端（H4） | – | 未开始 |
 | G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | – | 未开始 |
 
@@ -106,14 +106,6 @@ G8 / G9 沿用 G3 的学习率。
 
 **G1 / G2**：pilot 已通过，调参与主实验正在 CCDS TC2 上运行。进度见 [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md)。
 
-**G7 LoRA-GA**（共同协议，官方 validation，mean ± sd，%）：
-
-| SST-2 准确率 | MRPC 准确率 / F1 | RTE 准确率 |
-|---|---|---|
-| 93.96 ± 0.46 | 88.53 ± 0.74 / 91.83 ± 0.46 | 56.68 ± 8.85 |
-
-三个任务均选择学习率 2e-4。9 次调参与 13 次正式训练、同种子配对差值、预测诊断和耗时见 [`G7/results/summary.md`](G7/results/summary.md)。G7 使用 L40S 与记录的项目环境；比较中同时保留环境差异及真实参数量。
-
 ## 6. 仓库组织
 
 - 每人在自己的分支上工作，每组实验一个文件夹（如 `G1G2/`、`G3G4/`）。文件夹内包含代码、Slurm 脚本和结果 JSON。
@@ -125,7 +117,6 @@ G8 / G9 沿用 G3 的学习率。
 | `main` | 本简介 |
 | `yinchenyu_g3g4` | G3 EVA 复现、G4 按参数成本分配；包含共享的数据划分与训练管线 |
 | `yxh` | G1 LoRA 基线、G2 幅值对照 |
-| `liyouran` | 共同协议下的 G7 LoRA-GA；9 次调参与 13 次正式训练 |
 
 ## 7. 计算资源
 
