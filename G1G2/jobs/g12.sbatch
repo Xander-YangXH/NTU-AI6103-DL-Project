@@ -13,6 +13,7 @@
 # Same as G3G4/jobs/g34.sbatch, except: only TC2N07/N08 (L40S), and the venv ../venv instead of conda env gweva.
 # Submit from ~/gweva/G1G2:
 #   sbatch --export=ALL,STAGE=tune,NPAR=2 jobs/g12.sbatch        # STAGE = pilot | tune | main | lowres
+#   sbatch --export=ALL,STAGE="main lowres",NPAR=2 jobs/g12.sbatch   # several stages in one job (QoS: 2 submitted jobs max)
 set -u
 [ -z "${SLURM_JOB_ID:-}" ] && { echo "submit with sbatch, do not run on the login node"; exit 1; }
 cd "$SLURM_SUBMIT_DIR"
@@ -24,7 +25,9 @@ export GWEVA_DATA="${GWEVA_DATA:-$(dirname "$SLURM_SUBMIT_DIR")/gweva-data}"
 echo "job $SLURM_JOB_ID on $(hostname)  stage=$STAGE  npar=${NPAR:-2}  start=$(date)"
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 nvidia-smi --query-gpu=name --format=csv,noheader | grep -q L40S || { echo "not an L40S node: $(hostname)"; exit 2; }
-python jobs/make_queue.py "$STAGE" || exit 1
-bash jobs/run_queue.sh "jobs/queues/$STAGE.txt" "${NPAR:-2}"
-[ "$STAGE" = main ] || [ "$STAGE" = lowres ] && python jobs/summarize.py
+for S in $STAGE; do
+    python jobs/make_queue.py "$S" || exit 1
+    bash jobs/run_queue.sh "jobs/queues/$S.txt" "${NPAR:-2}"
+done
+python jobs/summarize.py
 echo "end=$(date)"
