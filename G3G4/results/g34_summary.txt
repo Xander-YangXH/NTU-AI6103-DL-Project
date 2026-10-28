@@ -1,0 +1,39 @@
+== tuning: best learning rate on dev (primary metric; send G3's to the G8/G9 owner) ==
+G3 mrpc  best lr=0.0002   (0.0002:91.3  0.0005:91.2  0.001:91.1)
+G3 rte   best lr=0.0002   (0.0002:79.1  0.0005:48.2  0.001:48.2)
+G3 sst2  best lr=0.001   (0.0002:94.8  0.0005:95.0  0.001:95.2)
+G4 mrpc  best lr=0.0002   (0.0002:91.4  0.0005:90.7  0.001:90.6)
+G4 rte   best lr=0.0002   (0.0002:77.5  0.0005:65.9  0.001:48.2)
+G4 sst2  best lr=0.0005   (0.0002:94.6  0.0005:95.1  0.001:94.9)
+
+== main: official validation, mean ± sd (primary metric: acc, MRPC F1) ==
+G3 mrpc  n=5  92.02 ± 0.79   LoRA params 1,258,906 (-5.1% vs budget)
+G3 rte   n=5  74.80 ± 2.49   LoRA params 1,246,925 (-6.0% vs budget)
+G3 sst2  n=3  94.19 ± 0.43   LoRA params 1,267,200 (-4.5% vs budget)
+G4 mrpc  n=5  91.50 ± 0.68   LoRA params 1,326,797 (-0.0% vs budget)
+G4 rte   n=5  73.57 ± 2.06   LoRA params 1,326,950 (-0.0% vs budget)
+G4 sst2  n=3  93.65 ± 0.24   LoRA params 1,326,592 (-0.0% vs budget)
+
+== paired difference G4 − G3 on the same seeds, 95% CI ==
+sst2  n=3  -0.54  [-1.69, +0.62]
+mrpc  n=5  -0.52  [-1.56, +0.52]
+rte   n=5  -1.23  [-4.31, +1.85]
+
+== mean rank by layer type (all G3/G4 runs) ==
+G3 query=8.8  key=8.8  value=8.8  attention.output.dense=8.0  intermediate.dense=8.8  output.dense=4.7
+G4 query=13.7  key=13.6  value=13.6  attention.output.dense=13.0  intermediate.dense=4.8  output.dense=2.4
+
+== check that G3 and G4 differ only in allocation ==
+mrpc_False_s0: mean subspace overlap G3 vs cache = 0.990 (min 0.942); L1 between PEFT's G3 ranks and EVA's rule on the cache = 10 of 576 ranks
+mrpc_False_s1: mean subspace overlap G3 vs cache = 0.987 (min 0.891); L1 between PEFT's G3 ranks and EVA's rule on the cache = 20 of 576 ranks
+mrpc_False_s2: mean subspace overlap G3 vs cache = 0.990 (min 0.955); L1 between PEFT's G3 ranks and EVA's rule on the cache = 16 of 576 ranks
+mrpc_False_s3: mean subspace overlap G3 vs cache = 0.986 (min 0.889); L1 between PEFT's G3 ranks and EVA's rule on the cache = 16 of 576 ranks
+mrpc_False_s4: mean subspace overlap G3 vs cache = 0.974 (min 0.842); L1 between PEFT's G3 ranks and EVA's rule on the cache = 24 of 576 ranks
+rte_False_s0: mean subspace overlap G3 vs cache = 0.984 (min 0.754); L1 between PEFT's G3 ranks and EVA's rule on the cache = 14 of 576 ranks
+rte_False_s1: mean subspace overlap G3 vs cache = 0.990 (min 0.864); L1 between PEFT's G3 ranks and EVA's rule on the cache = 16 of 576 ranks
+rte_False_s2: mean subspace overlap G3 vs cache = 0.988 (min 0.867); L1 between PEFT's G3 ranks and EVA's rule on the cache = 26 of 576 ranks
+rte_False_s3: mean subspace overlap G3 vs cache = 0.990 (min 0.814); L1 between PEFT's G3 ranks and EVA's rule on the cache = 14 of 576 ranks
+rte_False_s4: mean subspace overlap G3 vs cache = 0.989 (min 0.892); L1 between PEFT's G3 ranks and EVA's rule on the cache = 16 of 576 ranks
+sst2_False_s0: mean subspace overlap G3 vs cache = 0.985 (min 0.877); L1 between PEFT's G3 ranks and EVA's rule on the cache = 18 of 576 ranks
+sst2_False_s1: mean subspace overlap G3 vs cache = 0.983 (min 0.826); L1 between PEFT's G3 ranks and EVA's rule on the cache = 20 of 576 ranks
+sst2_False_s2: mean subspace overlap G3 vs cache = 0.984 (min 0.886); L1 between PEFT's G3 ranks and EVA's rule on the cache = 24 of 576 ranks
