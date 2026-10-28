@@ -1,128 +1,130 @@
-# GW-EVA：去掉独立性假设的梯度加权 LoRA 初始化
+<p align="right"><b>English</b> | <a href="README.zh-CN.md">中文</a></p>
 
-AI6103 Deep Learning 小组项目（Option 2：在已有代码库上做改进），六人一组。
+# GW-EVA: Gradient-Weighted LoRA Initialisation Without the Independence Assumption
 
-- **基础论文**：EVA（Paischer 等，NeurIPS 2025）。它用激活的主成分初始化 LoRA 的 A 矩阵，并按解释方差重新分配各层 rank。
-- **代码基础**：作者的官方仓库（MIT 许可），以及 Hugging Face PEFT 中的 EVA 实现。
-- **我们的改动**：去掉 EVA 最优性证明中的一个独立性假设，推导出梯度加权的初始化 **GW-EVA**，并在 PEFT 上实现。
+AI6103 Deep Learning group project (Option 2: improve on an existing codebase), team of six.
 
-## 1. 研究问题
+- **Base paper**: EVA (Paischer et al., NeurIPS 2025). It initialises LoRA's A matrix with the principal components of layer activations and redistributes ranks across layers by explained variance.
+- **Codebase**: the authors' official repository (MIT licence) and the EVA implementation in Hugging Face PEFT.
+- **Our change**: we drop one independence assumption from EVA's optimality proof, derive a gradient-weighted initialisation, **GW-EVA**, and implement it on top of PEFT.
 
-EVA 的最优性结论（定理 3.2）假设层输出梯度 $g = \partial L / \partial y$ 与输入激活 $x$ 统计独立。
+## 1. Research question
 
-如果不做这个假设，B 在初始化时（B = 0）收到的梯度信号精确等于：
+EVA's optimality result (Theorem 3.2) assumes that the layer-output gradient $g = \partial L / \partial y$ is statistically independent of the input activation $x$.
 
-$$
-\mathbb{E}\left\|\frac{\partial L}{\partial B}\right\|_F^2 = \operatorname{Tr}\left(A\,\Sigma_g\,A^\top\right),\qquad
-\Sigma_g = \mathbb{E}\left[\|g\|^2\, x x^\top\right]
-$$
-
-所以最优的 A 是 $\Sigma_g$ 的前 r 个特征向量，我们称之为 **GW-EVA**。当 $\|g\|^2$ 与 $x$ 无关时，它就退化为 EVA。
-
-对大小为 m 的小批量：
+Without this assumption, the gradient signal that B receives at initialisation (B = 0) is exactly:
 
 $$
-\mathbb{E}\left\|\bar G_m A^\top\right\|_F^2 = \tfrac{1}{m}\operatorname{Tr}\left(A\Sigma_g A^\top\right) + \left(1-\tfrac{1}{m}\right)\left\|\mathbb{E}[g x^\top]A^\top\right\|_F^2
+\mathbb{E}\left\Vert \frac{\partial L}{\partial B}\right\Vert _F^2 = \mathrm{Tr}\left(A\,\Sigma_g\,A^\top\right),\qquad
+\Sigma_g = \mathbb{E}\left[\Vert g\Vert^2\, x x^\top\right]
 $$
 
-第二项的最优方向正是 LoRA-GA 用的均值梯度方向。因此 EVA、GW-EVA、LoRA-GA 是同一目标在不同假设下的解。
+The optimal A is therefore the top-r eigenvectors of $\Sigma_g$, which we call **GW-EVA**. When $\Vert g\Vert^2$ is independent of $x$, it reduces to EVA.
 
-另一条主线是“LoRA 初始化需要多少任务信息”。按使用的任务信息从少到多，四种初始化排成一条线：
+For a mini-batch of size m:
 
-通用语料（G8）→ 别的任务输入（G9）→ 本任务输入（G3，EVA）→ 本任务输入 + 标签梯度（G5，GW-EVA）
+$$
+\mathbb{E}\left\Vert \bar G_m A^\top\right\Vert _F^2 = \tfrac{1}{m}\mathrm{Tr}\left(A\Sigma_g A^\top\right) + \left(1-\tfrac{1}{m}\right)\left\Vert \mathbb{E}[g x^\top]A^\top\right\Vert _F^2
+$$
 
-## 2. 假设
+The direction that maximises the second term is exactly the mean-gradient direction used by LoRA-GA. EVA, GW-EVA and LoRA-GA are therefore solutions of the same objective under different assumptions.
 
-| | 假设 | 若不成立 |
+A second thread asks how much task information a LoRA initialisation needs. Ordered from least to most task information, four initialisations form a line:
+
+generic corpus (G8) → another task's inputs (G9) → this task's inputs (G3, EVA) → this task's inputs + label gradients (G5, GW-EVA)
+
+## 2. Hypotheses
+
+| | Hypothesis | If it fails |
 |---|---|---|
-| **H1** | RoBERTa-base 中 $\|g\|^2$ 与 $x$ 相关，$\Sigma_g$ 与激活协方差的前 r 子空间有可测的差异（第 1 周，不训练即可检验） | 是对 EVA 假设的实证支持，GW-EVA 退化为 EVA，报告负结果 |
-| **H2** | 参数量相同时，GW-EVA 第 0 步梯度更大、前 500 步 loss 更低、精度高于 EVA，至少在低资源设置下配对 95% CI 不含 0 | 说明多一次反向传播不值得 |
-| **H3** | 按“每参数解释方差”而不是“每个 rank”分配，在固定参数预算下会改变结果（受控因素，不作为创新主张） | 原版按 rank 个数分配已经足够 |
-| **H4** | EVA 的激活子空间带有任务特异的信息：把校准数据换成通用语料或别的任务，子空间和精度都会变 | 激活统计主要由模型决定，任务信息只能靠标签梯度引入，反而加强 GW-EVA 的动机 |
+| **H1** | In RoBERTa-base, $\Vert g\Vert^2$ is correlated with $x$, and the top-r subspaces of $\Sigma_g$ and of the activation covariance differ measurably (week 1, no training needed) | Empirical support for EVA's assumption; GW-EVA reduces to EVA and we report a negative result |
+| **H2** | At equal parameter count, GW-EVA has a larger step-0 gradient, lower loss over the first 500 steps and higher accuracy than EVA, with a paired 95% CI excluding 0 at least in the low-resource setting | The extra backward pass is not worth it |
+| **H3** | Allocating ranks by explained variance per parameter, instead of per rank, changes the result under a fixed parameter budget (a controlled factor, not a novelty claim) | EVA's original per-rank allocation is sufficient |
+| **H4** | EVA's activation subspace carries task-specific information: calibrating on a generic corpus or another task changes both the subspace and the accuracy | Activation statistics are mostly determined by the model, so task information can only enter through label gradients, which strengthens the case for GW-EVA |
 
-## 3. 实验组
+## 3. Experimental groups
 
-核心是“方向 × 分配”的 2×2 因子设计（G3–G6），另加参照组。
+The core is a 2×2 factorial design, direction × allocation (G3–G6), plus reference groups.
 
-| 组 | A 的方向 | rank 分配 | 回答的问题 | 分支 | 状态 |
+| Group | Direction of A | Rank allocation | Question answered | Branch | Status |
 |---|---|---|---|---|---|
-| G1 LoRA | Kaiming 随机 | 均匀 r = 8 | 基线 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 进行中 |
-| G2 幅值对照 | 随机正交，行范数与 EVA 相同 | 均匀 r = 8 | 收益来自方向还是幅值 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 进行中 |
-| G3 EVA | 激活协方差 | 按 rank 个数（原版，ρ = 2） | 复现原方法 | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
-| G4 | 激活协方差 | 按参数成本 | 只换分配（H3） | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
-| G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | – | 未开始 |
-| G6 GW-EVA | $\Sigma_g$ | 按参数成本 | 方向与分配的组合 | – | 未开始 |
-| G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | – | 未开始 |
-| G8 EVA-generic | 通用语料（wikitext-103）的激活协方差 | 按 rank 个数 | 任务无关的一端（H4） | – | 未开始 |
-| G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | – | 未开始 |
+| G1 LoRA | Kaiming random | Uniform r = 8 | Baseline | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | In progress |
+| G2 magnitude control | Random orthonormal, row norms matched to EVA | Uniform r = 8 | Do gains come from direction or magnitude? | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | In progress |
+| G3 EVA | Activation covariance | By rank count (original, ρ = 2) | Reproduce the original method | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
+| G4 | Activation covariance | By parameter cost | Allocation only (H3) | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
+| G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | – | Not started |
+| G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | – | Not started |
+| G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | – | Not started |
+| G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | – | Not started |
+| G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | – | Not started |
 
-**模型与任务**：RoBERTa-base；GLUE SST-2、MRPC、RTE，另加 1,000 条的低资源 SST-2 子集（G1、G3、G5）。
+**Model and tasks**: RoBERTa-base on GLUE SST-2, MRPC and RTE, plus a 1,000-example low-resource SST-2 subset (G1, G3, G5).
 
-**LoRA 位置与预算**：全部 72 个注意力与 FFN 线性层，预算固定为 **1,327,104** 个可训练参数（即均匀 r = 8 时的参数量）。
+**LoRA placement and budget**: all 72 attention and FFN linear layers, with a fixed budget of **1,327,104** trainable parameters (the count for uniform r = 8).
 
-## 4. 共享实验设置
+## 4. Shared experimental settings
 
-所有组必须使用以下设置，以便按种子做配对比较。实现以 `G3G4/src/` 中的 `data.py` 与 `train.py` 为准（G1/G2 已直接复用）。
+Every group must use these settings so that runs can be compared pairwise by seed. The reference implementation is `data.py` and `train.py` in `G3G4/src/`; G1/G2 reuse them directly.
 
-| 设置 | 取值 |
+| Setting | Value |
 |---|---|
-| 学习率网格 | 2×10⁻⁴、5×10⁻⁴、1×10⁻³ |
-| 种子 | SST-2 为 0–2，MRPC / RTE 为 0–4；调参用 0 |
-| 训练轮数 | SST-2 3，MRPC 10，RTE 10，低资源 20 |
-| 批大小 / 最大长度 / 预热比例 / 权重衰减 | 32 / 128 / 6% / 0；bf16 混合精度；不裁剪梯度 |
-| LoRA α / dropout | α = 8（α/r = 1）/ 0；EVA 重分配后 PEFT 按 rank 等比例调整 α，使 α/r 不变 |
-| 分类头预热 | 冻结编码器，训练 1 个 epoch，学习率 1×10⁻³ |
-| dev 划分 | 训练集的 10%，`SPLIT_SEED = 2026`；低资源 1k 子集用种子 2027 |
-| 最终训练数据 | 划掉 dev 后的 90%，与调参一致 |
-| EVA 校准 | 训练集中随机 1,024 条，batch 16，去掉 labels；τ = 0.99，ρ = 2 |
-| 选参与报告 | 取最后一个 epoch；在 dev 上选参，官方 validation 只在最终评估时使用 |
-| 低资源学习率 | 沿用各组在 SST-2 上选出的学习率 |
-| 结果格式 | 每次运行一个 JSON，字段见 `G3G4/src/train.py` 末尾 |
-| 统计 | 同种子配对差，报告 95% 置信区间（t 分布，df = n − 1） |
-| 指标 | SST-2 / RTE 准确率，MRPC F1 与准确率；第 0 步 ‖∂L/∂B‖、前 500 步 loss；初始化耗时、总耗时、峰值显存 |
+| Learning-rate grid | 2×10⁻⁴, 5×10⁻⁴, 1×10⁻³ |
+| Seeds | 0–2 for SST-2, 0–4 for MRPC / RTE; seed 0 for tuning |
+| Epochs | SST-2 3, MRPC 10, RTE 10, low-resource 20 |
+| Batch size / max length / warm-up ratio / weight decay | 32 / 128 / 6% / 0; bf16 mixed precision; no gradient clipping |
+| LoRA α / dropout | α = 8 (α/r = 1) / 0; after EVA's redistribution PEFT scales α with the rank so that α/r is unchanged |
+| Classification-head warm-up | Encoder frozen, 1 epoch, learning rate 1×10⁻³ |
+| Dev split | 10% of the training set, `SPLIT_SEED = 2026`; the low-resource 1k subset uses seed 2027 |
+| Final training data | The remaining 90%, the same as during tuning |
+| EVA calibration | 1,024 random training examples, batch 16, labels removed; τ = 0.99, ρ = 2 |
+| Selection and reporting | Last epoch; hyperparameters chosen on dev; the official validation set is used only for the final evaluation |
+| Low-resource learning rate | Each group reuses the learning rate it chose on full SST-2 |
+| Result format | One JSON per run; fields as at the end of `G3G4/src/train.py` |
+| Statistics | Same-seed paired differences with 95% confidence intervals (t distribution, df = n − 1) |
+| Metrics | Accuracy for SST-2 / RTE, F1 and accuracy for MRPC; step-0 ‖∂L/∂B‖ and loss over the first 500 steps; initialisation time, total time, peak memory |
 
-已选定的学习率：
+Learning rates chosen so far:
 
-| 组 | SST-2 | MRPC | RTE |
+| Group | SST-2 | MRPC | RTE |
 |---|---|---|---|
 | G3 | 1e-3 | 2e-4 | 2e-4 |
 | G4 | 5e-4 | 2e-4 | 2e-4 |
 
-G8 / G9 沿用 G3 的学习率。
+G8 / G9 reuse G3's learning rates.
 
-## 5. 目前的结果
+## 5. Results so far
 
-**G3 / G4**（官方 validation，mean ± sd，%）：
+**G3 / G4** (official validation, mean ± sd, %):
 
-| 任务 | 种子数 | G3 | G4 | G4 − G3（95% CI） |
+| Task | Seeds | G3 | G4 | G4 − G3 (95% CI) |
 |---|---|---|---|---|
 | SST-2 (acc) | 3 | 94.19 ± 0.43 | 93.65 ± 0.24 | −0.54 [−1.69, +0.62] |
 | MRPC (F1) | 5 | 92.02 ± 0.79 | 91.50 ± 0.68 | −0.52 [−1.56, +0.52] |
 | RTE (acc) | 5 | 74.80 ± 2.49 | 73.57 ± 2.06 | −1.23 [−4.31, +1.85] |
 
-按参数成本分配（G4）没有带来提升，三个任务的差异都不显著。G3 低资源 SST-2 1k：88.81 ± 0.83。详见 [`G3G4/README.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4)。
+Allocating by parameter cost (G4) did not help; none of the three differences is significant. G3 on low-resource SST-2 1k: 88.81 ± 0.83. See [`G3G4/README.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) for details.
 
-**G1 / G2**：pilot 已通过，调参与主实验正在 CCDS TC2 上运行。进度见 [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md)。
+**G1 / G2**: the pilot has passed; tuning and main runs are in progress on CCDS TC2. See [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md).
 
-## 6. 仓库组织
+## 6. Repository layout
 
-- 每人在自己的分支上工作，每组实验一个文件夹（如 `G1G2/`、`G3G4/`）。文件夹内包含代码、Slurm 脚本和结果 JSON。
-- `main` 只放项目简介与公共约定。
-- 大文件（模型权重、数据、EVA 缓存、日志）不进 git，用 `.gitignore` 排除。
+- Each member works on their own branch, with one folder per pair of groups (e.g. `G1G2/`, `G3G4/`) holding code, Slurm scripts and result JSONs.
+- `main` holds only this overview and the shared conventions.
+- Large files (model weights, data, EVA caches, logs) stay out of git via `.gitignore`.
 
-| 分支 | 内容 |
+| Branch | Contents |
 |---|---|
-| `main` | 本简介 |
-| `yinchenyu_g3g4` | G3 EVA 复现、G4 按参数成本分配；包含共享的数据划分与训练管线 |
-| `yxh` | G1 LoRA 基线、G2 幅值对照 |
+| `main` | This overview |
+| `yinchenyu_g3g4` | G3 EVA reproduction and G4 parameter-cost allocation; includes the shared data split and training pipeline |
+| `yxh` | G1 LoRA baseline and G2 magnitude control |
 
-## 7. 计算资源
+## 7. Compute
 
-CCDS GPU Cluster TC2，Slurm 调度。每人的 QoS 为 1 张 GPU、最多 2 个作业、30 GB 内存，单个作业不超过 6 小时。每个作业把多次训练打包，在同一张卡上并行 2 个进程；每次训练结束立刻写出 JSON，重新提交即可续跑。
+CCDS GPU Cluster TC2 with Slurm. Each member's QoS allows 1 GPU, at most 2 jobs, 30 GB of memory and 6 hours per job. Each job packs several training runs and runs 2 processes side by side on one GPU. Every run writes its JSON as soon as it finishes, so resubmitting a job resumes it.
 
-## 8. 课程要求摘要
+## 8. Course requirements in brief
 
-- Option 2：选 2019 年及以后、有公开代码的论文，在其基础上实现改进，允许复用原代码。
-- 不得与组员个人项目的“模型 + 数据集”组合重复。
-- 不得刻意压低基线结果。
-- 评分共 30 分：新颖性与难度 10、技术方案 10、写作 10。
+- Option 2: pick a paper from 2019 or later with public code and implement an improvement on top of it; reusing the original code is allowed.
+- Do not repeat a model–dataset combination used in any member's individual project.
+- Do not artificially lower baseline performance.
+- Scoring, 30 points in total: novelty and difficulty 10, technical approach 10, writing 10.
