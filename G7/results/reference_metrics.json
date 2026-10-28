@@ -1,0 +1,538 @@
+{
+  "repository": "https://github.com/Xander-YangXH/NTU-AI6103-DL-Project",
+  "branch": "yinchenyu_g3g4",
+  "commit": "26616379899f0abce7d693e227ad4e03138312ab",
+  "attribution": "G3/G4 measurements by the owner of yinchenyu_g3g4; copied as scalar references only",
+  "runs": [
+    {
+      "run_id": "main_G3_mrpc_lr0.0002_s0",
+      "group": "G3",
+      "task": "mrpc",
+      "seed": 0,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8897058823529411,
+        "f1": 0.9206349206349206,
+        "primary": 0.9206349206349206
+      },
+      "lora_params": 1251072,
+      "budget_dev": -0.057291666666666664,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_mrpc_lr0.0002_s0.json"
+    },
+    {
+      "run_id": "main_G3_mrpc_lr0.0002_s1",
+      "group": "G3",
+      "task": "mrpc",
+      "seed": 1,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8970588235294118,
+        "f1": 0.9263157894736842,
+        "primary": 0.9263157894736842
+      },
+      "lora_params": 1260288,
+      "budget_dev": -0.050347222222222224,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_mrpc_lr0.0002_s1.json"
+    },
+    {
+      "run_id": "main_G3_mrpc_lr0.0002_s2",
+      "group": "G3",
+      "task": "mrpc",
+      "seed": 2,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8774509803921569,
+        "f1": 0.9140893470790378,
+        "primary": 0.9140893470790378
+      },
+      "lora_params": 1257984,
+      "budget_dev": -0.052083333333333336,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_mrpc_lr0.0002_s2.json"
+    },
+    {
+      "run_id": "main_G3_mrpc_lr0.0002_s3",
+      "group": "G3",
+      "task": "mrpc",
+      "seed": 3,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.875,
+        "f1": 0.9106830122591943,
+        "primary": 0.9106830122591943
+      },
+      "lora_params": 1257984,
+      "budget_dev": -0.052083333333333336,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_mrpc_lr0.0002_s3.json"
+    },
+    {
+      "run_id": "main_G3_mrpc_lr0.0002_s4",
+      "group": "G3",
+      "task": "mrpc",
+      "seed": 4,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.9019607843137255,
+        "f1": 0.9293286219081273,
+        "primary": 0.9293286219081273
+      },
+      "lora_params": 1267200,
+      "budget_dev": -0.04513888888888889,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_mrpc_lr0.0002_s4.json"
+    },
+    {
+      "run_id": "main_G3_rte_lr0.0002_s0",
+      "group": "G3",
+      "task": "rte",
+      "seed": 0,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7653429602888087,
+        "primary": 0.7653429602888087
+      },
+      "lora_params": 1246464,
+      "budget_dev": -0.06076388888888889,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_rte_lr0.0002_s0.json"
+    },
+    {
+      "run_id": "main_G3_rte_lr0.0002_s1",
+      "group": "G3",
+      "task": "rte",
+      "seed": 1,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7581227436823105,
+        "primary": 0.7581227436823105
+      },
+      "lora_params": 1246464,
+      "budget_dev": -0.06076388888888889,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_rte_lr0.0002_s1.json"
+    },
+    {
+      "run_id": "main_G3_rte_lr0.0002_s2",
+      "group": "G3",
+      "task": "rte",
+      "seed": 2,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7545126353790613,
+        "primary": 0.7545126353790613
+      },
+      "lora_params": 1241856,
+      "budget_dev": -0.0642361111111111,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_rte_lr0.0002_s2.json"
+    },
+    {
+      "run_id": "main_G3_rte_lr0.0002_s3",
+      "group": "G3",
+      "task": "rte",
+      "seed": 3,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.703971119133574,
+        "primary": 0.703971119133574
+      },
+      "lora_params": 1248768,
+      "budget_dev": -0.059027777777777776,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_rte_lr0.0002_s3.json"
+    },
+    {
+      "run_id": "main_G3_rte_lr0.0002_s4",
+      "group": "G3",
+      "task": "rte",
+      "seed": 4,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7581227436823105,
+        "primary": 0.7581227436823105
+      },
+      "lora_params": 1251072,
+      "budget_dev": -0.057291666666666664,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_rte_lr0.0002_s4.json"
+    },
+    {
+      "run_id": "main_G3_sst2_lr0.001_s0",
+      "group": "G3",
+      "task": "sst2",
+      "seed": 0,
+      "lr": 0.001,
+      "final": {
+        "acc": 0.9369266055045872,
+        "primary": 0.9369266055045872
+      },
+      "lora_params": 1264896,
+      "budget_dev": -0.046875,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_sst2_lr0.001_s0.json"
+    },
+    {
+      "run_id": "main_G3_sst2_lr0.001_s1",
+      "group": "G3",
+      "task": "sst2",
+      "seed": 1,
+      "lr": 0.001,
+      "final": {
+        "acc": 0.9438073394495413,
+        "primary": 0.9438073394495413
+      },
+      "lora_params": 1271808,
+      "budget_dev": -0.041666666666666664,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_sst2_lr0.001_s1.json"
+    },
+    {
+      "run_id": "main_G3_sst2_lr0.001_s2",
+      "group": "G3",
+      "task": "sst2",
+      "seed": 2,
+      "lr": 0.001,
+      "final": {
+        "acc": 0.944954128440367,
+        "primary": 0.944954128440367
+      },
+      "lora_params": 1264896,
+      "budget_dev": -0.046875,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G3_sst2_lr0.001_s2.json"
+    },
+    {
+      "run_id": "main_G4_mrpc_lr0.0002_s0",
+      "group": "G4",
+      "task": "mrpc",
+      "seed": 0,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8921568627450981,
+        "f1": 0.9219858156028369,
+        "primary": 0.9219858156028369
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_mrpc_lr0.0002_s0.json"
+    },
+    {
+      "run_id": "main_G4_mrpc_lr0.0002_s1",
+      "group": "G4",
+      "task": "mrpc",
+      "seed": 1,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8921568627450981,
+        "f1": 0.9214285714285714,
+        "primary": 0.9214285714285714
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_mrpc_lr0.0002_s1.json"
+    },
+    {
+      "run_id": "main_G4_mrpc_lr0.0002_s2",
+      "group": "G4",
+      "task": "mrpc",
+      "seed": 2,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8799019607843137,
+        "f1": 0.9150779896013865,
+        "primary": 0.9150779896013865
+      },
+      "lora_params": 1326336,
+      "budget_dev": -0.0005787037037037037,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_mrpc_lr0.0002_s2.json"
+    },
+    {
+      "run_id": "main_G4_mrpc_lr0.0002_s3",
+      "group": "G4",
+      "task": "mrpc",
+      "seed": 3,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.8700980392156863,
+        "f1": 0.9065255731922398,
+        "primary": 0.9065255731922398
+      },
+      "lora_params": 1326336,
+      "budget_dev": -0.0005787037037037037,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_mrpc_lr0.0002_s3.json"
+    },
+    {
+      "run_id": "main_G4_mrpc_lr0.0002_s4",
+      "group": "G4",
+      "task": "mrpc",
+      "seed": 4,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.875,
+        "f1": 0.91005291005291,
+        "primary": 0.91005291005291
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_mrpc_lr0.0002_s4.json"
+    },
+    {
+      "run_id": "main_G4_rte_lr0.0002_s0",
+      "group": "G4",
+      "task": "rte",
+      "seed": 0,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7689530685920578,
+        "primary": 0.7689530685920578
+      },
+      "lora_params": 1326336,
+      "budget_dev": -0.0005787037037037037,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_rte_lr0.0002_s0.json"
+    },
+    {
+      "run_id": "main_G4_rte_lr0.0002_s1",
+      "group": "G4",
+      "task": "rte",
+      "seed": 1,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.740072202166065,
+        "primary": 0.740072202166065
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_rte_lr0.0002_s1.json"
+    },
+    {
+      "run_id": "main_G4_rte_lr0.0002_s2",
+      "group": "G4",
+      "task": "rte",
+      "seed": 2,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7148014440433214,
+        "primary": 0.7148014440433214
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_rte_lr0.0002_s2.json"
+    },
+    {
+      "run_id": "main_G4_rte_lr0.0002_s3",
+      "group": "G4",
+      "task": "rte",
+      "seed": 3,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7256317689530686,
+        "primary": 0.7256317689530686
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_rte_lr0.0002_s3.json"
+    },
+    {
+      "run_id": "main_G4_rte_lr0.0002_s4",
+      "group": "G4",
+      "task": "rte",
+      "seed": 4,
+      "lr": 0.0002,
+      "final": {
+        "acc": 0.7292418772563177,
+        "primary": 0.7292418772563177
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_rte_lr0.0002_s4.json"
+    },
+    {
+      "run_id": "main_G4_sst2_lr0.0005_s0",
+      "group": "G4",
+      "task": "sst2",
+      "seed": 0,
+      "lr": 0.0005,
+      "final": {
+        "acc": 0.9357798165137615,
+        "primary": 0.9357798165137615
+      },
+      "lora_params": 1326336,
+      "budget_dev": -0.0005787037037037037,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_sst2_lr0.0005_s0.json"
+    },
+    {
+      "run_id": "main_G4_sst2_lr0.0005_s1",
+      "group": "G4",
+      "task": "sst2",
+      "seed": 1,
+      "lr": 0.0005,
+      "final": {
+        "acc": 0.9392201834862385,
+        "primary": 0.9392201834862385
+      },
+      "lora_params": 1326336,
+      "budget_dev": -0.0005787037037037037,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_sst2_lr0.0005_s1.json"
+    },
+    {
+      "run_id": "main_G4_sst2_lr0.0005_s2",
+      "group": "G4",
+      "task": "sst2",
+      "seed": 2,
+      "lr": 0.0005,
+      "final": {
+        "acc": 0.9346330275229358,
+        "primary": 0.9346330275229358
+      },
+      "lora_params": 1327104,
+      "budget_dev": 0.0,
+      "gpu": "NVIDIA A40",
+      "versions": {
+        "torch": "2.11.0+cu128",
+        "transformers": "5.21.0",
+        "peft": "0.21.2"
+      },
+      "source_path": "G3G4/results/main/main_G4_sst2_lr0.0005_s2.json"
+    }
+  ]
+}

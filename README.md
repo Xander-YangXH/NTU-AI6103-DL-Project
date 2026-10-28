@@ -54,7 +54,7 @@ The core is a 2×2 factorial design, direction × allocation (G3–G6), plus ref
 | G4 | Activation covariance | By parameter cost | Allocation only (H3) | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
 | G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | – | Not started |
 | G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | – | Not started |
-| G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | – | Not started |
+| G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | [`liyouran`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/liyouran/G7) | Done |
 | G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | – | Not started |
 | G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | – | Not started |
 
@@ -106,6 +106,14 @@ Allocating by parameter cost (G4) did not help; none of the three differences is
 
 **G1 / G2**: the pilot has passed; tuning and main runs are in progress on CCDS TC2. See [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md).
 
+**G7 LoRA-GA** (shared protocol, official validation, mean ± sd, %):
+
+| SST-2 accuracy | MRPC accuracy / F1 | RTE accuracy |
+|---|---|---|
+| 93.96 ± 0.46 | 88.53 ± 0.74 / 91.83 ± 0.46 | 56.68 ± 8.85 |
+
+All tasks selected LR 2e-4. The 9 tuning and 13 main runs, same-seed differences, prediction diagnostics and runtime are in [`G7/results/summary.md`](G7/results/summary.md). G7 used an L40S and the recorded project environment; cross-environment and actual parameter counts are documented with the comparisons.
+
 ## 6. Repository layout
 
 - Each member works on their own branch, with one folder per pair of groups (e.g. `G1G2/`, `G3G4/`) holding code, Slurm scripts and result JSONs.
@@ -117,6 +125,7 @@ Allocating by parameter cost (G4) did not help; none of the three differences is
 | `main` | This overview |
 | `yinchenyu_g3g4` | G3 EVA reproduction and G4 parameter-cost allocation; includes the shared data split and training pipeline |
 | `yxh` | G1 LoRA baseline and G2 magnitude control |
+| `liyouran` | G7 LoRA-GA under the shared protocol; 9 tuning and 13 main runs |
 
 ## 7. Compute
 
