@@ -52,8 +52,8 @@ $$
 | G2 幅值对照 | 随机正交，行范数与 EVA 相同 | 均匀 r = 8 | 收益来自方向还是幅值 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 进行中 |
 | G3 EVA | 激活协方差 | 按 rank 个数（原版，ρ = 2） | 复现原方法 | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
 | G4 | 激活协方差 | 按参数成本 | 只换分配（H3） | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
-| G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | – | 未开始 |
-| G6 GW-EVA | $\Sigma_g$ | 按参数成本 | 方向与分配的组合 | – | 未开始 |
+| G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13组完成（独立协议，非共享协议复跑） |
+| G6 GW-EVA | $\Sigma_g$ | 按参数成本 | 方向与分配的组合 | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13组完成（独立协议，非共享协议复跑） |
 | G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | – | 未开始 |
 | G8 EVA-generic | 通用语料（wikitext-103）的激活协方差 | 按 rank 个数 | 任务无关的一端（H4） | – | 未开始 |
 | G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | – | 未开始 |
@@ -117,6 +117,7 @@ G8 / G9 沿用 G3 的学习率。
 | `main` | 本简介 |
 | `yinchenyu_g3g4` | G3 EVA 复现、G4 按参数成本分配；包含共享的数据划分与训练管线 |
 | `yxh` | G1 LoRA 基线、G2 幅值对照 |
+| `hanyanze` | G5/G6：梯度加权方向与成本分配；独立协议，26组正式结果 |
 
 ## 7. 计算资源
 

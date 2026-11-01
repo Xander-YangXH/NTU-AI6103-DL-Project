@@ -52,8 +52,8 @@ The core is a 2×2 factorial design, direction × allocation (G3–G6), plus ref
 | G2 magnitude control | Random orthonormal, row norms matched to EVA | Uniform r = 8 | Do gains come from direction or magnitude? | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | In progress |
 | G3 EVA | Activation covariance | By rank count (original, ρ = 2) | Reproduce the original method | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
 | G4 | Activation covariance | By parameter cost | Allocation only (H3) | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
-| G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | – | Not started |
-| G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | – | Not started |
+| G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13 runs complete (independent protocol; not a shared-protocol rerun) |
+| G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13 runs complete (independent protocol; not a shared-protocol rerun) |
 | G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | – | Not started |
 | G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | – | Not started |
 | G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | – | Not started |
@@ -117,6 +117,7 @@ Allocating by parameter cost (G4) did not help; none of the three differences is
 | `main` | This overview |
 | `yinchenyu_g3g4` | G3 EVA reproduction and G4 parameter-cost allocation; includes the shared data split and training pipeline |
 | `yxh` | G1 LoRA baseline and G2 magnitude control |
+| `hanyanze` | G5/G6 gradient-weighted directions and cost allocation; independent protocol, 26 main runs |
 
 ## 7. Compute
 

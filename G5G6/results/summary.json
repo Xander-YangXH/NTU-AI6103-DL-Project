@@ -1,0 +1,149 @@
+{
+  "completed": 26,
+  "required": 26,
+  "rows": [
+    {
+      "task": "rte",
+      "group": "G5",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "n": 5,
+      "accuracy_mean": 0.7884476534296029,
+      "accuracy_std": 0.020035287979078147,
+      "f1_mean": null,
+      "f1_std": null
+    },
+    {
+      "task": "rte",
+      "group": "G6",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "n": 5,
+      "accuracy_mean": 0.7884476534296029,
+      "accuracy_std": 0.009061299926361803,
+      "f1_mean": null,
+      "f1_std": null
+    },
+    {
+      "task": "mrpc",
+      "group": "G5",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "n": 5,
+      "accuracy_mean": 0.8803921568627451,
+      "accuracy_std": 0.013130485525469478,
+      "f1_mean": 0.913660568563171,
+      "f1_std": 0.009458439112386044
+    },
+    {
+      "task": "mrpc",
+      "group": "G6",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "n": 5,
+      "accuracy_mean": 0.8838235294117647,
+      "accuracy_std": 0.01720930360935485,
+      "f1_mean": 0.9167639282163923,
+      "f1_std": 0.01170625303198394
+    },
+    {
+      "task": "sst2",
+      "group": "G5",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n": 3,
+      "accuracy_mean": 0.9392201834862385,
+      "accuracy_std": 0.0022935779816513624,
+      "f1_mean": null,
+      "f1_std": null
+    },
+    {
+      "task": "sst2",
+      "group": "G6",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n": 3,
+      "accuracy_mean": 0.9342507645259939,
+      "accuracy_std": 0.007283088258125985,
+      "f1_mean": null,
+      "f1_std": null
+    }
+  ],
+  "paired": [
+    {
+      "task": "rte",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "G6_minus_G5_accuracy": 0.0,
+      "paired_t_95_CI": [
+        -0.015201037841127479,
+        0.015201037841127479
+      ],
+      "complete": true,
+      "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
+    },
+    {
+      "task": "mrpc",
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "G6_minus_G5_accuracy": 0.0034313725490196178,
+      "paired_t_95_CI": [
+        -0.0038978502301235357,
+        0.01076059532816277
+      ],
+      "complete": true,
+      "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
+    },
+    {
+      "task": "sst2",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "G6_minus_G5_accuracy": -0.004969418960244647,
+      "paired_t_95_CI": [
+        -0.018432236409565223,
+        0.008493398489075932
+      ],
+      "complete": true,
+      "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
+    }
+  ]
+}
