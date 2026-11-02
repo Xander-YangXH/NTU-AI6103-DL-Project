@@ -48,8 +48,8 @@ $$
 
 | 组 | A 的方向 | rank 分配 | 回答的问题 | 分支 | 状态 |
 |---|---|---|---|---|---|
-| G1 LoRA | Kaiming 随机 | 均匀 r = 8 | 基线 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 进行中 |
-| G2 幅值对照 | 随机正交，行范数与 EVA 相同 | 均匀 r = 8 | 收益来自方向还是幅值 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 进行中 |
+| G1 LoRA | Kaiming 随机 | 均匀 r = 8 | 基线 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 已完成 |
+| G2 幅值对照 | 随机正交，行范数与 EVA 相同 | 均匀 r = 8 | 收益来自方向还是幅值 | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | 已完成 |
 | G3 EVA | 激活协方差 | 按 rank 个数（原版，ρ = 2） | 复现原方法 | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
 | G4 | 激活协方差 | 按参数成本 | 只换分配（H3） | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
 | G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | – | 未开始 |
@@ -87,6 +87,8 @@ $$
 
 | 组 | SST-2 | MRPC | RTE |
 |---|---|---|---|
+| G1 | 5e-4 | 2e-4 | 5e-4 |
+| G2 | 5e-4 | 1e-3 | 2e-4 |
 | G3 | 1e-3 | 2e-4 | 2e-4 |
 | G4 | 5e-4 | 2e-4 | 2e-4 |
 
@@ -104,7 +106,20 @@ G8 / G9 沿用 G3 的学习率。
 
 按参数成本分配（G4）没有带来提升，三个任务的差异都不显著。G3 低资源 SST-2 1k：88.81 ± 0.83。详见 [`G3G4/README.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4)。
 
-**G1 / G2**：pilot 已通过，调参与主实验正在 CCDS TC2 上运行。进度见 [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md)。
+**G1 / G2**（官方 validation，mean ± sd，%；配对差单位为百分点，附 95% CI）：
+
+| 任务 | 种子数 | G1 | G2 | G2 − G1 | G3 − G1 |
+|---|---|---|---|---|---|
+| SST-2 (acc) | 3 | 93.92 ± 0.00 | 94.07 ± 0.24 | +0.15 [−0.44, +0.75] | +0.27 [−0.81, +1.35] |
+| MRPC (F1) | 5 | 91.34 ± 0.43 | 91.16 ± 1.11 | −0.17 [−1.59, +1.24] | +0.68 [−0.60, +1.97] |
+| RTE (acc) | 5 | 73.94 ± 2.10 | 73.86 ± 1.04 | −0.07 [−3.23, +3.09] | +0.87 [−3.27, +5.01] |
+| 低资源 SST-2 1k | 5 | 91.44 ± 0.28 | – | – | −2.64 [−3.70, −1.57] |
+
+- 把行范数提到与 EVA 相同（G2），第 0 步 B 的梯度放大 1.8 倍，但精度不变：幅值本身不带来收益。
+- 在行范数相同的条件下，EVA 的方向（G3）让第 0 步梯度比随机方向大 3.9–8.5 倍，但精度只略高，且不显著。
+- 低资源下 G1 显著高于 G3，但两组学习率不同（5e-4 对 1e-3，均沿用各自在完整 SST-2 上的选择），下结论前需要补一组同学习率的对照。
+
+详见 [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md)。
 
 ## 6. 仓库组织
 

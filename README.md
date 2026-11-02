@@ -48,8 +48,8 @@ The core is a 2×2 factorial design, direction × allocation (G3–G6), plus ref
 
 | Group | Direction of A | Rank allocation | Question answered | Branch | Status |
 |---|---|---|---|---|---|
-| G1 LoRA | Kaiming random | Uniform r = 8 | Baseline | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | In progress |
-| G2 magnitude control | Random orthonormal, row norms matched to EVA | Uniform r = 8 | Do gains come from direction or magnitude? | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | In progress |
+| G1 LoRA | Kaiming random | Uniform r = 8 | Baseline | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | Done |
+| G2 magnitude control | Random orthonormal, row norms matched to EVA | Uniform r = 8 | Do gains come from direction or magnitude? | [`yxh`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yxh/G1G2) | Done |
 | G3 EVA | Activation covariance | By rank count (original, ρ = 2) | Reproduce the original method | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
 | G4 | Activation covariance | By parameter cost | Allocation only (H3) | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | Done |
 | G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | – | Not started |
@@ -87,6 +87,8 @@ Learning rates chosen so far:
 
 | Group | SST-2 | MRPC | RTE |
 |---|---|---|---|
+| G1 | 5e-4 | 2e-4 | 5e-4 |
+| G2 | 5e-4 | 1e-3 | 2e-4 |
 | G3 | 1e-3 | 2e-4 | 2e-4 |
 | G4 | 5e-4 | 2e-4 | 2e-4 |
 
@@ -104,7 +106,20 @@ G8 / G9 reuse G3's learning rates.
 
 Allocating by parameter cost (G4) did not help; none of the three differences is significant. G3 on low-resource SST-2 1k: 88.81 ± 0.83. See [`G3G4/README.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) for details.
 
-**G1 / G2**: the pilot has passed; tuning and main runs are in progress on CCDS TC2. See [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md).
+**G1 / G2** (official validation, mean ± sd, %; paired differences in percentage points with 95% CI):
+
+| Task | Seeds | G1 | G2 | G2 − G1 | G3 − G1 |
+|---|---|---|---|---|---|
+| SST-2 (acc) | 3 | 93.92 ± 0.00 | 94.07 ± 0.24 | +0.15 [−0.44, +0.75] | +0.27 [−0.81, +1.35] |
+| MRPC (F1) | 5 | 91.34 ± 0.43 | 91.16 ± 1.11 | −0.17 [−1.59, +1.24] | +0.68 [−0.60, +1.97] |
+| RTE (acc) | 5 | 73.94 ± 2.10 | 73.86 ± 1.04 | −0.07 [−3.23, +3.09] | +0.87 [−3.27, +5.01] |
+| Low-resource SST-2 1k | 5 | 91.44 ± 0.28 | – | – | −2.64 [−3.70, −1.57] |
+
+- Matching EVA's row norm (G2) raises the step-0 gradient on B by 1.8× but does not change accuracy: magnitude alone brings no gain.
+- At equal row norm, EVA's directions (G3) give a 3.9–8.5× larger step-0 gradient than random ones, yet only a small, non-significant accuracy gain.
+- In the low-resource setting G1 beats G3 significantly, but the two use different learning rates (5e-4 vs 1e-3, each reused from full SST-2), so a same-learning-rate control is needed before drawing conclusions.
+
+Details: [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md).
 
 ## 6. Repository layout
 
