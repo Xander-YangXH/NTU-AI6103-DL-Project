@@ -1,5 +1,7 @@
 """Write the command queue for one stage of G1/G2 to jobs/queues/<stage>.txt (copied from G3G4/jobs/make_queue.py).
 
+    python jobs/make_queue.py lowres_ctl   # extra: G1 low-resource at lr 1e-3 -> results/control/lowres/
+
     python jobs/make_queue.py pilot | tune | main | lowres
 main and lowres read the tuning results to pick each (group, task)'s learning rate.
 """
@@ -16,10 +18,10 @@ TASKS = ["sst2", "mrpc", "rte"]        # SST-2 first: the longest runs start fir
 GROUPS = ["G1", "G2"]
 
 
-def cmd(stage, task, group, lr, seed):
+def cmd(stage, task, group, lr, seed, out="results"):
     rid = f"{stage}_{group}_{task}_lr{lr:g}_s{seed}"
     return (f"python src/train.py --stage {stage} --task {task} --group {group} --lr {lr:g} --seed {seed}"
-            f" > logs/{rid}.log 2>&1")
+            f" --out {out} > logs/{rid}.log 2>&1")
 
 
 def pick_best(runs):
@@ -48,6 +50,10 @@ def main(stage):
     elif stage == "lowres":
         # proposal: low-resource SST-2 for G1, G3, G5 only; lr = the one G1 picked on full SST-2
         lines = [cmd("lowres", "sst2", "G1", best_lr("G1", "sst2"), s) for s in LOWRES_SEEDS]
+    elif stage == "lowres_ctl":
+        # learning-rate control, outside the shared protocol: G1 low-resource at G3's lr (1e-3), so that the
+        # G1-vs-G3 low-resource gap is not confounded by lr. Kept in results/control/ to stay apart from lowres.
+        lines = [cmd("lowres", "sst2", "G1", 1e-3, s, out="results/control") for s in LOWRES_SEEDS]
     else:
         sys.exit(f"unknown stage {stage}")
     os.makedirs("jobs/queues", exist_ok=True)
