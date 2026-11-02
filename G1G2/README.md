@@ -53,6 +53,7 @@ sbatch --export=ALL,STAGE=pilot,NPAR=2  jobs/g12.sbatch
 sbatch --export=ALL,STAGE=tune,NPAR=2   jobs/g12.sbatch
 sbatch --export=ALL,STAGE=main,NPAR=2   jobs/g12.sbatch     # 读 tune 结果选学习率，写 results/chosen_lr.json
 sbatch --export=ALL,STAGE=lowres,NPAR=2 jobs/g12.sbatch
+sbatch --export=ALL,STAGE=lowres_ctl,NPAR=2 jobs/g12.sbatch # 学习率对照
 python jobs/summarize.py                                    # results/g12_summary.txt、results/g12_runs.csv
 ```
 
@@ -62,10 +63,11 @@ python jobs/summarize.py                                    # results/g12_summar
 | tune | 2 组 × 3 任务 × 3 个 lr，seed 0，dev 评估 | 18 |
 | main | SST-2 3 个种子，MRPC / RTE 各 5 个，官方 validation | 26 |
 | lowres | G1，SST-2 1k，5 个种子，lr 沿用 G1 在 SST-2 上的选择 | 5 |
+| lowres_ctl | 对照（不属于共享协议）：同上，但 lr 用 G3 的 1e-3，写入 `results/control/` | 5 |
 
 ## 4. 结果摘要
 
-全部 51 个运行已完成（pilot 2、tune 18、main 26、lowres 5）。官方 validation，mean ± sd，%：
+全部 51 个运行已完成（pilot 2、tune 18、main 26、lowres 5），另有 5 个低资源学习率对照。官方 validation，mean ± sd，%：
 
 | 任务 | G1 | G2 | G3（参照） |
 |---|---|---|---|
@@ -73,9 +75,10 @@ python jobs/summarize.py                                    # results/g12_summar
 | MRPC (F1) | 91.34 ± 0.43 | 91.16 ± 1.11 | 92.02 ± 0.79 |
 | RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 |
 | 低资源 SST-2 1k | 91.44 ± 0.28 | – | 88.81 ± 0.83 |
+| 低资源，lr 1e-3（对照） | 91.47 ± 0.66 | – | 88.81 ± 0.83 |
 
 - G2 与 G1 没有差别：幅值本身不带来收益。
 - G3 在主实验上比两者略高，但不显著。
-- 低资源下 G1 显著高于 G3，但两组学习率不同（5e-4 对 1e-3），需要补对照。
+- 低资源下 G1 显著高于 G3。G1 改用与 G3 相同的 1e-3 后结果不变，G3 − G1 = −2.66 [−3.22, −2.11]，所以差距不是学习率造成的。
 
 完整的表格、逐种子结果、第 0 步梯度和结论见 [`PROGRESS.md`](PROGRESS.md)。
