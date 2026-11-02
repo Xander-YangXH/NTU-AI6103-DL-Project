@@ -1,0 +1,11 @@
+{
+  "status": "completed",
+  "tune_runs": 9,
+  "main_runs": 13,
+  "slurm_job": "48482",
+  "chosen_lr": {
+    "G7_sst2": 0.0002,
+    "G7_mrpc": 0.0002,
+    "G7_rte": 0.0002
+  }
+}

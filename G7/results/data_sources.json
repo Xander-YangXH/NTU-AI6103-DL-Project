@@ -1,0 +1,22 @@
+{
+  "model_repo": "FacebookAI/roberta-base",
+  "model_revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b",
+  "dataset_repo": "nyu-mll/glue",
+  "dataset_revision": "bcdcba79d07bc864c1c254ccfcedcce55bcc9a8c",
+  "source_mode": "existing project files",
+  "tasks": {
+    "sst2": {
+      "train": 67349,
+      "validation": 872
+    },
+    "mrpc": {
+      "train": 3668,
+      "validation": 408
+    },
+    "rte": {
+      "train": 2490,
+      "validation": 277
+    }
+  },
+  "split": "G7/src/data.py; NumPy permutation seed 2026; no stratification"
+}
