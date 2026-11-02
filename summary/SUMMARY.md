@@ -6,7 +6,7 @@ Branch `summary` merges every member branch as of 2026-11-02, without touching `
 
 | Branch | Commit | Folder | Groups | State |
 |---|---|---|---|---|
-| `yxh` | `739b682` | `G1G2/` | G1 LoRA, G2 magnitude control | Done (51 runs); low-resource lr control pending |
+| `yxh` | `d9a6ef4` | `G1G2/` | G1 LoRA, G2 magnitude control | Done (51 runs + 5-run low-resource lr control) |
 | `yinchenyu_g3g4` | `2661637` | `G3G4/` | G3 EVA, G4 parameter-cost allocation | Done (53 runs) |
 | `hanyanze` | `3a00380` | `G5G6/` | G5 / G6 GW-EVA | Done (26 main runs), **independent protocol** |
 | `liyouran` | `0c1b768` | `G7/` | G7 LoRA-GA | Done (22 runs) |
@@ -37,6 +37,8 @@ Paired difference against the LoRA baseline G1 (percentage points, 95% CI; `*` =
 | RTE | −0.07 [−3.23, +3.09] | +0.87 [−3.27, +5.01] | −0.36 [−3.14, +2.42] | −17.26 [−27.93, −6.59] * |
 | Low-res SST-2 1k | – | −2.64 [−3.70, −1.57] * | – | – |
 
+Learning-rate control (outside the shared protocol): G1 low-resource at G3's lr 1e-3 scores 91.47 ± 0.66 (vs 91.44 at 5e-4: +0.02 [−0.72, +0.77]); at equal lr, G3 − G1 = **−2.66 [−3.22, −2.11] \***.
+
 Step-0 ‖∂L/∂B‖ (mean over seeds):
 
 | Task | G1 | G2 | G3 | G4 | G7 |
@@ -50,8 +52,8 @@ Step-0 ‖∂L/∂B‖ (mean over seeds):
 1. **On the full-data tasks, no initialisation beats plain LoRA significantly.** G2, G3 and G4 are all within ±0.9 points of G1, and every interval contains 0. G3 (EVA) has the highest mean on all three tasks, but the margin is smaller than the seed noise, especially on RTE.
 2. **A larger initial gradient does not translate into accuracy.** The step-0 gradient on B grows by more than an order of magnitude from G1 to G3/G4 and G7, yet accuracy barely moves. Matching EVA's row norm (G2) alone changes nothing (magnitude), and EVA's directions (G3) add a 4–9× larger gradient at the same norm but only a non-significant gain (direction).
 3. **G7 (LoRA-GA) is unstable on RTE.** It matches the others on SST-2 and MRPC but averages 56.68 on RTE, with seed 1 predicting one class for all 277 examples; the drop against G1 and G3 is significant. All three G7 tasks selected lr 2e-4 on seed 0 only, which did not protect against this.
-4. **Low resource: G1 beats G3 by 2.6 points, but this is confounded by learning rate.** By the shared rule each group reuses its own full-SST-2 learning rate (G1 5e-4, G3 1e-3). A same-lr control (G1 at 1e-3, 5 seeds) is queued on the cluster; until it lands this result should not be read as evidence about EVA.
-5. **H2 cannot be tested yet.** G5/G6 are the only GW-EVA runs and follow an independent protocol (see §3). Testing H2 needs G5 under the shared protocol, paired with G3, ideally with a low-resource run.
+4. **Low resource: EVA is significantly worse than plain LoRA, and this is not a learning-rate effect.** By the shared rule G1 used 5e-4 and G3 1e-3 (G1 91.44 vs G3 88.81). Re-running G1 at 1e-3 (5 seeds) gives 91.47 ± 0.66, unchanged, and at equal lr G3 − G1 = −2.66 [−3.22, −2.11]. This runs against H2's premise that spectral initialisation helps most with little data.
+5. **H2 cannot be tested yet.** G5/G6 are the only GW-EVA runs and follow an independent protocol (see §3). Testing H2 needs G5 under the shared protocol, paired with G3 and G1, including the low-resource run, where EVA currently trails LoRA.
 
 ## 3. G5 / G6: independent protocol
 
@@ -73,14 +75,13 @@ The higher RTE score is not evidence for GW-EVA: with 8× the epochs and longer 
 | Software versions | G7 uses torch 2.4.0 / transformers 4.52.4 / peft 0.17.1; G1–G4 use 2.11.0 / 5.21.0 / 0.21.2 | Same algorithm and split, but not bit-identical numerics |
 | Parameter count | G3 uses 1.24–1.28 M LoRA parameters (−3.8% to −6.4%), by design of EVA's rank-count budget; G9 pilot −6.1% | Reported, not corrected |
 | Protocol | G5/G6 | Not pairable (§3) |
-| Learning rate | Low-resource G1 vs G3 | Confounded; control pending (§2.4) |
+| Learning rate | Low-resource G1 vs G3 | Ruled out by a same-lr control (§2.4) |
 
 ## 5. What is missing
 
 - **G8 EVA-generic**: no branch.
 - **G9 EVA-cross**: one MRPC pilot on a laptop GPU; tuning and main runs not started.
 - **G5 under the shared protocol**: needed for H2.
-- **Low-resource lr control** for G1 vs G3: queued on the cluster (`yxh`).
 - **H1 diagnostics** (subspace overlap of Σ_g vs activation covariance): no results in any branch yet; `G5G6/results/diagnostics/` holds implementation checks (gradient hooks, numerical tests), not the H1 measurement.
 
 ## 6. Reproduce

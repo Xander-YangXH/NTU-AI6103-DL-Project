@@ -119,7 +119,7 @@ Allocating by parameter cost (G4) did not help; none of the three differences is
 
 - Matching EVA's row norm (G2) raises the step-0 gradient on B by 1.8× but does not change accuracy: magnitude alone brings no gain.
 - At equal row norm, EVA's directions (G3) give a 3.9–8.5× larger step-0 gradient than random ones, yet only a small, non-significant accuracy gain.
-- In the low-resource setting G1 beats G3 significantly, but the two use different learning rates (5e-4 vs 1e-3, each reused from full SST-2), so a same-learning-rate control is needed before drawing conclusions.
+- In the low-resource setting G1 beats G3 significantly. A control with G1 at G3's learning rate (1e-3) gives 91.47 ± 0.66, unchanged, and G3 − G1 = −2.66 [−3.22, −2.11] at equal lr, so the gap is not a learning-rate effect.
 
 Details: [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/yxh/G1G2/PROGRESS.md).
 

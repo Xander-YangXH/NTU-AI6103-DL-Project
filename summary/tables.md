@@ -68,6 +68,12 @@ Seeds: SST-2 3, MRPC / RTE / low-resource 5. Learning rates:
 | MRPC (F1) | 91.37 ± 0.95 | 91.68 ± 1.17 | 0.0004 | 0.0004 |
 | RTE (acc) | 78.84 ± 2.00 | 78.84 ± 0.91 | 0.0001 | 0.0001 |
 
+## Learning-rate controls (outside the shared protocol)
+
+| Run | lr | Result | This − shared-lr run | G3 − this |
+|---|---|---|---|---|
+| G1 lowres sst2 | 0.001 | 91.47 ± 0.66 | +0.02 [-0.72, +0.77] | -2.66 [-3.22, -2.11] * |
+
 ## G9: pilot only
 
 - mrpc, lr 0.0002, seed 0, dev primary 89.75, LoRA params 1,246,464 (budget dev -6.1%)

@@ -3,6 +3,7 @@
     python summary/collect.py        # run from the repository root of the summary branch
 
 Reads */results/{main,lowres}/*.json (and G9's pilot), writes summary/all_runs.csv and summary/tables.md.
+Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV.
 Groups on the shared protocol are paired by seed; G5/G6 follow an independent protocol
 (shared_protocol_compliant = False in their JSONs) and are reported separately, never paired.
 """
@@ -133,6 +134,21 @@ def main():
     for stage, task, label in TASKS[:3]:
         lr = lambda g: (f"{meta[(g, stage, task)][0]['lr']:g}" if meta.get((g, stage, task)) else "–")
         out.append(f"| {label} | {cell('G5', stage, task)} | {cell('G6', stage, task)} | {lr('G5')} | {lr('G6')} |")
+
+    ctl = defaultdict(dict)   # (group, task, lr) -> {seed: primary}
+    for path in sorted(glob.glob(os.path.join(ROOT, "*", "results", "control", "*", "*.json"))):
+        r = json.load(open(path))
+        ctl[(r["group"], r["stage"], r["task"], r["lr"])][r["seed"]] = r["final"]["primary"]
+    if ctl:
+        out += ["", "## Learning-rate controls (outside the shared protocol)", "",
+                "| Run | lr | Result | This − shared-lr run | G3 − this |", "|---|---|---|---|---|"]
+        for (g, stage, task, lr), d in sorted(ctl.items()):
+            m, sd = mean_sd([100 * v for v in d.values()])
+            diffs = []
+            for a, b in ((score.get((g, stage, task), {}), d), (d, score.get(("G3", stage, task), {}))):
+                n, dm, lo, hi = paired(a, b)
+                diffs.append(f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else ""))
+            out.append(f"| {g} {stage} {task} | {lr:g} | {m:.2f} ± {sd:.2f} | {diffs[0]} | {diffs[1]} |")
 
     g9 = [r for r in rows if r["group"] == "G9"]
     out += ["", "## G9: pilot only", ""]
