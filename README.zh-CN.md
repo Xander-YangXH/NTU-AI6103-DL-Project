@@ -54,9 +54,9 @@ $$
 | G4 | 激活协方差 | 按参数成本 | 只换分配（H3） | [`yinchenyu_g3g4`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/yinchenyu_g3g4/G3G4) | 已完成 |
 | G5 GW-EVA | $\Sigma_g$ | 按 rank 个数 | 只换方向（H2） | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13组完成（独立协议，非共享协议复跑） |
 | G6 GW-EVA | $\Sigma_g$ | 按参数成本 | 方向与分配的组合 | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13组完成（独立协议，非共享协议复跑） |
-| G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | – | 未开始 |
+| G7 LoRA-GA | 均值梯度（B ≠ 0，改写 W） | 均匀 r = 8 | 目标第二项的代表 | [`liyouran`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/liyouran/G7) | 已完成 |
 | G8 EVA-generic | 通用语料（wikitext-103）的激活协方差 | 按 rank 个数 | 任务无关的一端（H4） | – | 未开始 |
-| G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | – | 未开始 |
+| G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | [`zjz_g9`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/zjz_g9/G9) | 只有 pilot |
 
 **模型与任务**：RoBERTa-base；GLUE SST-2、MRPC、RTE，另加 1,000 条的低资源 SST-2 子集（G1、G3、G5）。
 
@@ -96,6 +96,8 @@ G8 / G9 沿用 G3 的学习率。
 
 ## 5. 目前的结果
 
+各组结果的并列对比与按种子配对比较见 `summary` 分支的 [`summary/SUMMARY.zh-CN.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/blob/summary/summary/SUMMARY.zh-CN.md)。
+
 **G3 / G4**（官方 validation，mean ± sd，%）：
 
 | 任务 | 种子数 | G3 | G4 | G4 − G3（95% CI） |
@@ -133,6 +135,9 @@ G8 / G9 沿用 G3 的学习率。
 | `yinchenyu_g3g4` | G3 EVA 复现、G4 按参数成本分配；包含共享的数据划分与训练管线 |
 | `yxh` | G1 LoRA 基线、G2 幅值对照 |
 | `hanyanze` | G5/G6：梯度加权方向与成本分配；独立协议，26组正式结果 |
+| `liyouran` | G7 LoRA-GA，共享协议 |
+| `zjz_g9` | G9 EVA-cross（pilot） |
+| `summary` | 合并所有组员分支，`summary/` 中是跨组汇总 |
 
 ## 7. 计算资源
 
