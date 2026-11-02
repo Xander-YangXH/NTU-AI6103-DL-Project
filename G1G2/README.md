@@ -63,6 +63,19 @@ python jobs/summarize.py                                    # results/g12_summar
 | main | SST-2 3 个种子，MRPC / RTE 各 5 个，官方 validation | 26 |
 | lowres | G1，SST-2 1k，5 个种子，lr 沿用 G1 在 SST-2 上的选择 | 5 |
 
-## 4. 进度
+## 4. 结果摘要
 
-见 [`PROGRESS.md`](PROGRESS.md)。
+全部 51 个运行已完成（pilot 2、tune 18、main 26、lowres 5）。官方 validation，mean ± sd，%：
+
+| 任务 | G1 | G2 | G3（参照） |
+|---|---|---|---|
+| SST-2 (acc) | 93.92 ± 0.00 | 94.07 ± 0.24 | 94.19 ± 0.43 |
+| MRPC (F1) | 91.34 ± 0.43 | 91.16 ± 1.11 | 92.02 ± 0.79 |
+| RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 |
+| 低资源 SST-2 1k | 91.44 ± 0.28 | – | 88.81 ± 0.83 |
+
+- G2 与 G1 没有差别：幅值本身不带来收益。
+- G3 在主实验上比两者略高，但不显著。
+- 低资源下 G1 显著高于 G3，但两组学习率不同（5e-4 对 1e-3），需要补对照。
+
+完整的表格、逐种子结果、第 0 步梯度和结论见 [`PROGRESS.md`](PROGRESS.md)。

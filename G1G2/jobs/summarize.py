@@ -1,7 +1,9 @@
 """Summarise G1/G2: tuning table, main results (mean ± sd), paired G2 − G1 differences, low-resource G1.
 
-    python jobs/summarize.py        # writes results/g12_runs.csv and results/g12_summary.txt
+    python jobs/summarize.py                          # writes results/g12_runs.csv and results/g12_summary.txt
+    python jobs/summarize.py --g3 PATH/G3G4/results   # also pair G1/G2 with G3 by seed (same pipeline and seeds)
 """
+import argparse
 import csv
 import glob
 import json
@@ -14,8 +16,8 @@ GROUPS = ["G1", "G2"]
 LR_GRID = [2e-4, 5e-4, 1e-3]
 
 
-def load(stage):
-    return [json.load(open(p)) for p in sorted(glob.glob(f"results/{stage}/{stage}_*.json"))]
+def load(stage, root="results", group="*"):
+    return [json.load(open(p)) for p in sorted(glob.glob(f"{root}/{stage}/{stage}_{group}_*.json"))]
 
 
 def mean_sd(xs):
@@ -33,6 +35,9 @@ def paired(a, b):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--g3", help="G3G4/results folder from branch yinchenyu_g3g4, for seed-paired comparisons")
+    args = ap.parse_args()
     out = []
     tune = load("tune")
     if tune:
@@ -92,6 +97,36 @@ def main():
         m, sd = mean_sd([100 * v for v in low.values()])
         out += ["## Low-resource SST-2 1k (G1, official validation acc %)", "",
                 " / ".join(f"s{s} {100 * low[s]:.2f}" for s in sorted(low)) + f"  →  {m:.2f} ± {sd:.2f}", ""]
+
+    if args.g3:
+        g3 = {}
+        for r in load("main", args.g3, "G3") + load("lowres", args.g3, "G3"):
+            g3.setdefault((r["stage"], r["task"]), {})[r["seed"]] = (r["final"]["primary"], r["step0_grad_B"], r["lr"])
+        out += ["## Paired with G3 (EVA), official validation, percentage points", "",
+                "| stage | task | G3 (lr) | G3 − G1 (95% CI) | G3 − G2 (95% CI) | step-0 ‖∂L/∂B‖ G1 / G2 / G3 |",
+                "|---|---|---|---|---|---|"]
+        for stage, task in [("main", t) for t in TASKS] + [("lowres", "sst2")]:
+            ref = g3.get((stage, task))
+            if not ref:
+                continue
+            ref_score = {s: v[0] for s, v in ref.items()}
+            m3, sd3 = mean_sd([100 * v for v in ref_score.values()])
+            cells = []
+            for g in GROUPS:
+                mine = score.get((stage, g, task), {})
+                if len(set(mine) & set(ref_score)) > 1:
+                    n, m, lo, hi = paired(mine, ref_score)
+                    cells.append(f"{m:+.2f} [{lo:+.2f}, {hi:+.2f}]")
+                else:
+                    cells.append("–")
+            grads = []
+            for g in GROUPS:
+                gs = [r["step0_grad_B"] for r in rows if r["stage"] == stage and r["group"] == g and r["task"] == task]
+                grads.append(f"{mean_sd(gs)[0]:.2f}" if gs else "–")
+            grads.append(f"{mean_sd([v[1] for v in ref.values()])[0]:.2f}")
+            lr3 = next(iter(ref.values()))[2]
+            out.append(f"| {stage} | {task} | {m3:.2f} ± {sd3:.2f} ({lr3:g}) | {cells[0]} | {cells[1]} | {' / '.join(grads)} |")
+        out.append("")
 
     text = "\n".join(out)
     print(text)
