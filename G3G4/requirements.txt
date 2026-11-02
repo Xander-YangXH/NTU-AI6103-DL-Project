@@ -1,0 +1,6 @@
+# Versions the offline test was run with. PyTorch is installed separately to match the node's CUDA driver.
+transformers==5.21.0
+peft==0.21.2
+datasets==5.1.0
+numpy
+matplotlib
