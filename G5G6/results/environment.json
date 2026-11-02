@@ -1,0 +1,15 @@
+{
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_memory_GiB": 24,
+  "python": "3.12",
+  "torch": "2.8.0+cu128",
+  "transformers": "4.45.1",
+  "peft": "0.12.0",
+  "datasets": "2.20.0",
+  "numpy": "1.26.4",
+  "pyarrow": "17.0.0",
+  "scipy": "1.15.3",
+  "huggingface_hub": "0.25.2",
+  "native_peft_eva_used": false,
+  "base_model_revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b"
+}
