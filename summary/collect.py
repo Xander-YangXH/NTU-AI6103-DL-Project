@@ -2,7 +2,7 @@
 
     python summary/collect.py        # run from the repository root of the summary branch
 
-Reads */results/{main,lowres}/*.json (and G9's pilot), writes summary/all_runs.csv and summary/tables.md.
+Reads */results/{main,lowres}/*.json, writes summary/all_runs.csv and summary/tables.md.
 Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV.
 Groups on the shared protocol are paired by seed; G5/G6 follow an independent protocol
 (shared_protocol_compliant = False in their JSONs) and are reported separately, never paired.
@@ -19,7 +19,7 @@ OUT = os.path.join(ROOT, "summary")
 T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}
 TASKS = [("main", "sst2", "SST-2 (acc)"), ("main", "mrpc", "MRPC (F1)"), ("main", "rte", "RTE (acc)"),
          ("lowres", "sst2", "Low-res SST-2 1k (acc)")]
-SHARED = ["G1", "G2", "G3", "G4", "G7"]
+SHARED = ["G1", "G2", "G3", "G4", "G7", "G9"]
 INDEPENDENT = ["G5", "G6"]
 
 
@@ -46,7 +46,7 @@ def load():
         r = json.load(open(path))
         if "group" not in r or "final" not in r:
             continue
-        if stage == "pilot" and r["group"] != "G9":   # pilots are only kept for groups with nothing else yet
+        if stage == "pilot":   # pilots are never part of the final tables
             continue
         rows.append(dict(
             folder=os.path.relpath(path, ROOT).split(os.sep)[0], stage=r["stage"], group=r["group"], task=r["task"],
@@ -119,7 +119,7 @@ def main():
 
     out += ["", "## Environment per group", "", "| Group | Runs | GPU | torch / transformers / peft | LoRA params |",
             "|---|---|---|---|---|"]
-    for g in SHARED + INDEPENDENT + ["G9"]:
+    for g in SHARED + INDEPENDENT:
         rs = [r for r in rows if r["group"] == g]
         if not rs:
             continue
@@ -149,12 +149,6 @@ def main():
                 n, dm, lo, hi = paired(a, b)
                 diffs.append(f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else ""))
             out.append(f"| {g} {stage} {task} | {lr:g} | {m:.2f} ± {sd:.2f} | {diffs[0]} | {diffs[1]} |")
-
-    g9 = [r for r in rows if r["group"] == "G9"]
-    out += ["", "## G9: pilot only", ""]
-    for r in g9:
-        out.append(f"- {r['task']}, lr {r['lr']:g}, seed {r['seed']}, {r['eval_split']} primary "
-                   f"{100 * r['primary']:.2f}, LoRA params {r['lora_params']:,} (budget dev {100 * r['budget_dev']:+.1f}%)")
 
     text = "\n".join(out) + "\n"
     with open(os.path.join(OUT, "tables.md"), "w") as f:
