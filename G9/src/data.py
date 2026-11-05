@@ -64,8 +64,16 @@ def make_loader(ds, tokenizer, batch_size, shuffle, seed, num_workers=2, drop_la
     if shuffle:
         import torch
         gen = torch.Generator().manual_seed(seed)
-    return DataLoader(ds, batch_size=batch_size, shuffle=shuffle, generator=gen, num_workers=num_workers,
-                      collate_fn=DictCollator(tokenizer))
+    return DataLoader(
+        ds,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        generator=gen,
+        num_workers=num_workers,
+        collate_fn=DictCollator(tokenizer),
+        pin_memory=True,
+        persistent_workers=(num_workers > 0),
+    )
 
 
 def calib_loader(train_ds, tokenizer, size, batch_size, seed, num_workers=2):

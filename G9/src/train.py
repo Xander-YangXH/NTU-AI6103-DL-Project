@@ -7,13 +7,27 @@ training loop, evaluation and the JSON fields are identical to G1-G4.
 """
 import argparse
 import json
+import logging
 import os
 import socket
 import time
+import warnings
 
+# Silence non-critical library noise
+os.environ["LOGLEVEL"] = "ERROR"
+warnings.filterwarnings("ignore")
+logging.getLogger("torch.distributed.elastic.multiprocessing.redirects").setLevel(logging.ERROR)
+
+import datasets
 import numpy as np
 import torch
+from tqdm import tqdm
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_linear_schedule_with_warmup
+from transformers import logging as hf_logging
+
+hf_logging.set_verbosity_error()
+datasets.logging.set_verbosity_error()
+datasets.disable_progress_bar()
 
 import alloc
 import data
@@ -25,7 +39,7 @@ CFG = dict(
     max_len=128, batch_size=32, warmup_ratio=0.06, weight_decay=0.0,
     epochs={"sst2": 3, "mrpc": 10, "rte": 10, "lowres": 20},
     head_warmup_epochs=1, head_lr=1e-3,
-    calib_size=1024, calib_batch_size=16, num_workers=2, loss_curve_steps=500,
+    calib_size=1024, calib_batch_size=16, num_workers=4, loss_curve_steps=500,
 )
 
 CROSS_CALIB_MAP = {
@@ -90,6 +104,7 @@ def main():
         print(f"skip {run_id}: done")
         return
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    print(f"start {run_id}")
 
     t0 = time.time()
     torch.manual_seed(args.seed)
@@ -104,7 +119,7 @@ def main():
     eval_ds = sp["dev"] if args.stage in ("pilot", "tune") else sp["val"]
     nw = CFG["num_workers"]
     train_dl = data.make_loader(train_ds, tok, CFG["batch_size"], True, args.seed, nw)
-    eval_dl = data.make_loader(eval_ds, tok, 128, False, args.seed, nw)
+    eval_dl = data.make_loader(eval_ds, tok, 128, False, args.seed, num_workers=0)
 
     # G9: build calibration loader from the borrowed source task
     src_task = CROSS_CALIB_MAP[args.task]
@@ -115,7 +130,7 @@ def main():
         CFG["calib_size"],
         CFG["calib_batch_size"],
         args.seed,
-        nw
+        num_workers=0
     )
 
     base = AutoModelForSequenceClassification.from_pretrained(CFG["model"], num_labels=2).to(dev)
@@ -168,8 +183,9 @@ def main():
 
     model.train()
     step, grad_b0, losses, per_epoch = 0, None, [], []
-    for _ in range(n_ep):
-        for b in train_dl:
+    for ep in range(n_ep):
+        pbar = tqdm(train_dl, desc=f"{args.task} ep {ep+1}/{n_ep}")
+        for b in pbar:
             b = {k: v.to(dev) for k, v in b.items()}
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=dev.type == "cuda"):
                 loss = model(**b).loss
@@ -183,6 +199,7 @@ def main():
             sched.step()
             opt.zero_grad(set_to_none=True)
             step += 1
+            pbar.set_postfix(loss=f"{loss.item():.4f}")
         per_epoch.append(evaluate(model, eval_dl, args.task, dev))
     t4 = time.time()
 
