@@ -2,6 +2,7 @@ __pycache__/
 *.tmp
 logs/
 cache/
+cache_g3/
 jobs/queues/
 gweva-data/
 .venv*/
