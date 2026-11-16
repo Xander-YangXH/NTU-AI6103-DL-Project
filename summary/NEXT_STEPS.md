@@ -4,12 +4,14 @@
 
 Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 
+**Status on 2026-11-16:** the only new result since then is G9's cross-task overlap (`zjz_g9`, part of step 1). No other branch has new commits, so every other item below is still open, including both P0 items.
+
 ## Where we stand
 
 - On the full-data tasks, no initialisation (G2, G3, G4, G7, G9) beats plain LoRA (G1) significantly.
 - In the low-resource setting, EVA (G3) is significantly **worse** than LoRA (−2.66 points at equal lr).
 - **GW-EVA (our method) has not been tested yet.** The only G5/G6 runs follow an independent protocol and cannot be paired with G1/G3.
-- G9 shows that calibrating EVA on another task changes nothing measurable. This suggests the activation subspace is mostly fixed by the pretrained model, so task information would have to come from label gradients, which is GW-EVA's motivation. Whether Σ_g's subspace actually differs is H1, and nobody has measured it yet.
+- G9 shows that calibrating EVA on another task does not change accuracy, even though the subspace overlap with same-task EVA is only 0.49–0.66. Accuracy is insensitive to the directions, so it cannot decide H4; the overlap needs a same-task noise floor before it can. Whether Σ_g's subspace differs from EVA's is H1, and nobody has measured it yet.
 
 The priority is therefore to find out **whether GW-EVA works**, not to fill in the remaining groups.
 
@@ -24,7 +26,7 @@ The code already exists. `G5G6/src/gw_eva/calibrate.py` computes the subspace ov
 - Turn on all three modes and calibrate with the shared settings: max length 128, 1,024 examples, on SST-2, MRPC, RTE and the low-resource 1k subset, seeds 0–2.
 - Report per layer: overlap of the top-8 subspaces (EVA vs GW-EVA), principal angles, and corr(‖g‖², ‖x‖²). Summarise by layer type (q/k/v/o/FFN) and depth.
 - **Noise floor (required):** also compute the overlap of EVA with itself on two disjoint calibration samples. EVA and GW-EVA count as different only if their overlap is clearly below this floor.
-- **Cross-task overlap (for H4):** also compute the overlap of EVA calibrated on task X with EVA calibrated on the G9 source task. This turns G9's accuracy result into a direct measurement.
+- **Cross-task overlap (for H4):** also compute the overlap of EVA calibrated on task X with EVA calibrated on the G9 source task. This turns G9's accuracy result into a direct measurement. *Done by zjz on 2026-11-07 as a layer average (0.49 MRPC vs SST-2, 0.66 RTE vs MRPC); still needed: the noise floor above, the per-layer values, and the SST-2 vs RTE pair.*
 - Output: `G5G6/results/h1/*.json` plus one figure of overlap by layer.
 
 ### 2. G5 / G6 under the shared protocol (owners: hanyanze + yinchenyu)

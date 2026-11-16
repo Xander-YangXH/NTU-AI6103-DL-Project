@@ -73,3 +73,15 @@ Seeds: SST-2 3, MRPC / RTE / low-resource 5. Learning rates:
 | Run | lr | Result | This − shared-lr run | G3 − this |
 |---|---|---|---|---|
 | G1 lowres sst2 | 0.001 | 91.47 ± 0.66 | +0.02 [-0.72, +0.77] | -2.66 [-3.22, -2.11] * |
+
+## H4: subspace overlap of cross-task EVA (G9) with same-task EVA (G3)
+
+Mean squared cosine of the principal angles between the two lora_A row spaces, averaged over the 72 layers; 1 = identical, at most about 0.02 for random subspaces of these ranks (r ≤ 16 in d ≥ 768).
+
+| Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | G9 − G3 accuracy |
+|---|---|---|---|---|---|
+| sst2 | mrpc | 3 | 0.493 ± 0.013 | 0.481–0.507 | -0.19 [-1.63, +1.24] |
+| mrpc | rte | 5 | 0.662 ± 0.015 | 0.644–0.683 | -0.52 [-1.21, +0.17] |
+| rte | mrpc | 5 | 0.662 ± 0.015 | 0.644–0.683 | +0.87 [-3.31, +5.04] |
+
+The MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree to 1e-05 per seed, so there are two independent pairs here, not three.

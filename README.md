@@ -56,7 +56,7 @@ The core is a 2×2 factorial design, direction × allocation (G3–G6), plus ref
 | G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | [`hanyanze`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/hanyanze/G5G6) | 13 runs complete (independent protocol; not a shared-protocol rerun) |
 | G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | [`liyouran`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/liyouran/G7) | Done |
 | G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | – | Not started |
-| G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | [`zjz_g9`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/zjz_g9/G9) | Pilot only |
+| G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | [`zjz_g9`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Project/tree/zjz_g9/G9) | Done |
 
 **Model and tasks**: RoBERTa-base on GLUE SST-2, MRPC and RTE, plus a 1,000-example low-resource SST-2 subset (G1, G3, G5).
 
@@ -136,7 +136,7 @@ Details: [`G1G2/PROGRESS.md`](https://github.com/Xander-YangXH/NTU-AI6103-DL-Pro
 | `yxh` | G1 LoRA baseline and G2 magnitude control |
 | `hanyanze` | G5/G6 gradient-weighted directions and cost allocation; independent protocol, 26 main runs |
 | `liyouran` | G7 LoRA-GA under the shared protocol |
-| `zjz_g9` | G9 EVA-cross (pilot) |
+| `zjz_g9` | G9 EVA-cross: 13 main runs and the H4 subspace overlap |
 | `summary` | All member branches merged, plus the cross-group summary in `summary/` |
 
 ## 7. Compute

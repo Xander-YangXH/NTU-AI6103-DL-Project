@@ -4,6 +4,7 @@
 
 Reads */results/{main,lowres}/*.json, writes summary/all_runs.csv and summary/tables.md.
 Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV.
+G9's H4 measurement (G9/results/h4_overlap.csv, written by G9/src/overlap_analysis.ipynb) is summarised per task pair.
 Groups on the shared protocol are paired by seed; G5/G6 follow an independent protocol
 (shared_protocol_compliant = False in their JSONs) and are reported separately, never paired.
 """
@@ -149,6 +150,28 @@ def main():
                 n, dm, lo, hi = paired(a, b)
                 diffs.append(f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else ""))
             out.append(f"| {g} {stage} {task} | {lr:g} | {m:.2f} ± {sd:.2f} | {diffs[0]} | {diffs[1]} |")
+
+    h4_path = os.path.join(ROOT, "G9", "results", "h4_overlap.csv")
+    if os.path.exists(h4_path):
+        # G9 on task t is EVA calibrated on SRC[t], so overlap(G9_t, G3_t) compares EVA(SRC[t]) with EVA(t) at the
+        # same seed. MRPC and RTE borrow from each other: their rows are the same pair measured twice.
+        src = {"sst2": "mrpc", "mrpc": "rte", "rte": "mrpc"}
+        h4 = defaultdict(dict)
+        for r in csv.DictReader(open(h4_path)):
+            h4[r["task"]][int(r["seed"])] = float(r["overlap"])
+        out += ["", "## H4: subspace overlap of cross-task EVA (G9) with same-task EVA (G3)", "",
+                "Mean squared cosine of the principal angles between the two lora_A row spaces, averaged over the "
+                "72 layers; 1 = identical, at most about 0.02 for random subspaces of these ranks (r ≤ 16 in d ≥ 768).", "",
+                "| Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | G9 − G3 accuracy |",
+                "|---|---|---|---|---|---|"]
+        for t, d in h4.items():
+            m, sd = mean_sd(list(d.values()))
+            n, dm, lo, hi = paired(score.get(("G3", "main", t), {}), score.get(("G9", "main", t), {}))
+            out.append(f"| {t} | {src[t]} | {len(d)} | {m:.3f} ± {sd:.3f} | {min(d.values()):.3f}–{max(d.values()):.3f} "
+                       f"| {dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else "") + " |")
+        same = max(abs(h4["mrpc"][s] - h4["rte"][s]) for s in h4["mrpc"])
+        out += ["", f"The MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree to "
+                    f"{same:.0e} per seed, so there are two independent pairs here, not three."]
 
     text = "\n".join(out) + "\n"
     with open(os.path.join(OUT, "tables.md"), "w") as f:
