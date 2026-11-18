@@ -15,12 +15,11 @@ def main():
         for group in ['G5','G6']:
             values=[r for r in runs if r['task']==task and r['group']==group]
             def formatted(key):
-                scores=[r['final'][key] for r in values if key in r['final']]
+                scores=[r['final'][key] for r in values if r['final'].get(key) is not None]
                 if not scores:return '-'
                 if len(scores)==1:return f'{scores[0]*100:.2f} (single seed)'
                 return f'{statistics.mean(scores)*100:.2f} +/- {statistics.stdev(scores)*100:.2f}'
             print(f'| {task} | {group} | {len(values)} | {formatted("acc")} | {formatted("f1")} |')
-    print('Independent protocol; do not directly pair with shared-protocol G3/G4/G7 results.')
 
 
 if __name__=='__main__':main()

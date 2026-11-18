@@ -1,4 +1,4 @@
-"""Single-GPU server study: train-only LR selection then 26 formal jobs.
+"""Single-GPU server study: train-only LR selection then 32 formal jobs.
 
 RTE/MRPC seeds0-4; SST-2 seeds0-2. No official dev is used for tuning.
 """
@@ -24,18 +24,20 @@ from .calibrate import calibrate
 from .allocation import count_allocate,cost_allocate
 from .smoke import attach,encoder_digest
 
-STUDY=OUT/'server_study'
-TASKS={'rte':{'epochs':80,'batch':32,'seeds':5,'selection_epochs':10},
-       'mrpc':{'epochs':30,'batch':16,'seeds':5,'selection_epochs':10},
-       'sst2':{'epochs':10,'batch':32,'seeds':3,'selection_epochs':3}}
-LRS=[.0001,.0004,.001]
-LENGTH=512
+STUDY=OUT/'shared_study'
+TASKS={'rte':{'epochs':10,'batch':32,'seeds':5,'selection_epochs':10},
+       'mrpc':{'epochs':10,'batch':32,'seeds':5,'selection_epochs':10},
+       'sst2':{'epochs':3,'batch':32,'seeds':3,'selection_epochs':3}, 'sst2_lowres':{'epochs':20,'batch':32,'seeds':3,'selection_epochs':20}}
+LRS=[.0002,.0005,.001]
+LENGTH=128
 
 
 def read(path):return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
 def prepare(task):
+    lowres=task=='sst2_lowres'
+    if lowres:task='sst2'
     directory=ROOT/'data/gw_glue'/task;directory.mkdir(exist_ok=True,parents=True)
     hub=os.environ.get('GW_HF_ENDPOINT','https://huggingface.co').rstrip('/')
     if not (directory/'download.json').exists():
@@ -63,34 +65,16 @@ def prepare(task):
         raw=load_dataset('parquet',data_files={s:str(directory/(s+'.parquet')) for s in ['train','validation']},cache_dir=str(ROOT/'cache/gw_study'))
         data=raw.map(lambda b:tokenizer(b['sentence'] if task=='sst2' else b['sentence1'],None if task=='sst2' else b['sentence2'],truncation=True,max_length=LENGTH),batched=True,remove_columns=[k for k in raw['train'].column_names if k!='label'])
         data=data.rename_column('label','labels');data.save_to_disk(str(cache))
-    split_path=directory/'selection_split.json'
-    reference_split=ROOT/'configs/splits'/f'{task}.json'
-    if not split_path.exists() and reference_split.exists():write(split_path,read(reference_split))
-    if not split_path.exists():
-        raw=load_dataset('parquet',data_files={'train':str(directory/'train.parquet')},cache_dir=str(ROOT/'cache/gw_study'))['train']
-        groups={}
-        for i,row in enumerate(raw):
-            key=(row.get('sentence',row.get('sentence1','')).strip(),row.get('sentence2','').strip());groups.setdefault(key,[]).append(i)
-        rng=np.random.default_rng(0);selected=set();labels=np.array(data['train']['labels'])
-        for label in [0,1]:
-            indices=np.flatnonzero(labels==label);rng.shuffle(indices);selected.update(indices[:round(len(indices)*.1)].tolist())
-        target=len(selected)
-        for group in groups.values():
-            g=set(group)
-            if g&selected and not g<=selected:
-                add=selected|g;remove=selected-g;selected=remove if abs(len(remove)-target)<=abs(len(add)-target) else add
-        fit=sorted(set(range(len(labels)))-selected);selection=sorted(selected)
-        fit_set=set(fit);selection_set=set(selection)
-        require_no_overlap=all(not(set(g)&fit_set and set(g)&selection_set) for g in groups.values());assert require_no_overlap
-        write(split_path,{'fit':fit,'selection':selection,'seed':0,'grouped_duplicate_texts':True,'exact_text_overlap':0})
-    split=read(split_path)
-    assert not set(split['fit'])&set(split['selection'])
-    assert set(split['fit'])|set(split['selection'])==set(range(len(data['train'])))
+    perm=np.random.default_rng(2026).permutation(len(data['train']))
+    n_dev=round(.1*len(perm))
+    fit=perm[n_dev:]
+    if lowres:fit=np.random.default_rng(2027).permutation(fit)[:1000]
+    split={'fit':fit.tolist(),'selection':perm[:n_dev].tolist()}
     return data,collator,split,read(directory/'download.json')['files'][0]['sha256']
 
 
 def context(task,seed,partition):
-    data,collator,split,sha=prepare(task);train=data['train'].select(split['fit']) if partition=='fit' else data['train']
+    data,collator,split,sha=prepare(task);train=data['train'].select(split['fit'])
     directory=STUDY/task/partition/f'seed{seed}'/'initialization';directory.mkdir(exist_ok=True,parents=True)
     head_path=directory/'head_warmup.pt';metadata=directory/'head_warmup.json'
     if not head_path.exists() or not metadata.exists():
@@ -98,20 +82,22 @@ def context(task,seed,partition):
         for p in model.parameters():p.requires_grad_(False)
         for p in model.classifier.parameters():p.requires_grad_(True)
         old={n:p.detach().cpu().clone() for n,p in model.classifier.named_parameters()}
-        model.eval();model.classifier.train();optimizer=torch.optim.AdamW(model.classifier.parameters(),lr=.001,weight_decay=0)
+        model.train();optimizer=torch.optim.AdamW(model.classifier.parameters(),lr=.001)
         loader=DataLoader(train,batch_size=32,shuffle=True,collate_fn=collator,generator=torch.Generator().manual_seed(seed));visits=0
         device=next(model.parameters()).device
         with (directory/'warmup_steps.jsonl').open('w') as log:
             for step,record in enumerate(loader,1):
-                inputs={k:v.to(device) for k,v in record.items()};optimizer.zero_grad(set_to_none=True);loss=model(**inputs).loss
+                inputs={k:v.to(device) for k,v in record.items()};optimizer.zero_grad(set_to_none=True)
+                with torch.autocast('cuda',dtype=torch.bfloat16):loss=model(**inputs).loss
                 assert torch.isfinite(loss);loss.backward();optimizer.step();visits+=len(inputs['labels'])
                 log.write(json.dumps({'step':step,'loss':float(loss),'samples':len(inputs['labels'])})+'\n')
         assert visits==len(train) and encoder_digest(model)==before
         assert any(not torch.equal(p.detach().cpu(),old[n]) for n,p in model.classifier.named_parameters())
+        torch.save(loader.generator.get_state(),directory/'sampler.pt')
         torch.save({n:p.cpu() for n,p in model.classifier.state_dict().items()},head_path)
         write(metadata,{'status':'completed','task':task,'seed':seed,'partition':partition,'epochs':1,'samples':visits,
             'max_length':LENGTH,'head_lr':.001,'head_batch':32,'train_data_sha256':sha,
-            'indices':split['fit'] if partition=='fit' else list(range(len(train))),
+            'indices':split['fit'],
             'model_revision':read(OUT/'download.json')['revision'],'encoder_unchanged':True,'seconds':time.perf_counter()-started})
         del model,optimizer;gc.collect();torch.cuda.empty_cache()
     return {'task':task,'partition':partition,'directory':directory,'data':train,'collator':collator,'data_sha':sha,'modes':['gw_uncentered']}
@@ -121,7 +107,8 @@ def initialization(task,seed,partition):
     base=STUDY/task/partition/f'seed{seed}'/'initialization'
     if all((base/g/'initial_adapter/adapter_config.json').exists() and (base/g/'verification.json').exists() for g in ['G5','G6']):return base
     ctx=context(task,seed,partition)
-    artifact=calibrate(seed,LENGTH,min(256,len(ctx['data'])),micro_batch=2,context=ctx)
+    started=time.perf_counter()
+    artifact=calibrate(seed,LENGTH,min(1024,len(ctx['data'])),micro_batch=16,context=ctx)
     value=torch.load(artifact,map_location='cpu',weights_only=False)
     scores={n:v['gw_uncentered']['scores'].tolist() for n,v in value['layers'].items()}
     costs={n:d['d_in']+d['d_out'] for n,d in value['dimensions'].items()}
@@ -129,7 +116,9 @@ def initialization(task,seed,partition):
     assert sum(g5.values())==576 and .99<=report['fraction']<=1
     record=ctx['collator']([ctx['data'][0],ctx['data'][1]])
     layers={n:{**value['dimensions'][n],'A':v['gw_uncentered']['components']} for n,v in value['layers'].items()}
+    common_seconds=time.perf_counter()-started
     for group,ranks in [('G5',g5),('G6',g6)]:
+        allocation_started=time.perf_counter()
         directory=base/group;directory.mkdir(exist_ok=True,parents=True)
         model=model_load(seed);model.classifier.load_state_dict(torch.load(base/'head_warmup.pt',weights_only=True,map_location='cpu'));model.eval()
         before=encoder_digest(model);inputs={k:v.cuda() for k,v in record.items()}
@@ -141,7 +130,7 @@ def initialization(task,seed,partition):
         write(directory/'rank_pattern.json',ranks);write(directory/'parameters.json',details)
         write(directory/'verification.json',{'status':'passed','initial_logits_difference':difference,'encoder_unchanged':True,
             'rank_sum':sum(ranks.values()),'parameters':sum(costs[n]*r for n,r in ranks.items()),
-            'G6_budget':report if group=='G6' else None,'calibration':str(artifact),
+            'initialization_seconds':common_seconds+time.perf_counter()-allocation_started,'G6_budget':report if group=='G6' else None,'calibration':str(artifact),
             'calibration_sha256':hashlib.file_digest(artifact.open('rb'),'sha256').hexdigest()})
         del model;gc.collect();torch.cuda.empty_cache()
     return base
@@ -152,7 +141,7 @@ def metrics(labels,logits,task):
     if task=='mrpc':
         tp=int(((prediction==1)&(labels==1)).sum());fp=int(((prediction==1)&(labels==0)).sum());fn=int(((prediction==0)&(labels==1)).sum())
         result['f1']=2*tp/(2*tp+fp+fn) if 2*tp+fp+fn else 0.
-        result['selection_score']=(result['accuracy']+result['f1'])/2
+        result['selection_score']=result['f1']
     else:result['selection_score']=accuracy
     return result
 
@@ -162,15 +151,16 @@ def train(task,group,seed,phase,lr,base):
     result_path=directory/'result.json'
     if result_path.exists() and read(result_path).get('status')=='completed':return read(result_path)
     directory.mkdir(exist_ok=True,parents=True);write(STUDY/'active.json',{'task':task,'group':group,'seed':seed,'phase':phase,'lr':lr,'output':str(directory),'pid':os.getpid(),'unix_time':time.time()})
-    data,collator,split,sha=prepare(task);training=data['train'].select(split['fit']) if phase=='selection' else data['train']
+    data,collator,split,sha=prepare(task);training=data['train'].select(split['fit'])
     evaluation=data['train'].select(split['selection']) if phase=='selection' else data['validation']
     epochs=TASKS[task]['selection_epochs'] if phase=='selection' else TASKS[task]['epochs'];micro=TASKS[task]['batch'];accum=1
     model=PeftModel.from_pretrained(model_load(seed),base/group/'initial_adapter',is_trainable=True);before=encoder_digest(model)
     device=next(model.parameters()).device
     loader=DataLoader(training,batch_size=micro,shuffle=True,collate_fn=collator,generator=torch.Generator().manual_seed(seed),pin_memory=True)
+    loader.generator.set_state(torch.load(base/'sampler.pt',weights_only=True))
     planned=math.ceil(len(loader)/accum)*epochs
     optimizer=torch.optim.AdamW([p for p in model.parameters() if p.requires_grad],lr=lr,weight_decay=0)
-    scheduler=get_linear_schedule_with_warmup(optimizer,math.ceil(.06*planned),planned)
+    scheduler=get_linear_schedule_with_warmup(optimizer,int(.06*planned),planned)
     step=0;visits=0;start_epoch=0;started=time.perf_counter();checkpoint=directory/'checkpoint.pt';journal=[]
     if checkpoint.exists():
         state=torch.load(checkpoint,map_location='cpu',weights_only=False)
@@ -196,7 +186,7 @@ def train(task,group,seed,phase,lr,base):
                     assert torch.isfinite(loss);weight=len(batch['labels'])/samples;(loss*weight).backward();loss_value+=float(loss.detach())*weight
                 Bnorm=torch.stack([p.grad.float().square().sum() for n,p in model.named_parameters() if 'lora_B' in n and p.grad is not None]).sum().sqrt().item()
                 assert math.isfinite(Bnorm)
-                torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad],1.);optimizer.step();scheduler.step();step+=1;visits+=samples
+                optimizer.step();scheduler.step();step+=1;visits+=samples
                 torch.cuda.synchronize();row={'step':step,'epoch':epoch+(step-(math.ceil(len(loader)/accum)*epoch))/math.ceil(len(loader)/accum),
                     'loss':loss_value,'B_gradient_frobenius_unclipped':Bnorm,'samples':samples,'seconds':time.perf_counter()-step_started}
                 journal.append(row);stream.write(json.dumps(row)+'\n');stream.flush()
@@ -209,7 +199,7 @@ def train(task,group,seed,phase,lr,base):
     assert step==planned and visits==len(training)*epochs and encoder_digest(model)==before
     training_seconds=time.perf_counter()-started;model.eval();logits=[];labels=[]
     with torch.no_grad():
-        for batch in DataLoader(evaluation,batch_size=32,shuffle=False,collate_fn=collator):
+        for batch in DataLoader(evaluation,batch_size=128,shuffle=False,collate_fn=collator):
             inputs={k:v.to(device) for k,v in batch.items()}
             with torch.autocast('cuda',dtype=torch.bfloat16):prediction=model(**inputs).logits
             logits.append(prediction.float().cpu().numpy());labels.append(inputs['labels'].cpu().numpy())
@@ -228,6 +218,14 @@ def train(task,group,seed,phase,lr,base):
         'bf16_training':True,'seconds':time.perf_counter()-started,'training_segment_seconds':training_seconds,'peak_cuda_bytes':torch.cuda.max_memory_allocated(),
         'mean_step_seconds':statistics.mean(r['seconds'] for r in journal[10:]) if len(journal)>10 else statistics.mean(r['seconds'] for r in journal),
         'initialization':str(base/group/'initial_adapter'),'train_data_sha256':sha,'final_epoch_only':True,'reload_max_logit_difference':reload_error}
+    init=read(base/group/'verification.json')
+    head=read(base/'head_warmup.json')
+    result.update(step0_grad_B=journal[0]['B_gradient_frobenius_unclipped'],
+        loss_first_steps=[r['loss'] for r in journal[:500]], ranks=read(base/group/'rank_pattern.json'),
+        time_s={'init':init['initialization_seconds'],'head_warmup':head['seconds'],'train_eval':result['seconds'],
+                'total':head['seconds']+init['initialization_seconds']+result['seconds']},
+        shared_config={'split_seed':2026,'gradient_clipping':False,'calibration_batch':16,
+                       'calibration_samples':min(1024,len(training)),'calibration_labels':'required for GW gradients'})
     write(result_path,result);print('COMPLETED',task,group,phase,seed,score,flush=True)
     del model,optimizer,scheduler,state;gc.collect();torch.cuda.empty_cache()
     return result
@@ -253,26 +251,29 @@ def summarize():
             mean=statistics.mean(differences);half=float(t.ppf(.975,len(seeds)-1))*statistics.stdev(differences)/len(seeds)**.5
             paired.append({'task':task,'seeds':seeds,'G6_minus_G5_accuracy':mean,'paired_t_95_CI':[mean-half,mean+half],
                 'complete':len(seeds)==setting['seeds'],'interpretation':'exploratory; G5 and G6 do not necessarily have identical parameter counts'})
-    write(STUDY/'summary.json',{'completed':len(jobs),'required':26,'rows':rows,'paired':paired})
-    lines=['# G5/G6 server study','',f'Completed formal jobs: {len(jobs)}/26. Incomplete entries are not predictions.','',
+    write(STUDY/'summary.json',{'completed':len(jobs),'required':32,'rows':rows,'paired':paired})
+    lines=['# G5/G6 server study','',f'Completed formal jobs: {len(jobs)}/32. Incomplete entries are not predictions.','',
         '| Task | Group | Seeds | Accuracy mean | Sample std | MRPC F1 mean | F1 std |','|---|---|---|---|---|---|---|']
     for row in rows:lines.append('| '+' | '.join(str(row[k]) for k in ['task','group','seeds','accuracy_mean','accuracy_std','f1_mean','f1_std'])+' |')
-    lines+=['','RTE80 / MRPC30 / SST2 10 epochs; max length512; final official dev only. G5 uses 576 total ranks; G6 uses a parameter budget. Actual counts are in per-seed initialization verification.json.','',json.dumps(paired,indent=2)]
+    lines+=['','RTE10 / MRPC10 / SST2 3 / SST2-1k 20 epochs; max length128; final official dev only. G5 uses 576 total ranks; G6 uses a parameter budget. Actual counts are in per-seed initialization verification.json.','',json.dumps(paired,indent=2)]
     (STUDY/'summary.md').write_text('\n'.join(lines),encoding='utf-8')
 
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--tasks',nargs='+',choices=list(TASKS),default=list(TASKS));args=parser.parse_args()
-    STUDY.mkdir(exist_ok=True,parents=True);write(STUDY/'pipeline.json',{'status':'running','pid':os.getpid(),'started_unix':time.time(),'tasks':args.tasks,'required_jobs':26})
-    write(STUDY/'protocol.json',{'tasks':TASKS,'max_length':LENGTH,'calibration_samples':256,'calibration_micro_batch':2,'LR_grid':LRS,
-        'training_micro_batch':'full effective batch: RTE32 MRPC16 SST2 32; resource-verified on4090','gradient_accumulation':1,
-        'head_epochs':1,'head_lr':.001,'head_and_calibration_train_fit_only_during_selection':True,'selection_seed':0,
-        'selection_metric':'RTE/SST2 accuracy; MRPC average(accuracy,F1)','formal_dev':'final epoch once; no best-dev selection',
+    STUDY.mkdir(exist_ok=True,parents=True);write(STUDY/'pipeline.json',{'status':'running','pid':os.getpid(),'started_unix':time.time(),'tasks':args.tasks,'required_jobs':32})
+    write(STUDY/'protocol.json',{'tasks':TASKS,'max_length':LENGTH,'calibration_samples':1024,'calibration_micro_batch':16,'LR_grid':LRS,
+        'training_micro_batch':'full effective batch: 32 all tasks','gradient_accumulation':1,
+        'head_epochs':1,'head_lr':.001,'head_and_calibration_use_training_split_only':True,'selection_seed':0,
+        'selection_metric':'RTE/SST2 accuracy; MRPC F1','formal_dev':'final epoch once; no best-dev selection',
         'methods':['G5','G6'],'G5_budget':'576 ranks; parameter count reported, not forced within1%','G6_budget':1327104,
-        'epochs_choice':'RTE80 MRPC30 SST2 10; declared fixed before results, proposal did not specify RoBERTa epochs',
-        'source_model':read(OUT/'download.json')})
+        'epochs_choice':'shared settings including low-resource SST-2',
+        'split_seed':2026,'lowres_seed':2027,'lowres_samples':1000,'source_model':read(OUT/'download.json')})
     for task in args.tasks:
         hp_path=STUDY/task/'frozen_lr.json'
+        if not hp_path.exists():
+            if task=='sst2_lowres':
+                write(hp_path,read(STUDY/'sst2/frozen_lr.json'))
         if not hp_path.exists():
             base=initialization(task,0,'fit');chosen={}
             for group in ['G5','G6']:
@@ -283,7 +284,7 @@ def main():
             write(hp_path,{'official_dev_used':False,'groups':chosen})
         hp=read(hp_path)
         for seed in range(TASKS[task]['seeds']):
-            base=initialization(task,seed,'full')
+            base=initialization(task,seed,'fit')
             for group in ['G5','G6']:
                 train(task,group,seed,'formal',hp['groups'][group]['lr'],base);summarize()
     summarize();write(STUDY/'pipeline.json',{'status':'completed','tasks':args.tasks,'finished_unix':time.time()})

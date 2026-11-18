@@ -1,39 +1,45 @@
 {
   "tasks": {
     "rte": {
-      "epochs": 80,
+      "epochs": 10,
       "batch": 32,
       "seeds": 5,
       "selection_epochs": 10
     },
     "mrpc": {
-      "epochs": 30,
-      "batch": 16,
+      "epochs": 10,
+      "batch": 32,
       "seeds": 5,
       "selection_epochs": 10
     },
     "sst2": {
-      "epochs": 10,
+      "epochs": 3,
       "batch": 32,
       "seeds": 3,
       "selection_epochs": 3
+    },
+    "sst2_lowres": {
+      "epochs": 20,
+      "batch": 32,
+      "seeds": 3,
+      "selection_epochs": 20
     }
   },
-  "max_length": 512,
-  "calibration_samples": 256,
-  "calibration_micro_batch": 2,
+  "max_length": 128,
+  "calibration_samples": 1024,
+  "calibration_micro_batch": 16,
   "LR_grid": [
-    0.0001,
-    0.0004,
+    0.0002,
+    0.0005,
     0.001
   ],
-  "training_micro_batch": "full effective batch: RTE32 MRPC16 SST2 32; resource-verified on4090",
+  "training_micro_batch": "full effective batch: 32 all tasks",
   "gradient_accumulation": 1,
   "head_epochs": 1,
   "head_lr": 0.001,
   "head_and_calibration_train_fit_only_during_selection": true,
   "selection_seed": 0,
-  "selection_metric": "RTE/SST2 accuracy; MRPC average(accuracy,F1)",
+  "selection_metric": "RTE/SST2 accuracy; MRPC F1",
   "formal_dev": "final epoch once; no best-dev selection",
   "methods": [
     "G5",
@@ -41,7 +47,7 @@
   ],
   "G5_budget": "576 ranks; parameter count reported, not forced within1%",
   "G6_budget": 1327104,
-  "epochs_choice": "RTE80 MRPC30 SST2 10; declared fixed before results, proposal did not specify RoBERTa epochs",
+  "epochs_choice": "shared settings including low-resource SST-2",
   "source_model": {
     "repo": "FacebookAI/roberta-base",
     "revision": "e2da8e2f811d1448a5b465c236feacd80ffbac7b",
@@ -78,22 +84,5 @@
         "bytes": 498818054
       }
     ]
-  },
-  "protocol_id": "hanyanze_independent_20261030",
-  "shared_protocol_compliant": false,
-  "comparison_note": "Independent completed study, not a shared-protocol rerun. Do not directly pair with G3/G4/G7.",
-  "refinements": {
-    "old": [
-      0.001,
-      0.004,
-      0.01
-    ],
-    "new": [
-      0.0001,
-      0.0004,
-      0.001
-    ],
-    "basis": "flat training loss on RTE fit; no official dev; same final grid all groups/tasks",
-    "exploratory_archive": "outputs/gw_eva/server_study/rte/exploratory_high_lr"
   }
 }

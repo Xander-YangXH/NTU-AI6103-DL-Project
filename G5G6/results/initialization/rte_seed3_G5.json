@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "initial_logits_difference": 0.0,
+  "encoder_unchanged": true,
+  "rank_sum": 576,
+  "parameters": 1359360,
+  "initialization_seconds": 434.099895786494,
+  "G6_budget": null,
+  "calibration": "outputs/gw_eva/shared_study/rte/fit/seed3/initialization/calibration_n1024_b16.pt",
+  "calibration_sha256": "45604656854a9182fdf58d5bf1f2256e18bd2a0e44d68a782cf0ebfefe92e5c7"
+}
