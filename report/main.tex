@@ -1,0 +1,528 @@
+%File: main.tex -- AI6103 group project report, AAAI-24 camera-ready template
+\documentclass[letterpaper]{article} % DO NOT CHANGE THIS
+\usepackage{aaai24}  % DO NOT CHANGE THIS
+\usepackage{times}  % DO NOT CHANGE THIS
+\usepackage{helvet}  % DO NOT CHANGE THIS
+\usepackage{courier}  % DO NOT CHANGE THIS
+\usepackage[hyphens]{url}  % DO NOT CHANGE THIS
+\usepackage{graphicx} % DO NOT CHANGE THIS
+\urlstyle{rm} % DO NOT CHANGE THIS
+\def\UrlFont{\rm}  % DO NOT CHANGE THIS
+\usepackage{natbib}  % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\usepackage{caption} % DO NOT CHANGE THIS AND DO NOT ADD ANY OPTIONS TO IT
+\frenchspacing  % DO NOT CHANGE THIS
+\setlength{\pdfpagewidth}{8.5in}  % DO NOT CHANGE THIS
+\setlength{\pdfpageheight}{11in}  % DO NOT CHANGE THIS
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\pdfinfo{
+/TemplateVersion (2024.1)
+}
+
+% This is a course report, not an AAAI publication, so the AAAI copyright notice is switched off.
+\nocopyright
+
+\setcounter{secnumdepth}{2}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Sg}{\Sigma_g}
+\newcommand{\norm}[1]{\lVert #1\rVert}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\sig}{$^{*}$}
+
+\title{Does the Gradient Matter? Gradient-Weighted Explained Variance Adaptation for LoRA Initialisation}
+\author{
+    {YANG XUANHE} (G2604736C),
+    {YIN CHENYU} (G2602568C),
+    {HAN YANZE} (G2607626A),\\
+    {LI YOURAN} (G2605464L),
+    {WANG TIANSHUO} (G2603337L),
+    {ZHU JUNZHE} (G2604770B)
+}
+\affiliations{
+    AI6103 Deep Learning, Group Project (Option 2: improve on an existing codebase)\\
+    College of Computing and Data Science, Nanyang Technological University, Singapore\\
+    {xuanhe002}@e.ntu.edu.sg, {chenyu014}@e.ntu.edu.sg, {hany0052}@e.ntu.edu.sg,\\
+    {youran005}@e.ntu.edu.sg, {tianshuo001}@e.ntu.edu.sg, {junzhe003}@e.ntu.edu.sg\\
+    Code and all run files: \url{https://github.com/Xander-YangXH/NTU-AI6103-DL-Project}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Explained Variance Adaptation (EVA) initialises LoRA's down-projection $A$ with the principal components of layer input activations, assuming output gradients are independent of inputs. Relaxing this assumption, we show that the expected squared per-token gradient on $B$ at step~0 is exactly $\Tr(A\Sg A^\top)$ with $\Sg=\E[\norm{g}_2^2xx^\top]$. Its maximiser defines GW-EVA, and a mini-batch expansion of the same quantity unifies EVA, GW-EVA, and LoRA-GA within one spectral framework. We implement GW-EVA on Hugging Face PEFT and evaluate nine initialisations on RoBERTa-base across GLUE SST-2, MRPC, RTE, and a 1,000-example SST-2 subset using seed-paired statistics over 138 primary runs (296 total). Our theoretical predictions hold: a magnitude-only control amplifies the step-0 gradient norm by the predicted $\sqrt{3}$ factor (measured 1.78--1.83), GW-EVA raises it a further 1.46--2.27$\times$ over EVA, and GW-EVA's top-8 subspace overlaps EVA's by only 0.49--0.69 against a 0.84--0.95 sampling floor. However, these early advantages do not improve final validation scores: paired differences (GW-EVA $-$ EVA) are $-0.15$, $-0.88$, $-1.23$, and $-0.46$ percentage points, with all 95\% confidence intervals spanning zero. At a common learning rate of $2\times10^{-4}$, EVA outperforms LoRA on RTE; at rank $r=8$ on RoBERTa-base, larger step-0 gradients and faster early fitting prove transient.
+\end{abstract}
+
+%=====================================================================
+\section{Introduction}
+
+Low-Rank Adaptation (LoRA) \citep{hu2022lora} fine-tunes a frozen weight matrix $W$ via a low-rank update $BA$, initialised with $B=0$ and random $A$. Recent methods replace random $A$ with structured subspaces—such as activation principal components in EVA \citep{paischer2025eva}, full-batch gradient singular vectors in LoRA-GA \citep{wang2024loraga}, or pre-trained weight singular vectors in PiSSA \citep{meng2024pissa}—to amplify step-0 gradient signals and accelerate convergence.
+
+However, EVA's theoretical link between activation variance and the step-0 gradient on $B$ assumes that the output gradient $g=\partial L/\partial y$ is statistically independent of the layer input $x$. In practice, high-variance activations need not carry strong task gradients. Dropping this assumption yields a closed-form objective maximised by a gradient-weighted activation second moment, while situating EVA and LoRA-GA within a unified mini-batch formulation.
+
+We investigate whether incorporating label-derived gradient weights improves low-rank fine-tuning, making four contributions:
+\begin{enumerate}
+\item \textbf{Exact step-0 objective and unification.} We derive an exact identity for the expected squared step-0 gradient on $B$ without assuming $g \perp\!\!\!\perp x$, defining GW-EVA (Section~\ref{sec:method}), and show via mini-batch decomposition that EVA, GW-EVA, and LoRA-GA optimise distinct terms of the same objective.
+\item \textbf{PEFT implementation and budget allocation.} We implement GW-EVA on PEFT \citep{mangrulkar2022peft} using synchronised forward--backward hooks and bounded-memory streaming SVD, alongside parameter-cost rank allocation schemes under a common parameter ceiling.
+\item \textbf{Controlled multi-factor evaluation.} We compare nine configurations on RoBERTa-base under shared splits, common seeds, and seed-paired confidence intervals, including a random orthonormal control (G2) to isolate factor scale and calibration-source controls (G8, G9).
+\item \textbf{Decoupling step-0 signal from final accuracy.} We show that while GW-EVA rotates the initial subspace and increases step-0 gradients as predicted, these gains are transient and yield no statistically significant gain in final accuracy; the contrasts with LoRA depend on learning rate, seed variability and GPU pairing.
+\end{enumerate}
+
+%=====================================================================
+\section{Background and Related Work}
+
+\subsection{LoRA}
+For a frozen linear weight $W\in\mathbb{R}^{d_{out}\times d_{in}}$ and input $x\in\mathbb{R}^{d_{in}}$, LoRA computes $y=Wx+\frac{\alpha}{r}BAx$ with trainable factors $A\in\mathbb{R}^{r\times d_{in}}$ and $B\in\mathbb{R}^{d_{out}\times r}$. Setting $B=0$ at initialisation preserves the pre-trained forward mapping, while PEFT initialises $A$ from a Kaiming-uniform distribution $U(\pm 1/\sqrt{d_{in}})$ \citep{he2015delving}.
+
+\subsection{EVA}
+\label{sec:eva}
+EVA \citep{paischer2025eva} constructs $A$ prior to fine-tuning in two steps:
+
+\textbf{Incremental SVD.} Mini-batches of unlabelled calibration inputs are passed through the frozen model. For each adapted projection, non-padding token inputs $x$ are accumulated via incremental truncated SVD \citep{ross2008incremental}, maintaining up to $\rho r$ candidate components per layer until consecutive batch cosine similarities reach $\tau=0.99$.
+
+\textbf{Global rank redistribution.} Each component $j$ of layer $i$ is scored by its explained-variance ratio $\xi^i_j=(\sigma^i_j)^2/\sum_k(\sigma^i_k)^2$, where the denominator sums over the full singular spectrum of the centred layer inputs. Pooling all $N$ adapted layers, EVA retains the top $Nr$ components globally, assigning layer ranks $r_i \le \rho r$ from the selected right-singular vectors while setting $B=0$ and rescaling $\alpha$ to keep $\alpha/r_i$ fixed.
+
+Theorem~3.2 of \citet{paischer2025eva} shows that this choice maximises $\E\norm{\partial L/\partial B}_F^2 \propto \Tr(A\Sigma A^\top)$ ($\Sigma=\E[xx^\top]$) assuming output gradients are independent of layer inputs. Because PEFT centres token activations prior to SVD, practical EVA operates on the centred activation covariance.
+
+\subsection{Related Initialisations and Budget Allocation}
+Data-driven initialisations differ in the moments used to orient $A$ and whether $B$ starts non-zero (Table~\ref{tab:methods}). Unlike EVA and GW-EVA, LoRA-GA \citep{wang2024loraga} initialises both $A$ and $B$ from singular vectors of the full-batch weight gradient and subtracts $\frac{\alpha}{r}BA$ from $W$ to keep the initial function unchanged. GW-EVA incorporates label gradients via per-token output-gradient norms while retaining $B=0$.
+
+\begin{table}[!htb]
+\centering
+\small
+\begin{tabular}{@{}L{0.27\columnwidth}L{0.48\columnwidth}l@{}}
+\toprule
+Method & Statistic used & Labels \\
+\midrule
+PiSSA & Principal components of pre-trained $W$ & No \\
+EVA & Principal components of layer inputs $x$ & No \\
+LoRA-GA & Singular vectors of mean gradient $\partial L/\partial W$ & Yes \\
+GW-EVA (ours) & Principal components of inputs weighted by $\norm{g}_2$ & Yes \\
+\bottomrule
+\end{tabular}
+\caption{Statistics used by data-driven LoRA initialisations.}
+\label{tab:methods}
+\end{table}
+
+While AdaLoRA \citep{zhang2023adalora} prunes ranks dynamically during training, EVA allocates a fixed total rank count $Nr$ statically. However, rank counts ignore layer dimension heterogeneity: one rank in a RoBERTa-base FFN projection ($768 \leftrightarrow 3072$) costs $3{,}840$ parameters—$2.5\times$ the $1{,}536$ parameters of an attention projection ($768 \to 768$). We therefore evaluate parameter-cost allocation alongside EVA's rank-count rule (Section~\ref{sec:cost}).
+
+%=====================================================================
+\section{Method}
+\label{sec:method}
+
+\subsection{Setting}
+Consider one adapted linear layer $y=Wx+\frac{\alpha}{r}BAx$ with effective scaling $\alpha/r=1$. For a token with input $x\in\mathbb{R}^{d_{in}}$ and loss $L$, let $g=\partial L/\partial y\in\mathbb{R}^{d_{out}}$. At initialisation $B=0$, so both $y$ and $g$ are invariant to $A$.
+
+\subsection{Exact Step-0 Gradient Objective on $B$}
+\label{sec:identity}
+Writing $\partial L/\partial B=g\,(Ax)^\top$ for one token contribution, taking the squared Frobenius norm and averaging over valid tokens yields
+\begin{equation}
+\E\Big\lVert\frac{\partial L}{\partial B}\Big\rVert_F^2
+=\E\big[\norm{g}_2^2\,\norm{Ax}_2^2\big]
+=\Tr\big(A\Sg A^\top\big),
+\label{eq:identity}
+\end{equation}
+where $\Sg=\E\big[\norm{g}_2^2\,xx^\top\big]$ is the gradient-weighted activation second moment. Because $g$ is independent of $A$ at $B=0$, $\Sg$ is fixed across candidates. Under the scale constraint $AA^\top = I_r$, Ky Fan's theorem \citep{fan1949theorem} implies that (\ref{eq:identity}) is maximised when the rows of $A$ span the top-$r$ eigenspace of $\Sg$.
+
+\textbf{EVA as an independence special case.} If $\norm{g}_2^2$ is uncorrelated with $xx^\top$, then $\Sg=\E[\norm{g}_2^2]\,\E[xx^\top]$, recovering the uncentred activation second moment (which matches centred EVA when $\E[x]=0$). EVA is thus optimal for (\ref{eq:identity}) under this sufficient condition for mean-zero inputs.
+
+\textbf{Scale separation check.} For isotropic $A$ independent of $\Sg$, expected squared gradient scales with squared row norm. Kaiming-uniform rows (G1) have $\E\norm{a}_2^2 = d_{in}\cdot\frac{1}{3d_{in}}=\frac{1}{3}$, whereas orthonormal rows (G2) have unit norm, predicting a root-mean-square step-0 norm ratio of $\sqrt{3}\approx 1.73$ (tested in Section~\ref{sec:step0}).
+
+\subsection{Mini-Batch View: Unifying EVA, GW-EVA, and LoRA-GA}
+For a mini-batch mean gradient $\bar G_m=\frac{1}{m}\sum_{i=1}^m g_ix_i^\top$ over $m$ i.i.d.\ tokens with mean $M=\E[gx^\top]$, expanding the squared norm gives
+\begin{equation}
+\E\norm{\bar G_mA^\top}_F^2=\frac{1}{m}\Tr\big(A\Sg A^\top\big)+\left(1-\frac{1}{m}\right)\norm{MA^\top}_F^2 .
+\label{eq:minibatch}
+\end{equation}
+GW-EVA maximises the per-token second-moment term $\Tr(A\Sg A^\top)$ (which reduces to EVA under $g \perp\!\!\!\perp x$), whereas LoRA-GA maximises the coherent batch-mean term $\norm{MA^\top}_F^2$ via the top right-singular vectors of $M$. Because tokens within a sequence share context and labels, gradients can reinforce or cancel across positions; we therefore measure empirical first-batch norms directly.
+
+\subsection{GW-EVA Algorithm}
+For each of the 72 adapted projections in RoBERTa-base, GW-EVA proceeds in five steps:
+\begin{enumerate}
+\item \textbf{Head warm-up.} Train only the classification head for one epoch with the encoder frozen (as in all groups) so calibration gradients reflect task-relevant decision boundaries.
+\item \textbf{Hooked calibration.} Pass $1{,}024$ labelled training examples (or all $1{,}000$ in low-resource SST-2) in batches of 16 in evaluation mode. Forward and backward hooks record token inputs $x$ and output gradients $g$, undoing minibatch loss averaging before computing $\norm{g}_2$ and masking padding tokens.
+\item \textbf{Streaming spectral sketch.} Accumulate weighted rows $\norm{g}_2 x^\top$ in an uncentred streaming truncated SVD retaining up to $\rho r = 16$ right-singular vectors per merge to approximate the top eigenspace of $\Sg$.
+\item \textbf{Rank allocation.} Populate $A$ with leading right-singular vectors and assign ranks via either the global rank-count rule (G5) or the parameter-budget rule (G6).
+\item \textbf{Function preservation.} Set $B=0$ and leave $W$ unchanged.
+\end{enumerate}
+Calibration requires one backward pass per batch beyond EVA; median wall-clock initialisation times for G5 were 111\,s on SST-2, 352\,s on MRPC, 437\,s on RTE, and 104\,s on low-resource SST-2.
+
+\subsection{Parameter-Cost Rank Allocation}
+\label{sec:cost}
+Under the 576-rank rule, parameter counts vary with layer selection: G3 spans $1.242\text{--}1.276\text{M}$ parameters and G5 spans $1.279\text{--}1.359\text{M}$, versus $1{,}327{,}104$ for uniform $r=8$. To enforce this parameter ceiling, we maximise retained spectral energy within the uniform-$r=8$ parameter ceiling:
+\begin{align}
+&\max_{r_\ell}\ \sum_{\ell=1}^{72}\sum_{i=1}^{r_\ell}\xi_{\ell,i}\nonumber\\
+&\text{s.t.}\ \sum_{\ell=1}^{72} r_\ell\,(d_{in,\ell}+d_{out,\ell})\le 1{,}327{,}104,\quad 0\le r_\ell\le 16 .
+\label{eq:budget}
+\end{align}
+G4 approximates the optimum of (\ref{eq:budget}) on EVA's spectrum greedily by explained variance per parameter $\xi_{\ell,i}/(d_{in,\ell}+d_{out,\ell})$, whereas G6 uses dynamic programming to select optimal layerwise prefixes of GW-EVA's spectrum. Both utilise over $99.9\%$ of the parameter budget.
+
+\subsection{Controls}
+\label{sec:controls}
+\textbf{G2 (magnitude control).} $A$ has random orthonormal rows via QR decomposition of a Gaussian matrix, matching unit row norm without data orientation. G2 overwrites $A$ on G1's exact initialised state, sharing warm-up and batch order per seed.
+
+\textbf{G7 (LoRA-GA).} Mean weight gradient $G=USV^\top$ is estimated on $1{,}024$ warmed-up examples. Following \citet{wang2024loraga} (ArB2r), $A=c\,V_{:,1:r}^\top$ and $B=c\,U_{:,r+1:2r}$ with $c=d_{out}^{1/4}/\sqrt{16}$, and $W$ is replaced by $W-\frac{\alpha}{r}BA$.
+
+\textbf{G8 (generic calibration).} G8 preserves G3's exact $1{,}024$-example token layouts (segment lengths, sequence-pair format, special tokens) while replacing interior tokens with contiguous WikiText-103 text \citep{merity2017pointer}.
+
+\textbf{G9 (cross-task calibration).} G9 calibrates EVA on another GLUE task's inputs: MRPC for SST-2, RTE for MRPC, and MRPC for RTE.
+
+%=====================================================================
+\section{Experimental Design}
+
+\subsection{Groups and Hypotheses}
+Our design pairs a $2\times 2$ factorial core—direction (EVA vs.\ GW-EVA) $\times$ allocation (rank count vs.\ parameter budget) across G3--G6—with five reference groups (Table~\ref{tab:groups}) to test four hypotheses:
+\begin{itemize}
+\item \textbf{H1.} In RoBERTa-base, $\norm{g}_2^2$ correlates with $x$, rotating the top-$r$ eigenspace of $\Sg$ substantially away from EVA's activation subspace.
+\item \textbf{H2.} At matched parameter counts, GW-EVA yields larger step-0 gradients, lower early loss (steps 1--500), and higher validation score than EVA.
+\item \textbf{H3.} Parameter-cost rank allocation significantly alters downstream performance under a fixed parameter budget.
+\item \textbf{H4.} EVA subspaces are corpus-specific: calibrating on generic text or another task shifts the subspace and degrades accuracy.
+\end{itemize}
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{0.17\columnwidth}L{0.30\columnwidth}L{0.17\columnwidth}L{0.22\columnwidth}@{}}
+\toprule
+Group & Direction of $A$ & Allocation & Role / Tests \\
+\midrule
+G1 LoRA & Kaiming-uniform random & Uniform & Baseline \\
+G2 & Random orthonormal, row norm 1 & Uniform & Scale control \\
+G3 EVA & Activation covariance & Rank count & EVA baseline \\
+G4 & Activation covariance & Param.\ cost & H3 (greedy) \\
+G5 GW-EVA & $\Sg$ second moment & Rank count & H2 \\
+G6 & $\Sg$ second moment & Param.\ cost & H2, H3 (DP) \\
+G7 LoRA-GA & Mean-gradient SVD; $B\neq0$, $W$ compensated & Uniform & 2nd term of Eq.~(\ref{eq:minibatch}) \\
+G8 & Activation cov.\ on WikiText-103 & Rank count & H4 (content) \\
+G9 & Activation cov.\ on another task & Rank count & H4 (domain) \\
+\bottomrule
+\end{tabular}
+\caption{Experimental groups. Uniform allocation sets $r=8$ in every layer; rank-count allocation selects $576$ total ranks ($\rho=2$).}
+\label{tab:groups}
+\end{table}
+
+\subsection{Shared Protocol}
+All groups follow Table~\ref{tab:protocol}. G1--G7 tune their learning rates independently on an internal dev split across $\{2,5,10\}\times 10^{-4}$ using seed~0 (Table~\ref{tab:lr}).
+
+\begin{table}[!htb]
+\centering
+\small
+\begin{tabular}{@{}L{0.22\columnwidth}L{0.72\columnwidth}@{}}
+\toprule
+Setting & Specification \\
+\midrule
+Model \& tasks & RoBERTa-base \citep{liu2019roberta}; GLUE SST-2, MRPC, RTE \citep{wang2019glue}; 1,000-example SST-2 subset (seed 2027) \\
+Adapters & All 72 attention ($q,k,v,o$) and FFN linear layers; nominal $r=8$, $\alpha/r=1$, dropout 0; budget $1{,}327{,}104$ parameters \\
+Data split & 10\% of official training set held out as dev (seed 2026); final runs train on the remaining 90\% \\
+Optimisation & AdamW \citep{kingma2015adam,loshchilov2019decoupled}, batch 32, max length 128, linear schedule with 6\% warm-up, weight decay 0, \texttt{bf16}, no gradient clipping \\
+Epochs & SST-2: 3; MRPC: 10; RTE: 10; low-resource SST-2: 20 \\
+Head warm-up & 1 epoch at learning rate $10^{-3}$ with encoder frozen \\
+Learning rate & Selected per group and task from $\{2,5,10\}\times10^{-4}$ on dev (seed 0); low-resource reuses full-SST-2 choice; G8/G9 reuse G3's \\
+Calibration & $1{,}024$ training examples ($1{,}000$ in low-resource), batch 16; $\tau=0.99$, $\rho=2$ \\
+Seeds & SST-2: 0--2; MRPC, RTE, low-resource: 0--4 (G5/G6 low-resource: 0--2) \\
+Evaluation & Last epoch on official validation set (accuracy; positive-class F1 for MRPC) \\
+\bottomrule
+\end{tabular}
+\caption{Shared experimental protocol.}
+\label{tab:protocol}
+\end{table}
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+Task & G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8/G9 \\
+\midrule
+SST-2 & 5e-4 & 5e-4 & 1e-3 & 5e-4 & 1e-3 & 5e-4 & 2e-4 & 1e-3 \\
+MRPC & 2e-4 & 1e-3 & 2e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 \\
+RTE & 5e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 & 2e-4 \\
+Low-res. & 5e-4 & -- & 1e-3 & -- & 1e-3 & 5e-4 & -- & 1e-3 (G8) \\
+\bottomrule
+\end{tabular}
+\caption{Development-selected learning rates per group and task.}
+\label{tab:lr}
+\end{table}
+
+\begin{table*}[t]
+\centering
+\small
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+Task & G1 & G2 & G3 & G4 & G5 & G6 & G7 & G8 & G9 \\
+\midrule
+SST-2 (acc) & 93.92$\pm$0.00$^{\dagger}$ & 94.07$\pm$0.24 & 94.19$\pm$0.43 & 93.65$\pm$0.24 & 94.04$\pm$0.30 & \textbf{94.30$\pm$0.24} & 93.96$\pm$0.46 & 93.88$\pm$0.46 & 94.00$\pm$0.63 \\
+MRPC (F1) & 91.34$\pm$0.43 & 91.16$\pm$1.11 & \textbf{92.02$\pm$0.79} & 91.50$\pm$0.68 & 91.14$\pm$0.69 & 91.41$\pm$0.52 & 91.83$\pm$0.46 & 91.11$\pm$0.34 & 91.50$\pm$0.60 \\
+RTE (acc) & 73.94$\pm$2.10 & 73.86$\pm$1.04 & 74.80$\pm$2.49 & 73.57$\pm$2.06 & 73.57$\pm$2.43 & 72.92$\pm$2.09 & 56.68$\pm$8.85 & 72.06$\pm$2.18 & \textbf{75.67$\pm$1.70} \\
+Low-res.\ SST-2 & \textbf{91.44$\pm$0.28} & -- & 88.81$\pm$0.83 & -- & 88.46$\pm$0.29 & 89.98$\pm$0.18 & -- & 89.89$\pm$0.52 & -- \\
+\bottomrule
+\end{tabular}
+\caption{Official validation scores, mean $\pm$ sd (\%). $^{\dagger}$All three G1 seeds classify 819 of 872 examples correctly with distinct training loss curves and intermediate accuracies, making zero sd coincidental.}
+\label{tab:main}
+\vspace{0.8em}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{0.22\textwidth}cccc@{}}
+\toprule
+Pairwise Comparison & SST-2 & MRPC & RTE & Low-res.\ SST-2 \\
+\midrule
+G3 $-$ G1 (EVA vs.\ LoRA) & $+0.27$ [$-0.81$, $+1.35$] & $+0.68$ [$-0.60$, $+1.97$] & $+0.87$ [$-3.27$, $+5.01$] & $-2.64$ [$-3.70$, $-1.57$]$^{*}$ \\
+G5 $-$ G1 (GW-EVA vs.\ LoRA) & $+0.11$ [$-0.64$, $+0.87$] & $-0.20$ [$-1.14$, $+0.75$] & $-0.36$ [$-5.35$, $+4.63$] & $-3.10$ [$-3.59$, $-2.60$]$^{*}$ \\
+G7 $-$ G1 (LoRA-GA vs.\ LoRA) & $+0.04$ [$-1.11$, $+1.19$] & $+0.49$ [$-0.44$, $+1.41$] & $-17.26$ [$-27.93$, $-6.59$]$^{*}$ & -- \\
+\textbf{G5 $-$ G3 (H2: GW-EVA vs.\ EVA)} & $-0.15$ [$-1.07$, $+0.76$] & $-0.88$ [$-2.05$, $+0.29$] & $-1.23$ [$-4.09$, $+1.64$] & $-0.46$ [$-3.82$, $+2.90$] \\
+G4 $-$ G3 (H3: EVA budget vs.\ count) & $-0.54$ [$-1.69$, $+0.62$] & $-0.52$ [$-1.56$, $+0.52$] & $-1.23$ [$-4.31$, $+1.85$] & -- \\
+G6 $-$ G5 (H3: GW-EVA budget vs.\ count) & $+0.27$ [$-0.65$, $+1.18$] & $+0.27$ [$-0.75$, $+1.28$] & $-0.65$ [$-6.19$, $+4.89$] & $+1.53$ [$+0.94$, $+2.12$]$^{*}$ \\
+G8 $-$ G3 (H4: Generic vs.\ task EVA) & $-0.31$ [$-2.31$, $+1.70$] & $-0.91$ [$-1.54$, $-0.28$]$^{*}$ & $-2.74$ [$-6.65$, $+1.16$] & $+1.08$ [$-0.09$, $+2.24$] \\
+G9 $-$ G3 (H4: Cross-task vs.\ task EVA) & $-0.19$ [$-1.63$, $+1.24$] & $-0.52$ [$-1.21$, $+0.17$] & $+0.87$ [$-3.31$, $+5.04$] & -- \\
+\bottomrule
+\end{tabular}
+\caption{Seed-paired validation score differences in percentage points with 95\% CI ($^{*}$ indicates intervals excluding zero).}
+\label{tab:paired}
+\end{table*}
+
+\subsection{Statistics and Subspace Overlap}
+All groups share identical splits, head warm-up settings, and common seeds for pairing (with G1--G4 and G8 also sharing batch orders). We report within-seed paired differences with two-sided 95\% Student-$t$ intervals ($\text{df}=n-1$), marking intervals excluding zero with $^{*}$ (unadjusted across $\approx 20$ comparisons per table). Subspace alignment between orthonormal bases $Q_a, Q_b$ is measured via the mean squared cosine of principal angles, $\norm{Q_a^\top Q_b}_F^2/\min(k_a,k_b)$, averaged over all 72 projections ($1$ for identical subspaces; $\approx r/d_{in}\approx 0.01$ for random ones).
+
+\subsection{Runs, Compute, and Reproducibility}
+The primary comparison comprises 138 final training runs (201 shared-protocol runs including 63 tuning runs), plus 95 control/extra-seed runs on NVIDIA L40S GPUs and 12 calibration-only H1 diagnostic runs (296 fine-tuning runs total). Runs take 1--4 minutes on MRPC/RTE and 3--8 minutes on SST-2 on the NTU CCDS TC2 cluster. Primary runs used NVIDIA L40S (G1/G2, G7, G8, and controls), A40 (G3/G4), RTX 3050 Ti (G9), and RTX 4090 D (G5/G6) GPUs. G1--G4, G8 and G9 used PyTorch 2.11, Transformers 5.21 (G9: 5.20), and PEFT 0.21.2, while G7 used an older stack (PyTorch 2.4.0, Transformers 4.52.4, PEFT 0.17.1). Scripts \texttt{summary/collect.py} and \texttt{summary/figures.py} regenerate the summary tables and Figures~1--4; the rank heatmap uses \texttt{G3G4/jobs/plot\_ranks.py}.
+
+%=====================================================================
+\section{Results}
+
+\subsection{Main Validation Performance}
+
+
+
+Tables~\ref{tab:main} and~\ref{tab:paired} report main validation results. On full-data tasks, every group except G7 lies within $\pm 1.9$ points of LoRA (G1), with all confidence intervals against G1 spanning zero. Excluding G7 on RTE, the spread between the best and worst groups is under 1.0 point on SST-2 and MRPC and within seed noise on RTE.
+
+\subsection{GW-EVA versus EVA (H1 and H2)}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/h1_overlap.pdf}
+\caption{H1 diagnostic: rank-8 subspace overlap between EVA and GW-EVA on identical calibration samples (orange) versus the GW-EVA sampling noise floor across disjoint samples (blue). Left: per-task seed distributions. Middle and right: aggregated full-data results by projection type and encoder depth.}
+\label{fig:h1}
+\end{figure*}
+
+
+
+\textbf{H1 is supported: the EVA and GW-EVA subspaces differ substantially.} Sketching centred EVA and uncentred GW-EVA ($\Sg$) at rank $r=8$ on identical calibration samples (1,024 examples, or 1,000 on low-resource SST-2) using shared warmed-up heads reveals separation well beyond the disjoint-sample GW-EVA noise floor (Table~\ref{tab:h1}).
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Task & EVA--GW & Floor & Paired Diff.\ [95\% CI] & Angle \\
+\midrule
+SST-2 & 0.640 & 0.840 & $-0.201$ [$-0.224$, $-0.178$] & 34.8$^\circ$ \\
+MRPC & 0.522 & 0.868 & $-0.346$ [$-0.439$, $-0.252$] & 43.8$^\circ$ \\
+RTE & 0.493 & 0.866 & $-0.373$ [$-0.396$, $-0.350$] & 46.0$^\circ$ \\
+Low-res.$^{\ddagger}$ & 0.688 & 0.947 & $-0.259$ [$-0.295$, $-0.223$] & 30.8$^\circ$ \\
+\bottomrule
+\end{tabular}
+\caption{H1 rank-8 subspace diagnostic (3 seeds/task): same-sample EVA--GW overlap, disjoint-sample GW--GW floor, paired difference, and mean principal angle. $^{\ddagger}$Floor samples drawn from full SST-2 outside the 1k subset.}
+\label{tab:h1}
+\end{table}
+
+Only 7 of 864 layer--seed pairs reach their sampling floor, with mean principal angles spanning $30.8^\circ\text{--}46.0^\circ$. Rotation is strongest in attention output projections (\texttt{attn out}, mean overlap $0.476$ vs.\ $0.61$ for $k, v$) and peaks in layer~11 ($0.28$ vs.\ $0.84$ floor; Figure~\ref{fig:h1}). Per-token $\norm{g}_2^2$ correlates only weakly with $\norm{x}_2^2$ (Pearson $0.097\text{--}0.187$).
+
+\textbf{H2 is not supported: larger step-0 gradients do not improve early loss or final score.} Although GW-EVA (G5) increases step-0 gradient norms by within-seed mean factors of $1.46\times$, $2.27\times$, and $2.00\times$ over EVA (G3) on SST-2, MRPC, and RTE at identical learning rates, paired validation differences favour EVA across all four settings ($-0.15$ to $-1.23$ points; Table~\ref{tab:paired}), with all intervals spanning zero (on SST-2, the upper 95\% confidence limit is $+0.76$ points). Early training loss on G5 matches G3 in steps 1--50 and is slightly higher on SST-2 in steps 51--200 ($+0.018$ [$+0.003$, $+0.033$]) and steps 201--500 ($+0.021$ [$+0.005$, $+0.037$]).
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/step0_vs_accuracy.pdf}
+\caption{Step-0 gradient norm $\norm{\partial L/\partial B}_F$ (log scale) versus paired validation score difference relative to LoRA (G1), with 95\% CI. G5 (GW-EVA) is highlighted.}
+\label{fig:step0}
+\end{figure*}
+
+\subsection{Larger Gradients, Faster Start, Same Finish}
+\label{sec:step0}
+
+Step-0 gradient norms on $B$ grow $7\text{--}37\times$ from LoRA to data-driven initialisations while final validation scores remain within a narrow band (Figure~\ref{fig:step0}). Within-seed norm ratios (Table~\ref{tab:ratios}) confirm (\ref{eq:identity}): random orthonormal rows (G2/G1) amplify gradient norms by $1.78\text{--}1.83\times$ (matching the theoretical $\sqrt{3}\approx 1.73$), activation orientation (G3/G2) adds $4.19\text{--}8.41\times$, and gradient weighting (G5/G3) adds $1.46\text{--}2.27\times$, yet G2, G3, and G5 all match G1 in final score.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Task & G2/G1 (pred.\ 1.73) & G3/G2 & G5/G3 \\
+\midrule
+SST-2 & 1.83 (1.82--1.85) & 8.41 (6.54--10.64) & 1.46 (0.95--2.10) \\
+MRPC & 1.78 (1.62--1.87) & 4.19 (3.08--7.17) & 2.27 (1.11--3.96) \\
+RTE & 1.80 (1.66--1.92) & 4.48 (3.02--5.63) & 2.00 (0.84--3.13) \\
+\bottomrule
+\end{tabular}
+\caption{Within-seed step-0 gradient norm ratios, mean (range).}
+\label{tab:ratios}
+\end{table}
+
+Aligned subspaces do accelerate early fitting when learning rates match. On MRPC (G1, G3, G5 and G7 at $2\times 10^{-4}$), EVA, GW-EVA, and LoRA-GA achieve significantly lower training loss than LoRA across steps 1--500 (Table~\ref{tab:loss}), whereas on SST-2 scale-only G2 differs from G1 by at most $0.004$. However, these early advantages vanish by the final epoch, possibly because AdamW's coordinate-wise adaptive normalisation rescales update steps after early iterations.
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Group & \multicolumn{3}{c}{Training steps} & Final F1 $-$ G1 \\
+\cmidrule(lr){2-4} & 1--50 & 51--200 & 201--500 & [95\% CI] \\
+\midrule
+G3 (EVA) & $-0.015^{*}$ & $-0.054^{*}$ & $-0.038^{*}$ & \shortstack{$+0.68$\\{[$-0.60$, $+1.97$]}} \\
+G5 (GW-EVA) & $-0.014^{*}$ & $-0.056^{*}$ & $-0.034^{*}$ & \shortstack{$-0.20$\\{[$-1.14$, $+0.75$]}} \\
+G7 (LoRA-GA) & $-0.024^{*}$ & $-0.054^{*}$ & $-0.039^{*}$ & \shortstack{$+0.49$\\{[$-0.44$, $+1.41$]}} \\
+\bottomrule
+\end{tabular}
+\caption{MRPC at learning rate $2\times 10^{-4}$: paired differences in mean training loss relative to G1 and final F1 differences.}
+\label{tab:loss}
+\end{table}
+
+\subsection{Low-Resource Regime: Sensitivity to Learning Rate}
+
+Transferring full-SST-2 learning rates ($10^{-3}$ for G3/G5/G8 vs.\ $5\times 10^{-4}$ for G1) leaves spectral initialisations $1.56\text{--}3.10$ points behind LoRA on 1,000-example SST-2 (Table~\ref{tab:paired}). Rerunning a learning-rate sweep across $\{2,5,10\}\times 10^{-4}$ over 5 seeds on a single L40S GPU explains this gap (Table~\ref{tab:lowres}, Figure~\ref{fig:lowres}).
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Configuration & lr $2\times 10^{-4}$ & lr $5\times 10^{-4}$ & lr $10^{-3}$ \\
+\midrule
+G1 LoRA & 91.44$\pm$0.22 & 91.44$\pm$0.28 & 91.47$\pm$0.66 \\
+G3 EVA ($\rho=2$) & 90.87$\pm$0.55 & 90.55$\pm$0.54 & 89.50$\pm$1.16 \\
+G3 EVA ($\rho=1$) & -- & -- & 89.08$\pm$0.42 \\
+G8 EVA-generic & 90.41$\pm$1.15 & 90.28$\pm$0.69 & 89.89$\pm$0.52 \\
+\bottomrule
+\end{tabular}
+\caption{Low-resource SST-2 validation accuracy (\%, mean $\pm$ sd over 5 seeds on L40S). $\rho=1$ disables rank redistribution.}
+\label{tab:lowres}
+\end{table}
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/lowres_lr.pdf}
+\caption{Low-resource SST-2 accuracy versus learning rate on L40S (mean and 95\% CI over 5 seeds). LoRA is invariant; EVA recovers at lower rates.}
+\label{fig:lowres}
+\end{figure}
+
+
+
+
+
+Whereas LoRA is invariant to learning rate ($91.44\text{--}91.47\%$), EVA improves from $89.50\%$ at $10^{-3}$ to $90.87\%$ at $2\times 10^{-4}$, narrowing the paired $\text{G3}-\text{G1}$ gap to an insignificant $-0.57$ points [$-1.45$, $+0.30$]. Removing rank redistribution ($\rho=1$ vs.\ $\rho=2$ at $10^{-3}$) changes accuracy by $-0.41$ points [$-2.32$, $+1.50$]. At $10^{-3}$, EVA and GW-EVA exhibit higher training loss than LoRA in steps 51--200 ($+0.09$ and $+0.15$), showing slower early fitting at this rate.
+
+\begin{figure}[!htb]
+\centering
+\includegraphics[width=\columnwidth]{figures/h4_layers.pdf}
+\caption{H4 diagnostic: subspace overlap with target-task EVA (G3) for disjoint same-task calibration, WikiText-103 (G8), and cross-task calibration (G9), by projection type and depth.}
+\label{fig:h4}
+\end{figure}
+
+\subsection{Calibration-Corpus Specificity (H4)}
+
+Table~\ref{tab:h4} compares G3 against EVA on a disjoint $1{,}024$-example target-task split (sampling floor), layout-preserving WikiText-103 text (G8), and mismatched GLUE tasks (G9, with MRPC and RTE comparing the same subspace pair in reverse).
+
+\begin{table}[!htb]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Calibration source (vs.\ G3) & SST-2 & MRPC & RTE \\
+\midrule
+Same task, disjoint sample (floor) & 0.919 & 0.951 & 0.951 \\
+G8: WikiText-103, target layout & 0.642 & 0.716 & 0.694 \\
+G9: Cross-task GLUE inputs & 0.493 & 0.662 & 0.662 \\
+Random orthonormal, matched ranks & 0.010 & 0.010 & 0.010 \\
+\bottomrule
+\end{tabular}
+\caption{H4 subspace overlap with target-task EVA (G3) at allocated ranks.}
+\label{tab:h4}
+\end{table}
+
+Changing the calibration source reduces overlap to $0.493\text{--}0.716$ from the $0.919\text{--}0.951$ same-task reference, led by attention output projections (mean overlap $0.516$ for G8 and $0.501$ for G9 vs.\ $0.89$ floor) and layers 3--7 (Figure~\ref{fig:h4}). Preserving target sequence layout (G8) retains higher overlap than switching both domain and format (G9), notably on SST-2 where G9 switches from single sentences to sentence pairs. Yet validation scores barely change: neither G8 nor G9 differs significantly from LoRA on full data, and against G3 only G8 on MRPC reaches nominal significance ($-0.91$ [$-1.54$, $-0.28$]), before multiplicity adjustment. \textbf{H4 is partially supported:} EVA subspaces reflect corpus and format geometry, but at rank $r=8$ its effect on final scores varies by task.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/g34_rank_heatmap_diff.pdf}
+\caption{H3 diagnostic: mean per-layer rank difference $\text{G4}-\text{G3}$ across main-stage seeds (red: higher rank under parameter-cost allocation). Titles give net rank shifts in attention and FFN layers.}
+\label{fig:ranks}
+\end{figure*}
+
+\subsection{Parameter-Cost Rank Allocation (H3)}
+
+\textbf{H3 is not supported on full-data tasks.} Parameter-cost allocation yields no significant difference over rank-count allocation for EVA ($\text{G4}-\text{G3}$) or GW-EVA ($\text{G6}-\text{G5}$) on full data (Table~\ref{tab:paired}), despite adding $202\text{--}246$ attention ranks and removing $65\text{--}78$ FFN ranks (raising mean $q, k, v$ ranks from $8.8$ to $13.6\text{--}13.7$ and lowering FFN output ranks from $4.7$ to $2.4$; Figure~\ref{fig:ranks}). Although G4 spends the full $1.327\text{M}$ budget while G3 uses $3.8\text{--}6.4\%$ less, training $\approx 5\%$ more parameters yields no accuracy gain. In low-resource SST-2, $\text{G6}-\text{G5}=+1.53$ [$+0.94$, $+2.12$] confounds allocation with learning rate ($5\times 10^{-4}$ vs.\ $10^{-3}$).
+
+\subsection{Training Stability and Hardware Sensitivity}
+
+\textbf{RTE collapse.} G7 (LoRA-GA) averages $56.68 \pm 8.85\%$ on RTE—with one seed predicting a single class on all 277 validation examples and two near chance—while matching other groups on SST-2 and MRPC. Plain LoRA (G1) also collapses on 1 of 10 seeds at $5\times 10^{-4}$ and none at $2\times 10^{-4}$. At a matched rate of $2\times 10^{-4}$ over 10 seeds, EVA beats LoRA on RTE by $+2.13$ points [$+0.97$, $+3.29$] ($+3.03$ [$+1.59$, $+4.47$] on the five L40S pairs), whereas at LoRA's tuned rate of $5\times 10^{-4}$ the difference is $+2.92$ [$-1.83$, $+7.68$]. EVA's RTE advantage thus reflects stability at conservative learning rates rather than higher peak capacity.
+
+\textbf{GPU effects.} Rerunning G3 with identical code and seeds on L40S instead of A40 shifts single low-resource seeds by up to $2.5$ points due to \texttt{bf16} accumulation differences during head warm-up, lowering G3's MRPC mean by $1.08$ [$-2.43$, $+0.27$]. Across 15 MRPC seeds, EVA's apparent $+0.50$ F1 edge [$+0.08$, $+0.92$] when mixing A40 and L40S runs shrinks to $+0.14$ [$-0.24$, $+0.51$] when all seeds run on L40S.
+
+%=====================================================================
+\section{Discussion and Limitations}
+
+Four converging findings show that step-0 gradient magnitude on $B$ is an incomplete proxy for final generalisation at rank $r=8$: (i) random orthonormal G2 confirms the $\sqrt{3}$ scale effect without changing accuracy; (ii) faster early loss reduction on MRPC dissipates before convergence; (iii) EVA's low-resource deficit reflects learning-rate sensitivity; and (iv) gradient weighting and corpus substitution both reduce subspace overlap without a consistent change in validation scores (Table~\ref{tab:verdicts}).
+
+\begin{table}[!htb]
+\centering
+\small
+\begin{tabular}{@{}L{0.26\columnwidth}L{0.16\columnwidth}L{0.46\columnwidth}@{}}
+\toprule
+Hypothesis & Verdict & Key Empirical Evidence \\
+\midrule
+H1: $\Sg$ rotates subspace relative to EVA & Supported & Overlap 0.49--0.69 vs.\ 0.84--0.95 floor (all 4 settings) \\
+H2: GW-EVA improves over EVA & Not supported & 1.46--2.27$\times$ step-0 gradient; no early-loss or score gain \\
+H3: Parameter-cost allocation matters & Not supported & $\text{G4}-\text{G3}$, $\text{G6}-\text{G5}$ non-significant despite large rank shifts \\
+H4: Subspace is task-specific & Partially supported & Overlap 0.49--0.72 across corpora; MRPC F1 lower for G8 \\
+\bottomrule
+\end{tabular}
+\caption{Summary of hypothesis verdicts.}
+\label{tab:verdicts}
+\end{table}
+
+\textbf{Limitations and Future Work.}
+\emph{Scope and capacity.} Our experiments evaluate one encoder (RoBERTa-base), three GLUE classification tasks, and nominal rank $r=8$, where adapter capacity may allow gradient descent to reorient suboptimal subspaces during training. Testing larger generative models or tighter bottlenecks ($r \in \{1, 2\}$) will clarify when initial orientation becomes capacity-critical.
+
+\emph{Estimator isolation and mechanism.} H1 compares centred EVA against uncentred $\Sg$ at fixed rank 8; holding centring fixed would isolate pure gradient weighting, while SGD comparisons or update-norm logging would directly test whether AdamW's adaptive normalisation explains why step-0 gradient gains are transient.
+
+\emph{Infrastructure and coverage.} Primary runs spanned heterogeneous GPUs (with G5/G6 using a separate data loader), G7 used older library versions with weight decay $0.01$ during head warm-up, and rank-count groups operated within $6.5\%$ of the uniform-$r=8$ parameter budget. While single-GPU controls resolve hardware-sensitive conclusions, adding low-resource learning-rate sweeps for GW-EVA remains a useful extension.
+
+%=====================================================================
+\section{Conclusion}
+
+Relaxing EVA's independence assumption yields an exact step-0 gradient objective, the GW-EVA initialisation, and a unified mini-batch view encompassing EVA and LoRA-GA. In seed-paired experiments on RoBERTa-base, GW-EVA rotates the initial subspace well beyond sampling noise and amplifies step-0 gradient norms by $1.46\text{--}2.27\times$ over EVA at the cost of an extra calibration backward pass. Under the rank-count rule, GW-EVA shows no significant final validation gain over EVA. At a common learning rate of $2\times10^{-4}$, EVA improves RTE accuracy over LoRA by 2.13 points. While target-task spectral calibration can accelerate early fitting and stabilise low-learning-rate training on sensitive tasks such as RTE, larger initial gradients alone do not guarantee superior downstream performance at rank $r=8$.
+
+\section*{Contributions}
+
+\begin{center}
+\small
+\begin{tabular}{@{}L{0.36\columnwidth}L{0.58\columnwidth}@{}}
+\toprule
+Member (branch) & Contribution \\
+\midrule
+{YANG XUANHE} (\texttt{yxh}) & G1/G2, magnitude control and theory check, extra seeds, same-GPU and learning-rate controls, H4 noise floor and per-layer analysis, cross-group summary and results page, report outline \\
+{Yin Chenyu} (\texttt{yinchenyu\_g3g4}) & Shared data split and training pipeline, G3 EVA reproduction, G4 parameter-cost allocation, subspace-overlap metric, report writing \\
+{HAN YANZE} (\texttt{hanyanze}) & GW-EVA derivation and implementation, G5/G6, H1 subspace diagnosis \\
+{[LI YOURAN]} (\texttt{liyouran}) & G7 LoRA-GA, , weight compensation and RTE failure analysis \\
+{WANG TIANSHUO} (\texttt{eddy\_G8}) & G8 EVA-generic, layout-preserving generic calibration, G8 overlap \\
+{ZHU JUNZHE} (\texttt{zjz\_g9}) & G9 EVA-cross, H4 overlap analysis \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bibliography{refs}
+
+\end{document}
