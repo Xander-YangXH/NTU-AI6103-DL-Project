@@ -4,6 +4,7 @@
     python jobs/make_queue.py seeds10      # extra: G1 seeds 5-9 on MRPC, RTE, low resource -> results/seeds10/
     python jobs/make_queue.py g3_lowres_ctl  # extra: why EVA hurts in low resource (G3 runs, needs ../G3G4/src)
     python jobs/make_queue.py quick4       # extra: H4 noise floor, G8 low-resource lr, G3 seeds 5-9 (needs ../G3G4, ../G8)
+    python jobs/make_queue.py quick_ad     # extra: G1 lr 2e-4 (low res, RTE), MRPC seed check, per-layer H4 overlaps
 
     python jobs/make_queue.py pilot | tune | main | lowres
 main and lowres read the tuning results to pick each (group, task)'s learning rate.
@@ -89,6 +90,20 @@ def main(stage):
                   for t in ("mrpc", "rte") for s in EXTRA_SEEDS]
         lines += [f"python jobs/g3_control.py --rho 2 --stage lowres --task sst2 --group G3 --lr 1e-3 --seed {s}"
                   f" --out results/seeds10 --cache cache_g3 > logs/lowres_G3_sst2_lr0.001_s{s}.log 2>&1" for s in EXTRA_SEEDS]
+    elif stage == "quick_ad":
+        # D: per-layer H4 overlaps (init only, one process), first so it overlaps with the training runs
+        lines = ["python jobs/h4_layers.py --out results/h4_layers > logs/h4_layers.log 2>&1"]
+        # A: G1 low resource at lr 2e-4, the learning rate EVA does best at
+        lines += [cmd("lowres", "sst2", "G1", 2e-4, s, out="results/control") for s in LOWRES_SEEDS]
+        # C: G1 on RTE at G3's lr 2e-4, ten seeds, for an equal-lr comparison and the collapse rate
+        lines += [cmd("main", "rte", "G1", 2e-4, s, out="results/control") for s in LOWRES_SEEDS + EXTRA_SEEDS]
+        # B: MRPC check of G3 - G1 = +0.57: G3 seeds 0-4 rerun on L40S, and seeds 10-14 for both groups
+        def g3(s, out):
+            return (f"python jobs/g3_control.py --rho 2 --stage main --task mrpc --group G3 --lr 2e-4 --seed {s}"
+                    f" --out {out} --cache cache_g3 > logs/main_G3_mrpc_lr0.0002_s{s}_{os.path.basename(out)}.log 2>&1")
+        lines += [g3(s, "results/control_repro") for s in LOWRES_SEEDS]
+        lines += [g3(s, "results/seeds10") for s in range(10, 15)]
+        lines += [cmd("main", "mrpc", "G1", 2e-4, s, out="results/seeds10") for s in range(10, 15)]
     else:
         sys.exit(f"unknown stage {stage}")
     os.makedirs("jobs/queues", exist_ok=True)
