@@ -11,7 +11,9 @@ Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 - **Step 5 is partly answered from existing data.** `collect.py` now compares the first-500-step training loss at equal learning rates (SUMMARY finding 3): data-aware inits fit faster early on MRPC, GW-EVA is no faster than EVA, and in low resource EVA/GW-EVA fit more slowly in steps 51–200. Evaluating on the dev/val split at fixed step budgets still needs the `train.py` option.
 - **Step 4 is done** (11-20, `G1G2/results/control*/`): EVA prefers a lower learning rate in low resource (lr 2e-4: 90.87 vs 89.50 at 1e-3) and then trails LoRA by only 0.57; uniform ranks (ρ = 1) change nothing. Still open: the same learning-rate check for G5/G6 and G8.
 - **Step 7 is done.** eddy ran G8 (13 main + 5 low-resource runs, branch `eddy_G8`): generic-text calibration matches task-data EVA in accuracy, with subspace overlap 0.64–0.72.
-- **Step 3 is started.** G1 has seeds 5–9 on MRPC, RTE and low resource (11-20, `G1G2/results/seeds10/`); G3 and G5 still need theirs before the extra seeds can be paired. One G1 RTE seed collapsed to a single class, which also bears on step 6.
+- **Noise floor done (part of step 1)**: EVA against itself on a disjoint sample of the same task overlaps 0.92–0.95, so G8/G9's 0.49–0.72 are real subspace changes. The H1 measurement itself is still open (hanyanze).
+- **Step 3 is started.** G1 and G3 now have ten seeds on MRPC, RTE and low resource; G5 still needs seeds 5–9.
+- One G1 RTE seed (of ten) collapsed to a single class; G3's ten RTE seeds did not. This bears on step 6.
 - Every other item below is still open.
 
 ## Where we stand

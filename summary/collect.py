@@ -162,12 +162,12 @@ def main():
                 "rerun), so the G3 rows isolate learning rate and ρ from the GPU change.", "",
                 "| Run | lr | ρ | GPU | Result | − same group's shared setting | − G1 at the same lr | − G1 at 5e-4 |",
                 "|---|---|---|---|---|---|---|---|"]
-        rows = [(("G1", "lowres", "sst2", meta[("G1", "lowres", "sst2")][0]["lr"], None, "L40S"),
+        ctl_rows = [(("G1", "lowres", "sst2", meta[("G1", "lowres", "sst2")][0]["lr"], None, "L40S"),
                  score[("G1", "lowres", "sst2")], "G1 (shared)"),
                 (("G3", "lowres", "sst2", meta[("G3", "lowres", "sst2")][0]["lr"], 2.0, "A40"),
                  score[("G3", "lowres", "sst2")], "G3 (shared)")]
-        rows += [(k, d, k[0]) for k, d in sorted(ctl.items(), key=lambda kv: (kv[0][0], -kv[0][3], -(kv[0][4] or 0)))]
-        for (g, st, t, lr, rho, gpu), d, label in rows:
+        ctl_rows += [(k, d, k[0]) for k, d in sorted(ctl.items(), key=lambda kv: (kv[0][0], -kv[0][3], -(kv[0][4] or 0)))]
+        for (g, st, t, lr, rho, gpu), d, label in ctl_rows:
             m, sd = mean_sd([100 * v for v in d.values()])
             # same group's shared setting, rerun on the same GPU when there is such a rerun (G3: control_repro)
             shared_lr = meta[(g, st, t)][0]["lr"]
@@ -228,7 +228,8 @@ def main():
         extra[(r["group"], r["stage"], r["task"])][r["seed"]] = r["final"]["primary"]
     if extra:
         out += ["", "## Extra seeds (outside the shared tables until every group has them)", "",
-                "| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs |", "|---|---|---|---|---|---|"]
+                "| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs | − G1, all common seeds |",
+                "|---|---|---|---|---|---|---|"]
         for (g, stage, task), d in sorted(extra.items()):
             base = score.get((g, stage, task), {})
             both = {**base, **d}
@@ -238,8 +239,13 @@ def main():
             # a run that predicts one class scores exactly one class's share (RTE val: 146 / 277 or 131 / 277)
             collapsed = sorted(s for s, v in both.items()
                                if task == "rte" and min(abs(v - 146 / 277), abs(v - 131 / 277)) < 1e-9)
+            vs_g1 = "–"
+            if g != "G1":
+                g1_all = {**score.get(("G1", stage, task), {}), **extra.get(("G1", stage, task), {})}
+                n, dm, lo, hi = paired(g1_all, both)
+                vs_g1 = f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}] (n = {n})" + (" *" if lo > 0 or hi < 0 else "")
             out.append(f"| {g} {stage} {task} | {lr:g} | {len(both)} | {m0:.2f} ± {sd0:.2f} | {m:.2f} ± {sd:.2f} | "
-                       + (", ".join(f"seed {s}" for s in collapsed) if collapsed else "–") + " |")
+                       + (", ".join(f"seed {s}" for s in collapsed) if collapsed else "–") + f" | {vs_g1} |")
 
     # H4: overlap of each group's initial lora_A with same-task, same-seed G3, per target task.
     # G9 on task t is EVA calibrated on another task (src below); G8 is EVA calibrated on wikitext-103 laid out
@@ -255,28 +261,57 @@ def main():
             f = line.split()   # e.g. "mrpc   s0  overlap 0.736  L1 54"
             if len(f) >= 4 and f[2] == "overlap":
                 h4["G8"][f[0]][int(f[1][1:])] = float(f[3])
+    # Noise floor: EVA (G3's code) on the same task, calibrated on two disjoint 1,024-example samples
+    for path in glob.glob(os.path.join(ROOT, "*", "results", "noise_floor", "noise_floor_*.json")):
+        r = json.load(open(path))
+        h4["G3 vs G3"][r["task"]][r["seed"]] = r["overlap_mean"]
+        h4["random"][r["task"]][r["seed"]] = r["random_overlap_mean"]
     if h4:
         src = {"G8": {t: "wikitext-103" for t in ("sst2", "mrpc", "rte")},
-               "G9": {"sst2": "mrpc", "mrpc": "rte", "rte": "mrpc"}}
+               "G9": {"sst2": "mrpc", "mrpc": "rte", "rte": "mrpc"},
+               "G3 vs G3": {t: "same task, disjoint sample" for t in ("sst2", "mrpc", "rte")},
+               "random": {t: "random orthonormal, same ranks" for t in ("sst2", "mrpc", "rte")}}
         out += ["", "## H4: subspace overlap of EVA calibrated elsewhere with same-task EVA (G3)", "",
                 "Mean squared cosine of the principal angles between the two lora_A row spaces, averaged over the "
                 "72 layers; 1 = identical, at most about 0.02 for random subspaces of these ranks (r ≤ 16 in d ≥ 768).", "",
-                "| Group | Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | Accuracy − G3 |",
+                "| Compared with G3 | Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | Accuracy − G3 |",
                 "|---|---|---|---|---|---|---|"]
-        for g in sorted(h4):
+        for g in [g for g in ("G3 vs G3", "G8", "G9", "random") if g in h4]:
             for t in ("sst2", "mrpc", "rte"):
                 d = h4[g].get(t)
                 if not d:
                     continue
                 m, sd = mean_sd(list(d.values()))
-                n, dm, lo, hi = paired(score.get(("G3", "main", t), {}), score.get((g, "main", t), {}))
+                acc = "–"
+                if g in ("G8", "G9"):
+                    n, dm, lo, hi = paired(score.get(("G3", "main", t), {}), score.get((g, "main", t), {}))
+                    acc = f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else "")
                 out.append(f"| {g} | {t} | {src[g][t]} | {len(d)} | {m:.3f} ± {sd:.3f} | "
-                           f"{min(d.values()):.3f}–{max(d.values()):.3f} | {dm:+.2f} [{lo:+.2f}, {hi:+.2f}]"
-                           + (" *" if lo > 0 or hi < 0 else "") + " |")
+                           f"{min(d.values()):.3f}–{max(d.values()):.3f} | {acc} |")
         if h4["G9"].get("mrpc") and h4["G9"].get("rte"):
             same = max(abs(h4["G9"]["mrpc"][s] - h4["G9"]["rte"][s]) for s in h4["G9"]["mrpc"])
             out += ["", f"G9's MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree "
                         f"to {same:.0e} per seed, so G9 gives two independent pairs, not three."]
+
+    # Theory check: E||dL/dB||^2 = Tr(A Sigma_g A^T). For directions independent of Sigma_g it scales with the squared
+    # row norm of A, so G2 (row norm 1) over G1 (Kaiming-uniform, row norm 1/sqrt(3)) should give sqrt(3) in norm.
+    steps = defaultdict(dict)
+    for r in rows:
+        if r["step0_grad_B"] is not None:
+            steps[(r["group"], r["stage"], r["task"])][r["seed"]] = r["step0_grad_B"]
+
+    def ratio(gb, ga, stage, task):
+        a, b = steps.get((ga, stage, task), {}), steps.get((gb, stage, task), {})
+        v = [b[s] / a[s] for s in sorted(set(a) & set(b))]
+        return (f"{mean_sd(v)[0]:.2f} ({min(v):.2f}–{max(v):.2f})") if v else "–"
+    out += ["", "## Theory check: ratios of the step-0 gradient on B, same seed", "",
+            f"Prediction for G2 / G1 (random directions, row norm 1 vs 1/√3): √3 = {math.sqrt(3):.2f}. "
+            "G3 / G2 isolates EVA's directions at equal row norm; G5 / G3 is GW-EVA's directions over EVA's. "
+            "Mean (range over seeds).", "",
+            "| Task | G2 / G1 | G3 / G2 | G5 / G3 |", "|---|---|---|---|"]
+    for stage, task, label in TASKS[:3]:
+        out.append(f"| {label} | {ratio('G2', 'G1', stage, task)} | {ratio('G3', 'G2', stage, task)} | "
+                   f"{ratio('G5', 'G3', stage, task)} |")
 
     text = "\n".join(out) + "\n"
     with open(os.path.join(OUT, "tables.md"), "w") as f:

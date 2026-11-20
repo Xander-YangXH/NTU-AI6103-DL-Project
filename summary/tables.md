@@ -74,6 +74,8 @@ Low-resource SST-2 1k. Shared rows repeat the shared-protocol runs for reference
 | G3 | 0.001 | 1 | L40S | 89.08 ± 0.42 | -0.41 [-2.32, +1.50] | -2.39 [-2.91, -1.86] * | -2.36 [-2.69, -2.03] * |
 | G3 | 0.0005 | 2 | L40S | 90.55 ± 0.54 | +1.06 [-0.77, +2.88] | -0.89 [-1.76, -0.03] * | -0.89 [-1.76, -0.03] * |
 | G3 | 0.0002 | 2 | L40S | 90.87 ± 0.55 | +1.38 [-0.44, +3.20] | – | -0.57 [-1.10, -0.05] * |
+| G8 | 0.0005 | – | L40S | 90.28 ± 0.69 | +0.39 [-0.67, +1.45] | -1.17 [-2.10, -0.24] * | -1.17 [-2.10, -0.24] * |
+| G8 | 0.0002 | – | L40S | 90.41 ± 1.15 | +0.53 [-0.77, +1.83] | – | -1.03 [-2.61, +0.55] |
 
 ## Early training: paired difference in training loss (b − a), equal learning rates only
 
@@ -107,23 +109,42 @@ Mean training-batch loss over each step window; negative = b fits faster. G1@ctl
 
 ## Extra seeds (outside the shared tables until every group has them)
 
-| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs |
-|---|---|---|---|---|---|
-| G1 lowres sst2 | 0.0005 | 10 | 91.44 ± 0.28 | 91.35 ± 0.44 | – |
-| G1 main mrpc | 0.0002 | 10 | 91.34 ± 0.43 | 91.29 ± 0.62 | – |
-| G1 main rte | 0.0005 | 10 | 73.94 ± 2.10 | 72.13 ± 7.01 | seed 8 |
+| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs | − G1, all common seeds |
+|---|---|---|---|---|---|---|
+| G1 lowres sst2 | 0.0005 | 10 | 91.44 ± 0.28 | 91.35 ± 0.44 | – | – |
+| G1 main mrpc | 0.0002 | 10 | 91.34 ± 0.43 | 91.29 ± 0.62 | – | – |
+| G1 main rte | 0.0005 | 10 | 73.94 ± 2.10 | 72.13 ± 7.01 | seed 8 | – |
+| G3 lowres sst2 | 0.001 | 10 | 88.81 ± 0.83 | 88.77 ± 1.02 | – | -2.58 [-3.33, -1.83] (n = 10) * |
+| G3 main mrpc | 0.0002 | 10 | 92.02 ± 0.79 | 91.85 ± 0.78 | – | +0.57 [+0.03, +1.10] (n = 10) * |
+| G3 main rte | 0.0002 | 10 | 74.80 ± 2.49 | 75.05 ± 2.01 | – | +2.92 [-1.83, +7.68] (n = 10) |
 
 ## H4: subspace overlap of EVA calibrated elsewhere with same-task EVA (G3)
 
 Mean squared cosine of the principal angles between the two lora_A row spaces, averaged over the 72 layers; 1 = identical, at most about 0.02 for random subspaces of these ranks (r ≤ 16 in d ≥ 768).
 
-| Group | Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | Accuracy − G3 |
+| Compared with G3 | Target task | Calibrated on | Seeds | Overlap (mean ± sd) | Range | Accuracy − G3 |
 |---|---|---|---|---|---|---|
+| G3 vs G3 | sst2 | same task, disjoint sample | 3 | 0.919 ± 0.005 | 0.914–0.924 | – |
+| G3 vs G3 | mrpc | same task, disjoint sample | 3 | 0.951 ± 0.011 | 0.939–0.958 | – |
+| G3 vs G3 | rte | same task, disjoint sample | 3 | 0.951 ± 0.008 | 0.943–0.958 | – |
 | G8 | sst2 | wikitext-103 | 3 | 0.642 ± 0.004 | 0.638–0.646 | -0.31 [-2.31, +1.70] |
 | G8 | mrpc | wikitext-103 | 5 | 0.716 ± 0.013 | 0.700–0.736 | -0.91 [-1.54, -0.28] * |
 | G8 | rte | wikitext-103 | 5 | 0.694 ± 0.007 | 0.683–0.703 | -2.74 [-6.65, +1.16] |
 | G9 | sst2 | mrpc | 3 | 0.493 ± 0.013 | 0.481–0.507 | -0.19 [-1.63, +1.24] |
 | G9 | mrpc | rte | 5 | 0.662 ± 0.015 | 0.644–0.683 | -0.52 [-1.21, +0.17] |
 | G9 | rte | mrpc | 5 | 0.662 ± 0.015 | 0.644–0.683 | +0.87 [-3.31, +5.04] |
+| random | sst2 | random orthonormal, same ranks | 3 | 0.010 ± 0.000 | 0.010–0.010 | – |
+| random | mrpc | random orthonormal, same ranks | 3 | 0.010 ± 0.000 | 0.010–0.010 | – |
+| random | rte | random orthonormal, same ranks | 3 | 0.010 ± 0.000 | 0.010–0.010 | – |
 
 G9's MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree to 1e-05 per seed, so G9 gives two independent pairs, not three.
+
+## Theory check: ratios of the step-0 gradient on B, same seed
+
+Prediction for G2 / G1 (random directions, row norm 1 vs 1/√3): √3 = 1.73. G3 / G2 isolates EVA's directions at equal row norm; G5 / G3 is GW-EVA's directions over EVA's. Mean (range over seeds).
+
+| Task | G2 / G1 | G3 / G2 | G5 / G3 |
+|---|---|---|---|
+| SST-2 (acc) | 1.83 (1.82–1.85) | 8.41 (6.54–10.64) | 1.46 (0.95–2.10) |
+| MRPC (F1) | 1.78 (1.62–1.87) | 4.19 (3.08–7.17) | 2.27 (1.11–3.96) |
+| RTE (acc) | 1.80 (1.66–1.92) | 4.48 (3.02–5.63) | 2.00 (0.84–3.13) |
