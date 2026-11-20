@@ -110,7 +110,24 @@ G8 / G9 沿用 G3 的学习率。
 | RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 | 73.57 ± 2.06 | 73.57 ± 2.43 | 72.92 ± 2.09 | 56.68 ± 8.85 | 72.06 ± 2.18 | **75.67 ± 1.70** |
 | 低资源 SST-2 1k (acc) | **91.44 ± 0.28** | – | 88.81 ± 0.83 | – | 88.46 ± 0.29 | 89.98 ± 0.18 | – | 89.89 ± 0.52 | – |
 
-报告用图见 [`summary/figures/`](summary/figures/)（第 0 步梯度对精度；低资源精度随学习率的变化；H4 子空间重合度逐层对比），由 `python summary/figures.py` 生成。
+报告用图见 [`summary/figures/`](summary/figures/)（第 0 步梯度对精度；低资源精度随学习率的变化；H4 子空间重合度逐层对比），由 `python summary/figures.py` 生成。完整报告初稿（英文）见 [`summary/REPORT_DRAFT.md`](summary/REPORT_DRAFT.md)。
+
+**交互式结果页面**（[`summary/site/`](summary/site/)，英文界面）。页面用可筛选的图表展示本节全部结果，以及各项对照、前期训练损失曲线和 H4 子空间重合度。配对差的 95% 置信区间在浏览器里现算，算法与 `collect.py` 相同。它是纯静态页面，不需要构建，也没有依赖。
+
+1. 直接用浏览器打开 `summary/site/index.html`。页面从同目录的 `data.js` 读数据，所以 `file://` 离线也能用；只有网页字体需要联网，断网时自动换成系统字体。
+2. 也可以在本地起一个服务，再打开 http://localhost:8000：
+
+   ```bash
+   python -m http.server 8000 --directory summary/site
+   ```
+
+3. 有新的运行结果后，在仓库根目录重新生成数据：
+
+   ```bash
+   python summary/site/build_data.py
+   ```
+
+   这个脚本读取与 `collect.py` 相同的运行 JSON，重写 `summary/site/data.js`。
 
 配对差（百分点，95% CI；`*` 表示区间不含 0）：
 
@@ -152,7 +169,7 @@ G8 / G9 沿用 G3 的学习率。
 | `G7/` | G7 LoRA-GA | `liyouran` |
 | `G8/` | G8 EVA-generic（按 G3 的 token 排布用 wikitext-103 校准）及其与 G3 的子空间重合度 | `eddy_G8` |
 | `G9/` | G9 EVA-cross 及 H4 子空间重合度 | `zjz_g9` |
-| `summary/` | 跨组表格（`collect.py`）、发现与后续计划 | `summary` |
+| `summary/` | 跨组表格（`collect.py`）、报告用图、发现与后续计划、报告初稿和交互式结果页面（`site/`） | `summary` |
 
 ## 7. 计算资源
 
