@@ -8,6 +8,27 @@ AI6103 Deep Learning 小组项目（Option 2：在已有代码库上做改进）
 - **代码基础**：作者的官方仓库（MIT 许可），以及 Hugging Face PEFT 中的 EVA 实现。
 - **我们的改动**：去掉 EVA 最优性证明中的一个独立性假设，推导出梯度加权的初始化 **GW-EVA**，并在 PEFT 上实现。
 
+## 概览
+
+| | |
+|---|---|
+| **进度（2026-11-20）** | G1–G9 九组实验和 H1 诊断全部完成并已合并，共约 230 次运行，按种子配对 |
+| **主要结果** | 理论成立，GW-EVA 选出的子空间也确实不同于 EVA；但在调好学习率后，GW-EVA 和其他感知数据的初始化都没有在最终精度上胜过普通 LoRA |
+| **论文主线** | 分析型论文：“梯度加权的子空间不同，但不影响最终精度；收益只在早期，而且是暂时的” |
+| **先看这些** | [报告初稿（英文）](summary/REPORT_DRAFT.md) · [跨组汇总](summary/SUMMARY.zh-CN.md) · [全部表格](summary/tables.md) · [交互式结果页面](#6-交互式结果页面) |
+
+假设检验结论：**H1 成立**（子空间不同），**H2 不成立**（GW-EVA 与 EVA 精度相同），**H3 不成立**（秩分配方式没有影响），**H4 已回答**（子空间是任务相关的，但精度不依赖它）。详见[第 5 节](#5-结果)。
+
+## 快速开始：打开结果页面
+
+结果页面是 [`summary/site/`](summary/site/) 里的静态 HTML 页面，不需要构建，也不需要安装任何包。在仓库根目录运行：
+
+```bash
+python -m http.server 8000 --directory summary/site
+```
+
+然后在浏览器打开 http://localhost:8000。也可以直接双击 `summary/site/index.html`。详细说明见[第 6 节](#6-交互式结果页面)。
+
 ## 1. 研究问题
 
 EVA 的最优性结论（定理 3.2）假设层输出梯度 $g = \partial L / \partial y$ 与输入激活 $x$ 统计独立。
@@ -58,7 +79,9 @@ $$
 | G8 EVA-generic | 通用语料（wikitext-103）的激活协方差 | 按 rank 个数 | 任务无关的一端（H4） | [`G8/`](G8/) | 已完成（含低资源） |
 | G9 EVA-cross | 别的任务的激活协方差（SST-2←MRPC，MRPC←RTE，RTE←MRPC） | 按 rank 个数 | 任务输入有多特异（H4） | [`G9/`](G9/) | 已完成 |
 
-**模型与任务**：RoBERTa-base；GLUE SST-2、MRPC、RTE，另加 1,000 条的低资源 SST-2 子集（G1、G3、G5、G6）。
+**模型与任务**：RoBERTa-base；GLUE SST-2、MRPC、RTE，另加 1,000 条的低资源 SST-2 子集（G1、G3、G5、G6、G8）。
+
+**H1 诊断**（不训练）：对每个任务和种子，在同一批 1,024 个校准样本上分别计算 EVA 和 GW-EVA，比较 72 层各自的前 8 维子空间，并用两份不相交样本得到噪声基线。文件夹为 [`H1 Diagnosis/`](H1%20Diagnosis/)。
 
 **LoRA 位置与预算**：全部 72 个注意力与 FFN 线性层，预算固定为 **1,327,104** 个可训练参数（即均匀 r = 8 时的参数量）。
 
@@ -110,25 +133,6 @@ G8 / G9 沿用 G3 的学习率。
 | RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 | 73.57 ± 2.06 | 73.57 ± 2.43 | 72.92 ± 2.09 | 56.68 ± 8.85 | 72.06 ± 2.18 | **75.67 ± 1.70** |
 | 低资源 SST-2 1k (acc) | **91.44 ± 0.28** | – | 88.81 ± 0.83 | – | 88.46 ± 0.29 | 89.98 ± 0.18 | – | 89.89 ± 0.52 | – |
 
-报告用图见 [`summary/figures/`](summary/figures/)（第 0 步梯度对精度；低资源精度随学习率的变化；H4 子空间重合度逐层对比），由 `python summary/figures.py` 生成。完整报告初稿（英文）见 [`summary/REPORT_DRAFT.md`](summary/REPORT_DRAFT.md)。
-
-**交互式结果页面**（[`summary/site/`](summary/site/)，英文界面）。页面用可筛选的图表展示本节全部结果，以及各项对照、前期训练损失曲线和 H4 子空间重合度。配对差的 95% 置信区间在浏览器里现算，算法与 `collect.py` 相同。它是纯静态页面，不需要构建，也没有依赖。
-
-1. 直接用浏览器打开 `summary/site/index.html`。页面从同目录的 `data.js` 读数据，所以 `file://` 离线也能用；只有网页字体需要联网，断网时自动换成系统字体。
-2. 也可以在本地起一个服务，再打开 http://localhost:8000：
-
-   ```bash
-   python -m http.server 8000 --directory summary/site
-   ```
-
-3. 有新的运行结果后，在仓库根目录重新生成数据：
-
-   ```bash
-   python summary/site/build_data.py
-   ```
-
-   这个脚本读取与 `collect.py` 相同的运行 JSON，重写 `summary/site/data.js`。
-
 配对差（百分点，95% CI；`*` 表示区间不含 0）：
 
 | 比较 | SST-2 | MRPC | RTE | 低资源 |
@@ -150,14 +154,93 @@ G8 / G9 沿用 G3 的学习率。
 
 主要发现：
 
+- **GW-EVA 的子空间确实不同于 EVA（H1）。** 在同一批校准样本上，前 8 维子空间重合度为 0.49–0.69，而两份不相交样本各自得到的 GW-EVA 之间为 0.84–0.95；864 个“层 × 种子”中只有 7 个达到基线。逐 token 看，‖g‖² 与 ‖x‖² 只有弱相关（Pearson 0.10–0.19）。
 - **完整数据上，没有任何初始化优于普通 LoRA。** 除 G7 外，各组与 G1 的差都在 ±1.9 分以内，区间都包含 0，其中也包括用别的任务（G9）或通用文本（G8）校准的 EVA。
 - **感知数据的初始化在早期拟合更快，但优势不能保持。** MRPC 上学习率相同时，EVA、GW-EVA、LoRA-GA 前 500 步的训练 loss 都显著低于 LoRA，最终 F1 却没有差别。GW-EVA 在任何阶段都不比 EVA 快。
 - **更大的初始梯度换不来精度。** 从 G1 到各种感知数据的初始化，第 0 步 B 的梯度增大 7–37 倍；只匹配 EVA 的幅值（G2）、用 EVA 的方向（G3）或再加上标签梯度（G5），精度都不变。
 - **只有 1k 样本时，谱初始化差于 LoRA，完全是学习率的原因。** 按共享规则，G3 比 G1 低 2.64（G5 −3.10，G6 −1.57，G8 −1.56）。LoRA 对学习率不敏感，EVA 却适合更低的学习率：两者都用 2e-4 时，差距缩小到 −0.57，不显著。去掉 EVA 的秩重分配不改变结果；loss 曲线显示高学习率下 EVA 在第 51–200 步拟合更慢。
 - **同显卡、同学习率时，EVA 只在 RTE 上更好。** MRPC 上 10 个种子时看似的优势来自显卡差异（15 个种子全部在 L40S 上时 G3 − G1 = +0.14，不显著）。RTE 上都用 lr 2e-4 时 G3 − G1 = +2.13 [+0.97, +3.29]；但 LoRA 用自己调出的 5e-4 时差异不显著。
 - **RTE 上的训练很脆弱。** LoRA-GA 在 RTE 上平均只有 56.68（一个种子单类塌缩，两个接近随机）；但 G1 补到 10 个种子后，普通 LoRA 也有 1 个种子塌缩，见 [`summary/SUMMARY.zh-CN.md`](summary/SUMMARY.zh-CN.md) 第 2 节第 7 条。
+- **A 从哪些方向出发基本不重要。** 梯度加权（H1）和换一份数据校准（H4：G8 与 EVA 的重合度为 0.64–0.72，G9 为 0.49–0.66，基线为 0.92–0.95）都会改变 EVA 子空间的三分之一到一半，但都不改变精度。
 
-## 6. 仓库组织
+### 图
+
+由 `python summary/figures.py` 生成到 [`summary/figures/`](summary/figures/)（PNG 和 PDF），编号与报告初稿一致。
+
+| | |
+|---|---|
+| ![H1 子空间重合度](summary/figures/h1_overlap.png) | **图 1：H1。** 同一批样本上 GW-EVA 与 EVA 的重合度（橙色）对比 GW-EVA 噪声基线（蓝色），按任务、层类型和深度展示。 |
+| ![第 0 步梯度与精度](summary/figures/step0_vs_accuracy.png) | **图 2。** 第 0 步 ‖∂L/∂B‖（对数）与相对 LoRA 的精度差：梯度增大 7–37 倍，精度不变。 |
+| ![低资源精度与学习率](summary/figures/lowres_lr.png) | **图 3。** 同一张显卡上，低资源 SST-2 精度随学习率的变化：LoRA 基本不变，EVA 在更低学习率下回升。 |
+| ![H4 逐层子空间重合度](summary/figures/h4_layers.png) | **图 4：H4。** 同任务不相交样本、G8、G9 与本任务 EVA 的重合度，按层类型和深度展示。 |
+
+### 已知局限
+
+- H1 比较的是中心化的 EVA 与未中心化的 Σ<sub>g</sub>，所以中心化与梯度加权的作用还没有分开。
+- 各组用的显卡不同（A40、L40S、笔记本显卡），跨显卡时单个种子最多相差 2.5 分，因此结论以同显卡核查为准。
+- G5/G6 在低资源上只有 3 个种子，也没有低资源学习率对照。
+- 没有做多重比较校正（每张表约 20 个比较）。
+
+完整列表及各项的影响见 [`summary/SUMMARY.zh-CN.md`](summary/SUMMARY.zh-CN.md) 第 3–4 节。
+
+## 6. 交互式结果页面
+
+[`summary/site/`](summary/site/) 是一个英文结果页面，可用于展示和核对数字。它用交互图表展示上面的全部结果，并在浏览器里现算配对差的 95% 置信区间，算法与 `collect.py` 相同。
+
+| 文件 | 作用 |
+|---|---|
+| `index.html` | 页面本身：HTML、CSS 和原生 JavaScript，不依赖任何库 |
+| `data.js` | 所有运行、H1/H4 重合度和 loss 曲线，由运行 JSON 生成 |
+| `build_data.py` | 重新生成 `data.js`（只用标准库） |
+
+**打开方式**（任选一种）：
+
+1. **直接打开。** 双击 `summary/site/index.html`；或在仓库根目录运行 `open summary/site/index.html`（macOS）、`xdg-open summary/site/index.html`（Linux）、`start summary\site\index.html`（Windows）。页面从同目录读取 `data.js`，所以离线也能用；没有网络时只有网页字体会换成系统字体。
+2. **本地起服务**（只需 Python 3，无需安装）：
+
+   ```bash
+   python -m http.server 8000 --directory summary/site
+   ```
+
+   然后打开 http://localhost:8000。8000 端口被占用时换一个端口即可，按 Ctrl+C 停止服务。
+
+**页面内容：**
+
+| 节 | 内容 |
+|---|---|
+| 01 Verdict | H1–H4 的结论和主要发现 |
+| 02 Groups | 九种初始化；颜色表示 A 的方向所属的类别，标记形状区分组 |
+| 03 Main results | 选择任务和基线（G1、G3 或 G5）：配对差的森林图、每个种子的结果、mean ± sd 表 |
+| 04 Low resource | G1、G3、G8 的精度随学习率的变化（另有 G5/G6 在共享学习率下的结果） |
+| 05 Same-GPU checks | 在同一张显卡、相同学习率下重跑的比较 |
+| 06 Early training | 前 500 步的 loss 曲线，以及相对所选参照组的分段差值 |
+| 07 Step-0 gradient | 第 0 步 ‖∂L/∂B‖ 与精度的关系，以及 √3 理论检验 |
+| 08 Subspaces (H1) | 各任务上 GW-EVA 与 EVA 的重合度、带置信区间的表格、层类型 × 深度热力图 |
+| 09 Subspaces (H4) | G8、G9 和噪声基线与本任务 EVA 的重合度，按任务和按层展示 |
+| 10 Setup & caveats | 共享设置、注意事项和重新生成所有结果的命令 |
+
+鼠标悬停在任何标记上可以看到精确数值。页面跟随系统的浅色/深色主题，手机上也能正常查看。
+
+**有新的运行结果后**，在仓库根目录重新生成数据，再刷新页面：
+
+```bash
+python summary/site/build_data.py
+```
+
+该脚本读取与 `collect.py` 相同的运行 JSON（`*/results/…` 和 `H1 Diagnosis/results/`），重写 `summary/site/data.js`。如果图表是空的，先检查 `index.html` 旁边是否有 `data.js`。
+
+## 7. 文档
+
+| 文件 | 内容 |
+|---|---|
+| [`summary/REPORT_DRAFT.md`](summary/REPORT_DRAFT.md) | 完整的英文报告初稿：方法、设计、结果（表 1–7、图 1–4）、讨论；TODO 标出还需全组补充的地方 |
+| [`summary/SUMMARY.zh-CN.md`](summary/SUMMARY.zh-CN.md) | 跨组汇总：十条发现、假设结论、可比性说明、尚缺的部分 |
+| [`summary/tables.md`](summary/tables.md) | 所有自动生成的表格，包括全部配对差和对照 |
+| [`summary/all_runs.csv`](summary/all_runs.csv) | 共享协议下每次运行一行 |
+| [`summary/NEXT_STEPS.zh-CN.md`](summary/NEXT_STEPS.zh-CN.md) | 计划及进度，以及确定论文主线的决策表 |
+| `G*/README.md`、[`H1 Diagnosis/README.md`](H1%20Diagnosis/README.md) | 各组的实现细节和运行方式 |
+
+## 8. 仓库组织
 
 每人在自己的分支上工作，每两组实验一个文件夹，包含代码、Slurm 脚本和结果 JSON；`main` 现在合并了所有分支。大文件（模型权重、数据、EVA 缓存、日志）不进 git，用 `.gitignore` 排除。
 
@@ -172,11 +255,23 @@ G8 / G9 沿用 G3 的学习率。
 | `H1 Diagnosis/` | H1：在同一批校准样本上比较 GW-EVA 与 EVA 的子空间，附 GW–GW 噪声基线 | `hanyanze` |
 | `summary/` | 跨组表格（`collect.py`）、报告用图、发现与后续计划、报告初稿和交互式结果页面（`site/`） | `summary` |
 
-## 7. 计算资源
+## 9. 复现
+
+在仓库根目录用 Python 3 运行（`figures.py` 还需要 matplotlib）：
+
+```bash
+python summary/collect.py          # summary/tables.md 和 summary/all_runs.csv
+python summary/figures.py          # summary/figures/*.png 和 *.pdf（图 1–4）
+python summary/site/build_data.py  # 结果页面用的 summary/site/data.js
+```
+
+这些脚本只读取仓库里的结果 JSON。重新跑实验本身需要各组的环境（`G*/requirements.txt`）和 GPU 作业，见各组 README。H1 还需要共享实验的分类头检查点，它们不在 git 里。
+
+## 10. 计算资源
 
 CCDS GPU Cluster TC2，Slurm 调度。每人的 QoS 为 1 张 GPU、最多 2 个作业、30 GB 内存，单个作业不超过 6 小时。每个作业把多次训练打包，在同一张卡上并行 2 个进程；每次训练结束立刻写出 JSON，重新提交即可续跑。
 
-## 8. 课程要求摘要
+## 11. 课程要求摘要
 
 - Option 2：选 2019 年及以后、有公开代码的论文，在其基础上实现改进，允许复用原代码。
 - 不得与组员个人项目的“模型 + 数据集”组合重复。

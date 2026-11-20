@@ -25,7 +25,7 @@ EVA's optimality result rests on an assumption that is easy to miss: the output 
 1. **Identity and new initialisation.** An exact identity for the expected step-0 gradient on B without the independence assumption, and the resulting initialisation GW-EVA (§3). A mini-batch decomposition shows that EVA, GW-EVA and LoRA-GA maximise different terms of the same quantity.
 2. **Implementation.** GW-EVA on PEFT, with a per-token gradient hook, plus a parameter-cost rank allocation as a controlled factor.
 3. **Controlled comparison.** Nine initialisations under one protocol, with matched parameter budgets, shared data splits, shared seeds and same-seed paired confidence intervals. The design includes a magnitude-only control (G2), which separates the effect of A's direction from its norm, and two calibration-source controls (G8, G9).
-4. **A negative result with its mechanism.** The theory holds and the larger gradients are real, but they do not translate into accuracy. The apparent wins of data-aware initialisations disappear once learning rate and GPU are controlled.
+4. **A negative result with its mechanism.** The theory holds, the larger gradients are real, and GW-EVA's subspace is measurably different from EVA's, yet none of this translates into accuracy. The apparent wins of data-aware initialisations disappear once learning rate and GPU are controlled.
 
 ## 2. Related work
 
@@ -182,7 +182,9 @@ On the three full-data tasks, every group except G7 lies within ±1.9 points of 
 
 ¹ Both floor samples come from full SST-2 outside the 1k subset.
 
-The gap is significant on every task, and only 7 of 864 layer-seed pairs reach their floor. It is spread over all layer types and depths; the attention output projection differs most (0.48 on the full tasks, against 0.61 for k and v), as it does in H4. The per-layer curves are in [`H1 Diagnosis/results/h1_layerwise_overlap.png`](../H1%20Diagnosis/results/h1_layerwise_overlap.png). Per token, ‖g‖² is only weakly correlated with ‖x‖² (Pearson 0.10–0.19), so the gradient weighting is not a rescaled activation norm. The two halves of H1 thus come apart: the correlation with the input norm is weak, yet the weighting moves the subspace a lot.
+**Figure 1.** [`figures/h1_overlap.png`](figures/h1_overlap.png): H1, overlap of GW-EVA with EVA on the same sample against the GW-EVA floor, per task and, over the three full tasks, by layer type and depth.
+
+The gap is significant on every task, and only 7 of 864 layer-seed pairs reach their floor. It is spread over all layer types and depths (Figure 1). The attention output projection differs most (0.48 on the full tasks, against 0.61 for k and v), as it does in H4. Over depth, the gap is smallest in layers 0–2, where the floor itself is only 0.63–0.74 because GW-EVA's own estimate is noisy there, and largest in the last layer (0.28 against a floor of 0.84). Per-task per-layer curves are also in [`H1 Diagnosis/results/h1_layerwise_overlap.png`](../H1%20Diagnosis/results/h1_layerwise_overlap.png). Per token, ‖g‖² is only weakly correlated with ‖x‖² (Pearson 0.10–0.19), so the gradient weighting is not a rescaled activation norm. The two halves of H1 thus come apart: the correlation with the input norm is weak, yet the weighting moves the subspace a lot.
 
 **H2 is not supported.** GW-EVA's step-0 gradient is larger, as designed: 1.46×, 2.27× and 2.00× EVA's on SST-2, MRPC and RTE, as same-seed means. But its accuracy is never significantly different, and all four mean differences are negative.
 
@@ -190,7 +192,7 @@ H2's early-training claim fails too. At equal learning rates, G5 and G3 have the
 
 ### 5.3 Larger gradients, faster start, same finish
 
-**Figure 1.** [`figures/step0_vs_accuracy.png`](figures/step0_vs_accuracy.png): step-0 ‖∂L/∂B‖ against final accuracy, per group and task.
+**Figure 2.** [`figures/step0_vs_accuracy.png`](figures/step0_vs_accuracy.png): step-0 ‖∂L/∂B‖ against final accuracy, per group and task.
 
 The step-0 gradient on B grows 7–37× from LoRA to the data-aware initialisations while accuracy stays within a one-point band. The same-seed ratios decompose this growth (Table 4).
 
@@ -218,7 +220,7 @@ A plausible reason why the gradient scale does not persist is Adam's per-coordin
 
 ### 5.4 Low resource: the gap is the learning rate
 
-**Figure 2.** [`figures/lowres_lr.png`](figures/lowres_lr.png): low-resource accuracy against learning rate for G1, G3 and G8, on one GPU.
+**Figure 3.** [`figures/lowres_lr.png`](figures/lowres_lr.png): low-resource accuracy against learning rate for G1, G3 and G8, on one GPU.
 
 Under the shared rule, which reuses the full-SST-2 learning rate, every spectral initialisation trails LoRA by 1.6–3.1 points (Table 2, last column). We reran the settings outside the shared protocol to find out why (Table 6).
 
@@ -241,7 +243,7 @@ H3 is not supported. Allocating by parameter cost changes nothing on full data, 
 
 ### 5.6 Where the calibration data comes from (H4)
 
-**Figure 3.** [`figures/h4_layers.png`](figures/h4_layers.png): subspace overlap with same-task EVA, by layer type and depth.
+**Figure 4.** [`figures/h4_layers.png`](figures/h4_layers.png): subspace overlap with same-task EVA, by layer type and depth.
 
 We measure the overlap between two initial A matrices as the mean squared cosine of the principal angles between their row spaces, averaged over the 72 layers. To separate real differences from sampling noise, the noise floor compares G3 with EVA computed on a disjoint 1,024-example sample of the same task.
 
@@ -297,7 +299,7 @@ At rank 8 on RoBERTa-base, the final accuracy is largely insensitive to which di
 
 ## 7. Conclusion
 
-Removing EVA's independence assumption gives an exact step-0 objective, a new initialisation (GW-EVA) and a unifying view of EVA and LoRA-GA. Under a carefully controlled, seed-paired comparison, GW-EVA does what the theory says: it maximises the initial gradient signal. Neither it nor any other data-aware initialisation improves the final accuracy of RoBERTa-base with rank-8 LoRA. The commonly cited benefits of such initialisations, a larger initial gradient and faster early fitting, are real but transient. The few apparent accuracy gains come from the learning rate, from seed collapse, or from cross-GPU pairing.
+Removing EVA's independence assumption gives an exact step-0 objective, a new initialisation (GW-EVA) and a unifying view of EVA and LoRA-GA. Under a carefully controlled, seed-paired comparison, GW-EVA does what the theory says: it maximises the initial gradient signal, and it does so with a subspace that differs from EVA's well beyond sampling noise (overlap 0.49–0.69 against a floor of 0.84–0.95). Neither it nor any other data-aware initialisation improves the final accuracy of RoBERTa-base with rank-8 LoRA. The commonly cited benefits of such initialisations, a larger initial gradient and faster early fitting, are real but transient. The few apparent accuracy gains come from the learning rate, from seed collapse, or from cross-GPU pairing.
 
 ## Contributions
 
@@ -341,7 +343,7 @@ Each group's folder (`G1G2/` … `G9/`) holds its code, Slurm scripts and one JS
 
 ```bash
 python summary/collect.py          # all tables (summary/tables.md) and one row per run (summary/all_runs.csv)
-python summary/figures.py          # Figures 1–3, PNG and PDF
+python summary/figures.py          # Figures 1–4, PNG and PDF
 python summary/site/build_data.py  # data for the interactive results page, summary/site/index.html
 ```
 

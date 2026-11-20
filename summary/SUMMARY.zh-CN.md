@@ -15,7 +15,7 @@
 
 ¹ 以 `2489b48` 合入：文件、作者和时间都不变，只去掉了提交说明里的共同作者行。
 
-所有表格由 [`collect.py`](collect.py)、三张报告用图由 [`figures.py`](figures.py)（`figures/step0_vs_accuracy`、`figures/lowres_lr`、`figures/h4_layers`，PNG 和 PDF）从各文件夹的运行 JSON 生成。完整表格（包括相对 G3 的配对差和所有对照）见 [`tables.md`](tables.md)，逐次运行见 [`all_runs.csv`](all_runs.csv)。
+所有表格由 [`collect.py`](collect.py)、四张报告用图由 [`figures.py`](figures.py)（`figures/h1_overlap`、`figures/step0_vs_accuracy`、`figures/lowres_lr`、`figures/h4_layers`，PNG 和 PDF）从各文件夹的运行 JSON 生成。完整表格（包括相对 G3 的配对差和所有对照）见 [`tables.md`](tables.md)，逐次运行见 [`all_runs.csv`](all_runs.csv)。
 
 ## 1. 结果
 

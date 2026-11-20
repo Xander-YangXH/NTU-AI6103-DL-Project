@@ -7,6 +7,8 @@ step0_vs_accuracy: one panel per task; x = mean step-0 ||dL/dB|| (log), y = pair
 lowres_lr: low-resource accuracy against the learning rate for G1, G3 (EVA) and G8, mean with 95% CI over seeds,
   from the shared runs and the controls run on L40S (G3's shared A40 run is left out so one GPU is compared).
 h4_layers: overlap with G3's initial lora_A by layer type and depth for a disjoint same-task sample, G8 and G9.
+h1_overlap: H1, top-8 overlap of GW-EVA with EVA on the same calibration sample against the GW-EVA floor (two disjoint
+  samples), per task (dots = seeds) and, over the three full tasks, by layer type and depth. From "H1 Diagnosis/results".
 """
 import glob
 import json
@@ -174,6 +176,51 @@ def h4_layers():
     save(fig, "h4_layers")
 
 
+def h1_overlap():
+    runs = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(collect.ROOT, "H1 Diagnosis", "results", "*_seed*.json")))]
+    if not runs:
+        return
+    tasks = [("sst2", "SST-2"), ("mrpc", "MRPC"), ("rte", "RTE"), ("sst2_lowres", "SST-2\n1k")]
+    kinds = [("gw_gw", "GW-EVA vs GW-EVA (floor)", SERIES[0]), ("eva_gw", "EVA vs GW-EVA", SERIES[1])]
+    types = ["q", "k", "v", "o", "FFN input", "FFN output"]
+    full = [l for r in runs if r["task"] != "sst2_lowres" for l in r["per_layer"]]
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.5), constrained_layout=True, sharey=True,
+                             gridspec_kw={"width_ratios": [1.0, 1.1, 1.6]})
+    ax0, ax1, ax2 = axes
+    for color_i, (k, label, color) in enumerate(kinds):
+        dx = -0.12 if k == "gw_gw" else 0.12
+        for i, (t, _) in enumerate(tasks):
+            v = [r[f"mean_{k}"] for r in runs if r["task"] == t]
+            if not v:
+                continue
+            ax0.plot([i + dx] * len(v), v, "o", ms=3, color=color, alpha=0.55, mec="none")
+            ax0.plot([i + dx - 0.1, i + dx + 0.1], [sum(v) / len(v)] * 2, color=color, lw=2, solid_capstyle="round")
+        by_type = [sum(l[k] for l in full if l["layer_type"] == t) / sum(1 for l in full if l["layer_type"] == t)
+                   for t in types]
+        ax1.plot(range(len(types)), by_type, color=color, lw=2, marker="o", ms=5, mec="white", mew=1.0, label=label)
+        by_depth = [sum(l[k] for l in full if l["block"] == d) / sum(1 for l in full if l["block"] == d)
+                    for d in range(12)]
+        ax2.plot(range(12), by_depth, color=color, lw=2, marker="o", ms=4, mec="white", mew=1.0, label=label)
+        ax2.annotate("floor" if k == "gw_gw" else "EVA vs GW-EVA", (11, by_depth[-1]), xytext=(5, 0),
+                     textcoords="offset points", va="center", fontsize=7, color=INK_2)
+    ax0.set_xticks(range(len(tasks)), [n for _, n in tasks])
+    ax0.set_xlim(-0.5, len(tasks) - 0.5)
+    ax0.set_title("per task (dots = seeds)")
+    ax0.set_ylabel("rank-8 subspace overlap")
+    ax1.set_xticks(range(len(types)), ["q", "k", "v", "attn\nout", "FFN\nin", "FFN\nout"])
+    ax1.set_title("by layer type (full tasks)")
+    ax2.set_xticks(range(0, 12, 2))
+    ax2.set_xlim(-0.5, 15.5)
+    ax2.set_xlabel("encoder layer")
+    ax2.set_title("by depth (full tasks)")
+    for ax in axes:
+        ax.set_ylim(0, 1)
+        ax.grid(axis="y", color=GRID, lw=0.6)
+        ax.set_axisbelow(True)
+    ax1.legend(frameon=False, fontsize=7, loc="lower left")
+    save(fig, "h1_overlap")
+
+
 def save(fig, name):
     os.makedirs(OUT, exist_ok=True)
     for ext in ("png", "pdf"):
@@ -188,3 +235,4 @@ if __name__ == "__main__":
     step0_vs_accuracy(s, g)
     lowres_lr(s)
     h4_layers()
+    h1_overlap()
