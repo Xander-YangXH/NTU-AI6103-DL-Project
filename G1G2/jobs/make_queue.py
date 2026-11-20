@@ -2,6 +2,7 @@
 
     python jobs/make_queue.py lowres_ctl   # extra: G1 low-resource at lr 1e-3 -> results/control/lowres/
     python jobs/make_queue.py seeds10      # extra: G1 seeds 5-9 on MRPC, RTE, low resource -> results/seeds10/
+    python jobs/make_queue.py g3_lowres_ctl  # extra: why EVA hurts in low resource (G3 runs, needs ../G3G4/src)
 
     python jobs/make_queue.py pilot | tune | main | lowres
 main and lowres read the tuning results to pick each (group, task)'s learning rate.
@@ -62,6 +63,18 @@ def main(stage):
         lrs = json.load(open("results/chosen_lr.json"))
         lines = [cmd("main", t, "G1", lrs[f"G1_{t}"], s, out="results/seeds10") for t in ("mrpc", "rte") for s in EXTRA_SEEDS]
         lines += [cmd("lowres", "sst2", "G1", lrs["G1_sst2"], s, out="results/seeds10") for s in EXTRA_SEEDS]
+    elif stage == "g3_lowres_ctl":
+        # Low-resource G3 (EVA) controls, run with G3G4's code through jobs/g3_control.py:
+        #   repro: G3 as in the shared protocol (lr 1e-3, rho 2), rerun on L40S as the reference for the two below
+        #   lr:    G3 at lr 5e-4 (G1's choice) and 2e-4, rho 2: is the gap a learning-rate effect for EVA?
+        #   rho1:  EVA directions with uniform r = 8 (rho 1) at lr 1e-3: direction vs rank redistribution
+        def g3(lr, s, rho, out, cache):
+            rid = f"lowres_G3_sst2_lr{lr:g}_s{s}_rho{rho:g}"
+            return (f"python jobs/g3_control.py --rho {rho:g} --stage lowres --task sst2 --group G3 --lr {lr:g} --seed {s}"
+                    f" --out {out} --cache {cache} > logs/{rid}.log 2>&1")
+        lines = [g3(1e-3, s, 2, "results/control_repro", "cache_g3") for s in LOWRES_SEEDS]
+        lines += [g3(lr, s, 2, "results/control", "cache_g3") for lr in (5e-4, 2e-4) for s in LOWRES_SEEDS]
+        lines += [g3(1e-3, s, 1, "results/control_rho1", "cache_g3_rho1") for s in LOWRES_SEEDS]
     else:
         sys.exit(f"unknown stage {stage}")
     os.makedirs("jobs/queues", exist_ok=True)
