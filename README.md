@@ -55,7 +55,7 @@ The core is a 2×2 factorial design, direction × allocation (G3–G6), plus ref
 | G5 GW-EVA | $\Sigma_g$ | By rank count | Direction only (H2) | [`G5G6/`](G5G6/) | Done (shared settings; low-resource 3 seeds) |
 | G6 GW-EVA | $\Sigma_g$ | By parameter cost | Direction and allocation combined | [`G5G6/`](G5G6/) | Done (shared settings; low-resource 3 seeds) |
 | G7 LoRA-GA | Mean gradient (B ≠ 0, rewrites W) | Uniform r = 8 | Representative of the second term | [`G7/`](G7/) | Done |
-| G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | – | Not started |
+| G8 EVA-generic | Activation covariance on a generic corpus (wikitext-103) | By rank count | Task-agnostic end (H4) | [`G8/`](G8/) | Done (incl. low-resource) |
 | G9 EVA-cross | Activation covariance from another task (SST-2←MRPC, MRPC←RTE, RTE←MRPC) | By rank count | How task-specific are the inputs? (H4) | [`G9/`](G9/) | Done |
 
 **Model and tasks**: RoBERTa-base on GLUE SST-2, MRPC and RTE, plus a 1,000-example low-resource SST-2 subset (G1, G3, G5, G6).
@@ -145,6 +145,7 @@ Each member worked on their own branch with one folder per pair of groups, holdi
 | `G5G6/` | G5 / G6 GW-EVA under the shared settings | `hanyanze` |
 | `G7/` | G7 LoRA-GA | `liyouran` |
 | `G9/` | G9 EVA-cross and the H4 subspace overlap | `zjz_g9` |
+| `G8/` | G8 EVA-generic (wikitext-103 calibration in G3's token layout) and its subspace overlap with G3 | `eddy_G8` |
 | `summary/` | Cross-group tables (`collect.py`), findings and next steps | `summary` |
 
 ## 7. Compute

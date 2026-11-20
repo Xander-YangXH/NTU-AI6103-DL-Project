@@ -1,0 +1,33 @@
+G8 vs G3, official validation, final epoch (MRPC: F1; SST-2 / RTE: accuracy), %
+task    n     G8 mean±sd     G3 mean±sd          G8 − G3 [95% CI]
+sst2    3   93.88 ± 0.46   94.19 ± 0.43   -0.31 [-2.31, +1.70]
+mrpc    5   91.11 ± 0.34   92.02 ± 0.79   -0.91 [-1.54, -0.28]
+rte     5   72.06 ± 2.18   74.80 ± 2.49   -2.74 [-6.65, +1.16]
+lowres  5   89.89 ± 0.52   88.81 ± 0.83   +1.08 [-0.09, +2.24]   (SST-2 1k subset)
+
+G8 vs G1 (plain LoRA, its own chosen lr), same seeds
+task    n     G8 mean±sd     G1 mean±sd          G8 − G1 [95% CI]
+sst2    3   93.88 ± 0.46   93.92 ± 0.00   -0.04 [-1.19, +1.11]
+mrpc    5   91.11 ± 0.34   91.34 ± 0.43   -0.23 [-1.00, +0.54]
+rte     5   72.06 ± 2.18   73.94 ± 2.10   -1.88 [-5.37, +1.61]
+lowres  5   89.89 ± 0.52   91.44 ± 0.28   -1.56 [-2.53, -0.59]   (SST-2 1k subset)
+
+step-0 ||dL/dB|| (mean over seeds): G8 vs G3
+sst2     19.818    25.058  ratio 0.79
+mrpc      2.805     1.626  ratio 1.73
+rte       1.920     1.352  ratio 1.42
+
+initial A: subspace overlap G8 vs G3 (mean over 72 layers) and rank-allocation L1 distance (of 576)
+mrpc   s0  overlap 0.736  L1 54
+mrpc   s1  overlap 0.711  L1 58
+mrpc   s2  overlap 0.720  L1 58
+mrpc   s3  overlap 0.700  L1 44
+mrpc   s4  overlap 0.711  L1 64
+rte    s0  overlap 0.697  L1 48
+rte    s1  overlap 0.691  L1 56
+rte    s2  overlap 0.703  L1 60
+rte    s3  overlap 0.695  L1 46
+rte    s4  overlap 0.683  L1 42
+sst2   s0  overlap 0.638  L1 54
+sst2   s1  overlap 0.641  L1 36
+sst2   s2  overlap 0.646  L1 40
