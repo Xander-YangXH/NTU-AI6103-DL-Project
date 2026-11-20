@@ -1,6 +1,6 @@
 {
-  "completed": 26,
-  "required": 26,
+  "completed": 32,
+  "required": 32,
   "rows": [
     {
       "task": "rte",
@@ -13,8 +13,8 @@
         4
       ],
       "n": 5,
-      "accuracy_mean": 0.7884476534296029,
-      "accuracy_std": 0.020035287979078147,
+      "accuracy_mean": 0.7357400722021661,
+      "accuracy_std": 0.02427109937035614,
       "f1_mean": null,
       "f1_std": null
     },
@@ -29,8 +29,8 @@
         4
       ],
       "n": 5,
-      "accuracy_mean": 0.7884476534296029,
-      "accuracy_std": 0.009061299926361803,
+      "accuracy_mean": 0.7292418772563177,
+      "accuracy_std": 0.020895012459910163,
       "f1_mean": null,
       "f1_std": null
     },
@@ -45,10 +45,10 @@
         4
       ],
       "n": 5,
-      "accuracy_mean": 0.8803921568627451,
-      "accuracy_std": 0.013130485525469478,
-      "f1_mean": 0.913660568563171,
-      "f1_std": 0.009458439112386044
+      "accuracy_mean": 0.8759803921568627,
+      "accuracy_std": 0.010046030162705452,
+      "f1_mean": 0.9113998455806862,
+      "f1_std": 0.00690923158497408
     },
     {
       "task": "mrpc",
@@ -61,10 +61,10 @@
         4
       ],
       "n": 5,
-      "accuracy_mean": 0.8838235294117647,
-      "accuracy_std": 0.01720930360935485,
-      "f1_mean": 0.9167639282163923,
-      "f1_std": 0.01170625303198394
+      "accuracy_mean": 0.8808823529411764,
+      "accuracy_std": 0.006845215707729895,
+      "f1_mean": 0.9140883426294157,
+      "f1_std": 0.005171056509397226
     },
     {
       "task": "sst2",
@@ -75,8 +75,8 @@
         2
       ],
       "n": 3,
-      "accuracy_mean": 0.9392201834862385,
-      "accuracy_std": 0.0022935779816513624,
+      "accuracy_mean": 0.9403669724770642,
+      "accuracy_std": 0.003034118475991537,
       "f1_mean": null,
       "f1_std": null
     },
@@ -89,8 +89,36 @@
         2
       ],
       "n": 3,
-      "accuracy_mean": 0.9342507645259939,
-      "accuracy_std": 0.007283088258125985,
+      "accuracy_mean": 0.9430428134556575,
+      "accuracy_std": 0.0023872316507639038,
+      "f1_mean": null,
+      "f1_std": null
+    },
+    {
+      "task": "sst2_lowres",
+      "group": "G5",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n": 3,
+      "accuracy_mean": 0.8845565749235473,
+      "accuracy_std": 0.0028860223376416957,
+      "f1_mean": null,
+      "f1_std": null
+    },
+    {
+      "task": "sst2_lowres",
+      "group": "G6",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "n": 3,
+      "accuracy_mean": 0.8998470948012233,
+      "accuracy_std": 0.001751749118866919,
       "f1_mean": null,
       "f1_std": null
     }
@@ -105,10 +133,10 @@
         3,
         4
       ],
-      "G6_minus_G5_accuracy": 0.0,
+      "G6_minus_G5_accuracy": -0.006498194945848401,
       "paired_t_95_CI": [
-        -0.015201037841127479,
-        0.015201037841127479
+        -0.06188978582075999,
+        0.048893395929063194
       ],
       "complete": true,
       "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
@@ -122,10 +150,10 @@
         3,
         4
       ],
-      "G6_minus_G5_accuracy": 0.0034313725490196178,
+      "G6_minus_G5_accuracy": 0.004901960784313731,
       "paired_t_95_CI": [
-        -0.0038978502301235357,
-        0.01076059532816277
+        -0.008363450710791377,
+        0.018167372279418836
       ],
       "complete": true,
       "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
@@ -137,10 +165,25 @@
         1,
         2
       ],
-      "G6_minus_G5_accuracy": -0.004969418960244647,
+      "G6_minus_G5_accuracy": 0.0026758409785933024,
       "paired_t_95_CI": [
-        -0.018432236409565223,
-        0.008493398489075932
+        -0.006481711213316272,
+        0.011833393170502877
+      ],
+      "complete": true,
+      "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"
+    },
+    {
+      "task": "sst2_lowres",
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "G6_minus_G5_accuracy": 0.01529051987767586,
+      "paired_t_95_CI": [
+        0.009360307707402786,
+        0.021220732047948936
       ],
       "complete": true,
       "interpretation": "exploratory; G5 and G6 do not necessarily have identical parameter counts"

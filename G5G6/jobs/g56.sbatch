@@ -7,6 +7,6 @@
 #SBATCH --output=g56-%j.log
 set -euo pipefail
 # Set partition/account/QoS with sbatch flags appropriate to your cluster.
-# Submit one task at a time; the original 26-run queue took about10h total.
+# Submit one task at a time.
 cd "${GWEVA_CODE:?Set GWEVA_CODE to the absolute G5G6 folder}"
 bash jobs/run_queue.sh --tasks "${TASK:-rte}"

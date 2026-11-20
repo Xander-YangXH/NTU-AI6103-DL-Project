@@ -20,13 +20,12 @@ def save(fig,name):
 def main():
     fig,axes=plt.subplots(3,2,figsize=(12,13),layout='constrained')
     for i,task in enumerate(['rte','mrpc','sst2']):
-        initial=[json.loads(p.read_text()) for p in (ROOT/'initialization').glob(f'{task}_seed*.json')]
         for j,group in enumerate(['G5','G6']):
-            matrices=[np.array([[r['layers'][f'roberta.encoder.layer.{depth}.{kind}'][group+'_rank'] for kind in TYPES] for depth in range(12)]) for r in initial]
+            matrices=[np.array([[r['ranks'][f'roberta.encoder.layer.{depth}.{kind}'] for kind in TYPES] for depth in range(12)]) for r in [json.loads(p.read_text()) for p in (ROOT/'main').glob(f'main_{group}_{task}_*.json')]]
             data=np.mean(matrices,axis=0);ax=axes[i,j]
             image=ax.imshow(data,vmin=0,vmax=16,cmap='magma',aspect='auto')
             ax.set_xticks(range(6),SHORT,rotation=30,ha='right');ax.set_yticks(range(12),range(12));ax.set_ylabel('Encoder layer')
-            ax.set_title(f'{task.upper()} / {group} / mean of {len(initial)} seeds')
+            ax.set_title(f'{task.upper()} / {group} / mean of {len(matrices)} seeds')
             fig.colorbar(image,ax=ax,label='Allocated rank')
     fig.suptitle('G5/G6 rank allocation / independent completed study');save(fig,'g56_rank_heatmap')
     fig,axes=plt.subplots(1,3,figsize=(15,4),layout='constrained')

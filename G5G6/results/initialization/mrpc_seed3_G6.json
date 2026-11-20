@@ -1,0 +1,19 @@
+{
+  "status": "passed",
+  "initial_logits_difference": 0.0,
+  "encoder_unchanged": true,
+  "rank_sum": 636,
+  "parameters": 1327104,
+  "initialization_seconds": 348.87395304068923,
+  "G6_budget": {
+    "algorithm": "exact multiple-choice prefix knapsack dynamic programming",
+    "globally_optimal_for_supplied_scores": true,
+    "score": 65.11096886642142,
+    "cost_unit": 768,
+    "budget": 1327104,
+    "used_parameters": 1327104,
+    "fraction": 1.0
+  },
+  "calibration": "outputs/gw_eva/shared_study/mrpc/fit/seed3/initialization/calibration_n1024_b16.pt",
+  "calibration_sha256": "10fa42eb25687148485e76d000eee18b814799d42507684b044f67f7ff52221c"
+}

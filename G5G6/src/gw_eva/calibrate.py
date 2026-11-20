@@ -21,7 +21,7 @@ def calibrate(seed=0,max_length=128,samples=64,micro_batch=1,context=None):
     data,collator,data_sha=(context['data'],context['collator'],context['data_sha']) if context else rte_data(max_length)
     if not 0<samples<=len(data):raise ValueError('Invalid sample count')
     indices=np.random.default_rng(seed).permutation(len(data))[:samples].tolist()
-    loader=DataLoader(data.select(indices),batch_size=micro_batch,shuffle=False,collate_fn=collator)
+    loader=DataLoader(data.select(indices),batch_size=micro_batch,shuffle=bool(context),generator=torch.Generator().manual_seed(seed),collate_fn=collator)
     modules=targets(model);pending={};gradient_handles=[];handles=[];active={};sketches={}
     stats={n:{'tokens':0,'gradient_calls':0,'gradient_norm_sum':0.,'gradient_norm_square_sum':0.,
               'gradient_norm_min':float('inf'),'gradient_norm_max':0.,'sum_x2':0.,'sum_x2_square':0.,
