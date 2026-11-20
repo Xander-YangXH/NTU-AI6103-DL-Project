@@ -69,6 +69,7 @@ python jobs/summarize.py                                    # results/g12_summar
 | seeds10 | G1 的 MRPC、RTE、低资源各加种子 5–9，沿用已选学习率，写入 `results/seeds10/` | 15 |
 | g3_lowres_ctl | G3 低资源：L40S 复现（lr 1e-3），lr 5e-4、2e-4，以及均匀秩 ρ = 1；用 G3G4 未改动的代码，写入 `results/control*/` | 20 |
 | quick4 | H4 噪声基线（EVA 对 EVA，两份不相交样本）、G8 低资源 lr 5e-4/2e-4、G3 种子 5–9；写入 `results/noise_floor/`、`results/control_g8/`、`results/seeds10/` | 26 |
+| quick_ad | G1 lr 2e-4（低资源 5 次、RTE 10 次）、G3 MRPC 种子 0–4 在 L40S 上重跑、G1/G3 MRPC 种子 10–14、H4 逐层重合度 | 31 |
 
 ## 4. 结果摘要
 

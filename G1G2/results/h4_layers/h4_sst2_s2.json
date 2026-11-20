@@ -1,0 +1,950 @@
+{
+ "task": "sst2",
+ "seed": 2,
+ "g9_source": "mrpc",
+ "mean": {
+  "floor": 0.9143386506249688,
+  "G8": 0.6461954745392521,
+  "G9": 0.489812176275436
+ },
+ "layers": {
+  "roberta.encoder.layer.0.attention.output.dense": {
+   "type": "o",
+   "depth": 0,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 11,
+    "G9": 11
+   },
+   "floor_vs_G3": 0.9260585352306495,
+   "G8_vs_G3": 0.6674234147220227,
+   "G9_vs_G3": 0.5799301062142564
+  },
+  "roberta.encoder.layer.0.attention.self.key": {
+   "type": "k",
+   "depth": 0,
+   "ranks": {
+    "G3": 11,
+    "floor": 10,
+    "G8": 12,
+    "G9": 12
+   },
+   "floor_vs_G3": 0.9740712969429545,
+   "G8_vs_G3": 0.7598090914232585,
+   "G9_vs_G3": 0.7199604478558452
+  },
+  "roberta.encoder.layer.0.attention.self.query": {
+   "type": "q",
+   "depth": 0,
+   "ranks": {
+    "G3": 11,
+    "floor": 10,
+    "G8": 12,
+    "G9": 12
+   },
+   "floor_vs_G3": 0.9740712969429545,
+   "G8_vs_G3": 0.7598090914232585,
+   "G9_vs_G3": 0.7199604478558452
+  },
+  "roberta.encoder.layer.0.attention.self.value": {
+   "type": "v",
+   "depth": 0,
+   "ranks": {
+    "G3": 11,
+    "floor": 10,
+    "G8": 12,
+    "G9": 12
+   },
+   "floor_vs_G3": 0.9740712969429545,
+   "G8_vs_G3": 0.7598090914232585,
+   "G9_vs_G3": 0.7199604478558452
+  },
+  "roberta.encoder.layer.0.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 0,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 10,
+    "G9": 11
+   },
+   "floor_vs_G3": 0.9635881570914199,
+   "G8_vs_G3": 0.7785118154986724,
+   "G9_vs_G3": 0.716772563641267
+  },
+  "roberta.encoder.layer.0.output.dense": {
+   "type": "ffn_out",
+   "depth": 0,
+   "ranks": {
+    "G3": 7,
+    "floor": 7,
+    "G8": 6,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.8914799421156155,
+   "G8_vs_G3": 0.6716075312625341,
+   "G9_vs_G3": 0.4404171998253563
+  },
+  "roberta.encoder.layer.1.attention.output.dense": {
+   "type": "o",
+   "depth": 1,
+   "ranks": {
+    "G3": 10,
+    "floor": 11,
+    "G8": 11,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9127444610779405,
+   "G8_vs_G3": 0.5982520063022505,
+   "G9_vs_G3": 0.34239783980181565
+  },
+  "roberta.encoder.layer.1.attention.self.key": {
+   "type": "k",
+   "depth": 1,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9065145356314547,
+   "G8_vs_G3": 0.7514750555356456,
+   "G9_vs_G3": 0.6784178589099815
+  },
+  "roberta.encoder.layer.1.attention.self.query": {
+   "type": "q",
+   "depth": 1,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9065145356314547,
+   "G8_vs_G3": 0.7514750555356456,
+   "G9_vs_G3": 0.6784178589099815
+  },
+  "roberta.encoder.layer.1.attention.self.value": {
+   "type": "v",
+   "depth": 1,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9065145356314547,
+   "G8_vs_G3": 0.7514750555356456,
+   "G9_vs_G3": 0.6784178589099815
+  },
+  "roberta.encoder.layer.1.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 1,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9453405305011755,
+   "G8_vs_G3": 0.7204529563173754,
+   "G9_vs_G3": 0.6620903926468669
+  },
+  "roberta.encoder.layer.1.output.dense": {
+   "type": "ffn_out",
+   "depth": 1,
+   "ranks": {
+    "G3": 7,
+    "floor": 7,
+    "G8": 6,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.8428061118779065,
+   "G8_vs_G3": 0.656686046785632,
+   "G9_vs_G3": 0.35279748823847507
+  },
+  "roberta.encoder.layer.10.attention.output.dense": {
+   "type": "o",
+   "depth": 10,
+   "ranks": {
+    "G3": 7,
+    "floor": 7,
+    "G8": 7,
+    "G9": 5
+   },
+   "floor_vs_G3": 0.8131612589464966,
+   "G8_vs_G3": 0.3758396938448221,
+   "G9_vs_G3": 0.2864348422450751
+  },
+  "roberta.encoder.layer.10.attention.self.key": {
+   "type": "k",
+   "depth": 10,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9406310707668883,
+   "G8_vs_G3": 0.6437178222124897,
+   "G9_vs_G3": 0.4916516910768548
+  },
+  "roberta.encoder.layer.10.attention.self.query": {
+   "type": "q",
+   "depth": 10,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9406310707668883,
+   "G8_vs_G3": 0.6437178222124897,
+   "G9_vs_G3": 0.4916516910768548
+  },
+  "roberta.encoder.layer.10.attention.self.value": {
+   "type": "v",
+   "depth": 10,
+   "ranks": {
+    "G3": 7,
+    "floor": 8,
+    "G8": 7,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.957325891402405,
+   "G8_vs_G3": 0.6104479052572896,
+   "G9_vs_G3": 0.5233781063069742
+  },
+  "roberta.encoder.layer.10.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 10,
+   "ranks": {
+    "G3": 7,
+    "floor": 8,
+    "G8": 7,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9678135353580808,
+   "G8_vs_G3": 0.6010713280294898,
+   "G9_vs_G3": 0.5407321697129004
+  },
+  "roberta.encoder.layer.10.output.dense": {
+   "type": "ffn_out",
+   "depth": 10,
+   "ranks": {
+    "G3": 3,
+    "floor": 3,
+    "G8": 4,
+    "G9": 1
+   },
+   "floor_vs_G3": 0.9862085548602971,
+   "G8_vs_G3": 0.8715123862961941,
+   "G9_vs_G3": 0.8922912645153087
+  },
+  "roberta.encoder.layer.11.attention.output.dense": {
+   "type": "o",
+   "depth": 11,
+   "ranks": {
+    "G3": 6,
+    "floor": 5,
+    "G8": 6,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.7900063526937443,
+   "G8_vs_G3": 0.3730679800883765,
+   "G9_vs_G3": 0.34015116780975346
+  },
+  "roberta.encoder.layer.11.attention.self.key": {
+   "type": "k",
+   "depth": 11,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9442760495399309,
+   "G8_vs_G3": 0.601045449673159,
+   "G9_vs_G3": 0.497966769504689
+  },
+  "roberta.encoder.layer.11.attention.self.query": {
+   "type": "q",
+   "depth": 11,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9442760495399309,
+   "G8_vs_G3": 0.601045449673159,
+   "G9_vs_G3": 0.497966769504689
+  },
+  "roberta.encoder.layer.11.attention.self.value": {
+   "type": "v",
+   "depth": 11,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9442760495399309,
+   "G8_vs_G3": 0.601045449673159,
+   "G9_vs_G3": 0.497966769504689
+  },
+  "roberta.encoder.layer.11.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 11,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.8955676596868449,
+   "G8_vs_G3": 0.5949437491485359,
+   "G9_vs_G3": 0.5608019125325093
+  },
+  "roberta.encoder.layer.11.output.dense": {
+   "type": "ffn_out",
+   "depth": 11,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 6
+   },
+   "floor_vs_G3": 0.9199268839086511,
+   "G8_vs_G3": 0.6265642332809723,
+   "G9_vs_G3": 0.5221540878742666
+  },
+  "roberta.encoder.layer.2.attention.output.dense": {
+   "type": "o",
+   "depth": 2,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.8140921948961448,
+   "G8_vs_G3": 0.4297582916964484,
+   "G9_vs_G3": 0.2725476267787523
+  },
+  "roberta.encoder.layer.2.attention.self.key": {
+   "type": "k",
+   "depth": 2,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 10,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9219900810555449,
+   "G8_vs_G3": 0.7564530472220512,
+   "G9_vs_G3": 0.5780031279696289
+  },
+  "roberta.encoder.layer.2.attention.self.query": {
+   "type": "q",
+   "depth": 2,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 10,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9219900810555449,
+   "G8_vs_G3": 0.7564530472220512,
+   "G9_vs_G3": 0.5780031279696289
+  },
+  "roberta.encoder.layer.2.attention.self.value": {
+   "type": "v",
+   "depth": 2,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 10,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9219900810555449,
+   "G8_vs_G3": 0.7564530472220512,
+   "G9_vs_G3": 0.5780031279696289
+  },
+  "roberta.encoder.layer.2.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 2,
+   "ranks": {
+    "G3": 10,
+    "floor": 10,
+    "G8": 10,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.8899597977117335,
+   "G8_vs_G3": 0.6695750693766633,
+   "G9_vs_G3": 0.5321483474490211
+  },
+  "roberta.encoder.layer.2.output.dense": {
+   "type": "ffn_out",
+   "depth": 2,
+   "ranks": {
+    "G3": 8,
+    "floor": 7,
+    "G8": 6,
+    "G9": 6
+   },
+   "floor_vs_G3": 0.9516477370786488,
+   "G8_vs_G3": 0.6916754885343024,
+   "G9_vs_G3": 0.4137494148535694
+  },
+  "roberta.encoder.layer.3.attention.output.dense": {
+   "type": "o",
+   "depth": 3,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.8609099798062773,
+   "G8_vs_G3": 0.47897017884933235,
+   "G9_vs_G3": 0.2164206245836661
+  },
+  "roberta.encoder.layer.3.attention.self.key": {
+   "type": "k",
+   "depth": 3,
+   "ranks": {
+    "G3": 10,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9253442031589726,
+   "G8_vs_G3": 0.7230407493734654,
+   "G9_vs_G3": 0.5122150715261742
+  },
+  "roberta.encoder.layer.3.attention.self.query": {
+   "type": "q",
+   "depth": 3,
+   "ranks": {
+    "G3": 10,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9253442031589726,
+   "G8_vs_G3": 0.7230407493734654,
+   "G9_vs_G3": 0.5122150715261742
+  },
+  "roberta.encoder.layer.3.attention.self.value": {
+   "type": "v",
+   "depth": 3,
+   "ranks": {
+    "G3": 10,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9253442031589726,
+   "G8_vs_G3": 0.7230407493734654,
+   "G9_vs_G3": 0.5122150715261742
+  },
+  "roberta.encoder.layer.3.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 3,
+   "ranks": {
+    "G3": 10,
+    "floor": 9,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.8926087112783486,
+   "G8_vs_G3": 0.6937827247278092,
+   "G9_vs_G3": 0.4484248332731573
+  },
+  "roberta.encoder.layer.3.output.dense": {
+   "type": "ffn_out",
+   "depth": 3,
+   "ranks": {
+    "G3": 5,
+    "floor": 6,
+    "G8": 5,
+    "G9": 6
+   },
+   "floor_vs_G3": 0.9190876612947687,
+   "G8_vs_G3": 0.49943104942688843,
+   "G9_vs_G3": 0.3283365483996409
+  },
+  "roberta.encoder.layer.4.attention.output.dense": {
+   "type": "o",
+   "depth": 4,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.8321675337988214,
+   "G8_vs_G3": 0.4413248490715832,
+   "G9_vs_G3": 0.25827814601168425
+  },
+  "roberta.encoder.layer.4.attention.self.key": {
+   "type": "k",
+   "depth": 4,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9024171613793138,
+   "G8_vs_G3": 0.6309337494919119,
+   "G9_vs_G3": 0.46808725984402366
+  },
+  "roberta.encoder.layer.4.attention.self.query": {
+   "type": "q",
+   "depth": 4,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9024171613793138,
+   "G8_vs_G3": 0.6309337494919119,
+   "G9_vs_G3": 0.46808725984402366
+  },
+  "roberta.encoder.layer.4.attention.self.value": {
+   "type": "v",
+   "depth": 4,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 9,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9024171613793138,
+   "G8_vs_G3": 0.6309337494919119,
+   "G9_vs_G3": 0.46808725984402366
+  },
+  "roberta.encoder.layer.4.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 4,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9182861830572452,
+   "G8_vs_G3": 0.6823673660672533,
+   "G9_vs_G3": 0.4622216357397748
+  },
+  "roberta.encoder.layer.4.output.dense": {
+   "type": "ffn_out",
+   "depth": 4,
+   "ranks": {
+    "G3": 4,
+    "floor": 4,
+    "G8": 4,
+    "G9": 6
+   },
+   "floor_vs_G3": 0.9441540892799014,
+   "G8_vs_G3": 0.7454363876973755,
+   "G9_vs_G3": 0.4468748492545268
+  },
+  "roberta.encoder.layer.5.attention.output.dense": {
+   "type": "o",
+   "depth": 5,
+   "ranks": {
+    "G3": 9,
+    "floor": 11,
+    "G8": 11,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.8773660461934388,
+   "G8_vs_G3": 0.4195862199325475,
+   "G9_vs_G3": 0.21121454994398092
+  },
+  "roberta.encoder.layer.5.attention.self.key": {
+   "type": "k",
+   "depth": 5,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 8,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.9203607718251118,
+   "G8_vs_G3": 0.7057804407575725,
+   "G9_vs_G3": 0.5246122785027819
+  },
+  "roberta.encoder.layer.5.attention.self.query": {
+   "type": "q",
+   "depth": 5,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 8,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.9203607718251118,
+   "G8_vs_G3": 0.7057804407575725,
+   "G9_vs_G3": 0.5246122785027819
+  },
+  "roberta.encoder.layer.5.attention.self.value": {
+   "type": "v",
+   "depth": 5,
+   "ranks": {
+    "G3": 9,
+    "floor": 9,
+    "G8": 8,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.9203607718251118,
+   "G8_vs_G3": 0.7057804407575725,
+   "G9_vs_G3": 0.5246122785027819
+  },
+  "roberta.encoder.layer.5.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 5,
+   "ranks": {
+    "G3": 9,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9316037109800926,
+   "G8_vs_G3": 0.6777466655237225,
+   "G9_vs_G3": 0.45695321134642386
+  },
+  "roberta.encoder.layer.5.output.dense": {
+   "type": "ffn_out",
+   "depth": 5,
+   "ranks": {
+    "G3": 5,
+    "floor": 5,
+    "G8": 6,
+    "G9": 6
+   },
+   "floor_vs_G3": 0.9477350716778401,
+   "G8_vs_G3": 0.651047218151985,
+   "G9_vs_G3": 0.4107825178433087
+  },
+  "roberta.encoder.layer.6.attention.output.dense": {
+   "type": "o",
+   "depth": 6,
+   "ranks": {
+    "G3": 10,
+    "floor": 9,
+    "G8": 10,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.7558619150650571,
+   "G8_vs_G3": 0.3597402296002623,
+   "G9_vs_G3": 0.1868123918295051
+  },
+  "roberta.encoder.layer.6.attention.self.key": {
+   "type": "k",
+   "depth": 6,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9102416921618,
+   "G8_vs_G3": 0.6446218895573588,
+   "G9_vs_G3": 0.4416048403023725
+  },
+  "roberta.encoder.layer.6.attention.self.query": {
+   "type": "q",
+   "depth": 6,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9102416921618,
+   "G8_vs_G3": 0.6446218895573588,
+   "G9_vs_G3": 0.4416048403023725
+  },
+  "roberta.encoder.layer.6.attention.self.value": {
+   "type": "v",
+   "depth": 6,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9102416921618,
+   "G8_vs_G3": 0.6446218895573588,
+   "G9_vs_G3": 0.4416048403023725
+  },
+  "roberta.encoder.layer.6.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 6,
+   "ranks": {
+    "G3": 8,
+    "floor": 9,
+    "G8": 8,
+    "G9": 8
+   },
+   "floor_vs_G3": 0.9505358493479867,
+   "G8_vs_G3": 0.6060095759556933,
+   "G9_vs_G3": 0.4180955477142212
+  },
+  "roberta.encoder.layer.6.output.dense": {
+   "type": "ffn_out",
+   "depth": 6,
+   "ranks": {
+    "G3": 5,
+    "floor": 5,
+    "G8": 5,
+    "G9": 5
+   },
+   "floor_vs_G3": 0.9579265492768002,
+   "G8_vs_G3": 0.6868903261116475,
+   "G9_vs_G3": 0.3673863493249482
+  },
+  "roberta.encoder.layer.7.attention.output.dense": {
+   "type": "o",
+   "depth": 7,
+   "ranks": {
+    "G3": 8,
+    "floor": 9,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.787029042842851,
+   "G8_vs_G3": 0.46693415211738865,
+   "G9_vs_G3": 0.2976964351394702
+  },
+  "roberta.encoder.layer.7.attention.self.key": {
+   "type": "k",
+   "depth": 7,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9196304676822703,
+   "G8_vs_G3": 0.6819778895504798,
+   "G9_vs_G3": 0.47183059498572566
+  },
+  "roberta.encoder.layer.7.attention.self.query": {
+   "type": "q",
+   "depth": 7,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9196304676822703,
+   "G8_vs_G3": 0.6819778895504798,
+   "G9_vs_G3": 0.47183059498572566
+  },
+  "roberta.encoder.layer.7.attention.self.value": {
+   "type": "v",
+   "depth": 7,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 9,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9196304676822703,
+   "G8_vs_G3": 0.6819778895504798,
+   "G9_vs_G3": 0.47183059498572566
+  },
+  "roberta.encoder.layer.7.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 7,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9138997902174866,
+   "G8_vs_G3": 0.633989554403459,
+   "G9_vs_G3": 0.502069359268877
+  },
+  "roberta.encoder.layer.7.output.dense": {
+   "type": "ffn_out",
+   "depth": 7,
+   "ranks": {
+    "G3": 3,
+    "floor": 3,
+    "G8": 2,
+    "G9": 3
+   },
+   "floor_vs_G3": 0.989829961268664,
+   "G8_vs_G3": 0.9877785031328893,
+   "G9_vs_G3": 0.4258440424874948
+  },
+  "roberta.encoder.layer.8.attention.output.dense": {
+   "type": "o",
+   "depth": 8,
+   "ranks": {
+    "G3": 6,
+    "floor": 7,
+    "G8": 7,
+    "G9": 7
+   },
+   "floor_vs_G3": 0.8378131754762844,
+   "G8_vs_G3": 0.43287770160772715,
+   "G9_vs_G3": 0.22297030735575163
+  },
+  "roberta.encoder.layer.8.attention.self.key": {
+   "type": "k",
+   "depth": 8,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9007531451117964,
+   "G8_vs_G3": 0.636639064901158,
+   "G9_vs_G3": 0.48507679351907074
+  },
+  "roberta.encoder.layer.8.attention.self.query": {
+   "type": "q",
+   "depth": 8,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9007531451117964,
+   "G8_vs_G3": 0.636639064901158,
+   "G9_vs_G3": 0.48507679351907074
+  },
+  "roberta.encoder.layer.8.attention.self.value": {
+   "type": "v",
+   "depth": 8,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 8,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9007531451117964,
+   "G8_vs_G3": 0.636639064901158,
+   "G9_vs_G3": 0.48507679351907074
+  },
+  "roberta.encoder.layer.8.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 8,
+   "ranks": {
+    "G3": 8,
+    "floor": 9,
+    "G8": 8,
+    "G9": 10
+   },
+   "floor_vs_G3": 0.9609100869518419,
+   "G8_vs_G3": 0.6536204523421226,
+   "G9_vs_G3": 0.5188331628722456
+  },
+  "roberta.encoder.layer.8.output.dense": {
+   "type": "ffn_out",
+   "depth": 8,
+   "ranks": {
+    "G3": 4,
+    "floor": 4,
+    "G8": 5,
+    "G9": 1
+   },
+   "floor_vs_G3": 0.9566156045392512,
+   "G8_vs_G3": 0.748728740480317,
+   "G9_vs_G3": 0.9010039971923047
+  },
+  "roberta.encoder.layer.9.attention.output.dense": {
+   "type": "o",
+   "depth": 9,
+   "ranks": {
+    "G3": 6,
+    "floor": 7,
+    "G8": 6,
+    "G9": 5
+   },
+   "floor_vs_G3": 0.869529611826307,
+   "G8_vs_G3": 0.38795237736258903,
+   "G9_vs_G3": 0.25655714195001866
+  },
+  "roberta.encoder.layer.9.attention.self.key": {
+   "type": "k",
+   "depth": 9,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9369147738417711,
+   "G8_vs_G3": 0.6292810659224755,
+   "G9_vs_G3": 0.48202310541811555
+  },
+  "roberta.encoder.layer.9.attention.self.query": {
+   "type": "q",
+   "depth": 9,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9369147738417711,
+   "G8_vs_G3": 0.6292810659224755,
+   "G9_vs_G3": 0.48202310541811555
+  },
+  "roberta.encoder.layer.9.attention.self.value": {
+   "type": "v",
+   "depth": 9,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9369147738417711,
+   "G8_vs_G3": 0.6292810659224755,
+   "G9_vs_G3": 0.48202310541811555
+  },
+  "roberta.encoder.layer.9.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 9,
+   "ranks": {
+    "G3": 8,
+    "floor": 8,
+    "G8": 7,
+    "G9": 9
+   },
+   "floor_vs_G3": 0.9041381329624862,
+   "G8_vs_G3": 0.6102720628215724,
+   "G9_vs_G3": 0.470493603440578
+  },
+  "roberta.encoder.layer.9.output.dense": {
+   "type": "ffn_out",
+   "depth": 9,
+   "ranks": {
+    "G3": 3,
+    "floor": 3,
+    "G8": 3,
+    "G9": 1
+   },
+   "floor_vs_G3": 0.9878418568917021,
+   "G8_vs_G3": 0.8735898103498186,
+   "G9_vs_G3": 0.9177150792447056
+  }
+ },
+ "time_s": 41.75230813026428,
+ "gpu": "NVIDIA L40S"
+}
