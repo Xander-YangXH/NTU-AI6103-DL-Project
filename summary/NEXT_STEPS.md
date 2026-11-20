@@ -14,6 +14,7 @@ Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 - **Noise floor done (part of step 1)**: EVA against itself on a disjoint sample of the same task overlaps 0.92–0.95, so G8/G9's 0.49–0.72 are real subspace changes. The H1 measurement itself is still open (hanyanze).
 - **Step 3 is started.** G1 and G3 now have ten seeds on MRPC, RTE and low resource; G5 still needs seeds 5–9.
 - One G1 RTE seed (of ten) collapsed to a single class; G3's ten RTE seeds did not. This bears on step 6.
+- **Same-GPU and equal-lr checks done** (11-20): with both at lr 2e-4, EVA matches LoRA in low resource; the MRPC edge was a GPU artefact; on RTE at equal lr EVA is +2.1. Per-layer H4 overlaps are rebuilt in `G1G2/results/h4_layers/`.
 - Every other item below is still open.
 
 ## Where we stand

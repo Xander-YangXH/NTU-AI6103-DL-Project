@@ -70,12 +70,13 @@ Low-resource SST-2 1k. Shared rows repeat the shared-protocol runs for reference
 | G1 (shared) | 0.0005 | – | L40S | 91.44 ± 0.28 | – | – | – |
 | G3 (shared) | 0.001 | 2 | A40 | 88.81 ± 0.83 | – | -2.66 [-3.22, -2.11] * | -2.64 [-3.70, -1.57] * |
 | G1 | 0.001 | – | L40S | 91.47 ± 0.66 | +0.02 [-0.72, +0.77] | – | – |
+| G1 | 0.0002 | – | L40S | 91.44 ± 0.22 | +0.00 [-0.56, +0.56] | – | – |
 | G3 | 0.001 | 2 | L40S | 89.50 ± 1.16 | +0.69 [-1.67, +3.04] | -1.97 [-4.20, +0.26] | -1.95 [-3.60, -0.30] * |
 | G3 | 0.001 | 1 | L40S | 89.08 ± 0.42 | -0.41 [-2.32, +1.50] | -2.39 [-2.91, -1.86] * | -2.36 [-2.69, -2.03] * |
 | G3 | 0.0005 | 2 | L40S | 90.55 ± 0.54 | +1.06 [-0.77, +2.88] | -0.89 [-1.76, -0.03] * | -0.89 [-1.76, -0.03] * |
-| G3 | 0.0002 | 2 | L40S | 90.87 ± 0.55 | +1.38 [-0.44, +3.20] | – | -0.57 [-1.10, -0.05] * |
+| G3 | 0.0002 | 2 | L40S | 90.87 ± 0.55 | +1.38 [-0.44, +3.20] | -0.57 [-1.45, +0.30] | -0.57 [-1.10, -0.05] * |
 | G8 | 0.0005 | – | L40S | 90.28 ± 0.69 | +0.39 [-0.67, +1.45] | -1.17 [-2.10, -0.24] * | -1.17 [-2.10, -0.24] * |
-| G8 | 0.0002 | – | L40S | 90.41 ± 1.15 | +0.53 [-0.77, +1.83] | – | -1.03 [-2.61, +0.55] |
+| G8 | 0.0002 | – | L40S | 90.41 ± 1.15 | +0.53 [-0.77, +1.83] | -1.03 [-2.28, +0.22] | -1.03 [-2.61, +0.55] |
 
 ## Early training: paired difference in training loss (b − a), equal learning rates only
 
@@ -102,8 +103,6 @@ Mean training-batch loss over each step window; negative = b fits faster. G1@ctl
 | G3 − G1 | mrpc | 0.0002 | 5 | -0.015 [-0.026, -0.005] * | -0.054 [-0.071, -0.037] * | -0.038 [-0.046, -0.030] * |
 | G5 − G1 | mrpc | 0.0002 | 5 | -0.014 [-0.022, -0.006] * | -0.056 [-0.071, -0.040] * | -0.034 [-0.043, -0.025] * |
 | G7 − G1 | mrpc | 0.0002 | 5 | -0.024 [-0.032, -0.016] * | -0.054 [-0.092, -0.016] * | -0.039 [-0.061, -0.017] * |
-| G3 − G1@ctl | low-res | 0.001 | 5 | -0.029 [-0.061, +0.003] | +0.092 [+0.039, +0.146] * | +0.034 [+0.019, +0.049] * |
-| G5 − G1@ctl | low-res | 0.001 | 3 | -0.015 [-0.099, +0.069] | +0.154 [+0.118, +0.191] * | +0.043 [+0.023, +0.064] * |
 
 `*` the interval excludes 0.
 
@@ -112,11 +111,20 @@ Mean training-batch loss over each step window; negative = b fits faster. G1@ctl
 | Run | lr | Seeds | Shared seeds | All seeds | Single-class runs | − G1, all common seeds |
 |---|---|---|---|---|---|---|
 | G1 lowres sst2 | 0.0005 | 10 | 91.44 ± 0.28 | 91.35 ± 0.44 | – | – |
-| G1 main mrpc | 0.0002 | 10 | 91.34 ± 0.43 | 91.29 ± 0.62 | – | – |
+| G1 main mrpc | 0.0002 | 15 | 91.34 ± 0.43 | 91.39 ± 0.57 | – | – |
 | G1 main rte | 0.0005 | 10 | 73.94 ± 2.10 | 72.13 ± 7.01 | seed 8 | – |
 | G3 lowres sst2 | 0.001 | 10 | 88.81 ± 0.83 | 88.77 ± 1.02 | – | -2.58 [-3.33, -1.83] (n = 10) * |
-| G3 main mrpc | 0.0002 | 10 | 92.02 ± 0.79 | 91.85 ± 0.78 | – | +0.57 [+0.03, +1.10] (n = 10) * |
+| G3 main mrpc | 0.0002 | 15 | 92.02 ± 0.79 | 91.89 ± 0.70 | – | +0.50 [+0.08, +0.92] (n = 15) * |
 | G3 main rte | 0.0002 | 10 | 74.80 ± 2.49 | 75.05 ± 2.01 | – | +2.92 [-1.83, +7.68] (n = 10) |
+
+## Full-data checks: same GPU and equal learning rates (outside the shared protocol)
+
+| Check | a | b | b − a |
+|---|---|---|---|
+| G3 MRPC seeds 0–4 rerun on L40S vs the original A40 runs | 92.02 ± 0.79 (n = 5) | 90.94 ± 0.57 (n = 5) | -1.08 [-2.43, +0.27] (n = 5) |
+| MRPC, G1 vs G3, all seeds, G3 on L40S only | 91.39 ± 0.57 (n = 15) | 91.53 ± 0.76 (n = 15) | +0.14 [-0.24, +0.51] (n = 15) |
+| MRPC, G1 vs G3, all seeds, G3 seeds 0–4 from A40 | 91.39 ± 0.57 (n = 15) | 91.89 ± 0.70 (n = 15) | +0.50 [+0.08, +0.92] (n = 15) * |
+| RTE at equal lr 2e-4, G1 vs G3 | 72.92 ± 1.48 (n = 10), 0 single-class | 75.05 ± 2.01 (n = 10), 0 single-class | +2.13 [+0.97, +3.29] (n = 10) * |
 
 ## H4: subspace overlap of EVA calibrated elsewhere with same-task EVA (G3)
 
@@ -138,6 +146,18 @@ Mean squared cosine of the principal angles between the two lora_A row spaces, a
 | random | rte | random orthonormal, same ranks | 3 | 0.010 ± 0.000 | 0.010–0.010 | – |
 
 G9's MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree to 1e-05 per seed, so G9 gives two independent pairs, not three.
+
+## H4 per layer type (rebuilt on one GPU, mean over tasks and seeds)
+
+13 task-seed pairs; `G1G2/jobs/h4_layers.py` rebuilds G3, a disjoint same-task sample, G8 and G9 with each group's calibration rule and compares the last three with G3.
+
+| Compared with G3 | All layers | q | k | v | o | ffn_in | ffn_out | Layers 0–3 | Layers 4–7 | Layers 8–11 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| floor (same task, disjoint sample) | 0.942 | 0.953 | 0.953 | 0.952 | 0.888 | 0.950 | 0.957 | 0.948 | 0.937 | 0.940 |
+| G8 (wikitext-103) | 0.690 | 0.730 | 0.731 | 0.731 | 0.516 | 0.722 | 0.712 | 0.722 | 0.650 | 0.699 |
+| G9 (another task) | 0.623 | 0.649 | 0.649 | 0.648 | 0.501 | 0.645 | 0.647 | 0.652 | 0.564 | 0.654 |
+
+Per task (mean over seeds): sst2: floor 0.919, G8 0.642, G9 0.493; mrpc: floor 0.944, G8 0.716, G9 0.662; rte: floor 0.954, G8 0.694, G9 0.662
 
 ## Theory check: ratios of the step-0 gradient on B, same seed
 

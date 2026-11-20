@@ -6,6 +6,7 @@ step0_vs_accuracy: one panel per task; x = mean step-0 ||dL/dB|| (log), y = pair
   with its 95% CI. Groups are named next to their marks; only G5 (GW-EVA) is coloured.
 lowres_lr: low-resource accuracy against the learning rate for G1, G3 (EVA) and G8, mean with 95% CI over seeds,
   from the shared runs and the controls run on L40S (G3's shared A40 run is left out so one GPU is compared).
+h4_layers: overlap with G3's initial lora_A by layer type and depth for a disjoint same-task sample, G8 and G9.
 """
 import glob
 import json
@@ -141,6 +142,38 @@ def lowres_lr(score):
     save(fig, "lowres_lr")
 
 
+def h4_layers():
+    lay = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(collect.ROOT, "*", "results", "h4_layers", "h4_*.json")))]
+    if not lay:
+        return
+    kinds = [("floor", "same task, other sample"), ("G8", "G8: wikitext-103"), ("G9", "G9: another task")]
+    types = ["q", "k", "v", "o", "ffn_in", "ffn_out"]
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.0, 2.5), constrained_layout=True, sharey=True)
+    for color, (k, label) in zip(SERIES, kinds):
+        by_type = [sum(v) / len(v) for v in ([l[f"{k}_vs_G3"] for r in lay for l in r["layers"].values()
+                                               if l["type"] == t] for t in types)]
+        ax1.plot(range(len(types)), by_type, color=color, lw=2, marker="o", ms=5, mec="white", mew=1.0, label=label)
+        by_depth = [sum(v) / len(v) for v in ([l[f"{k}_vs_G3"] for r in lay for l in r["layers"].values()
+                                                if l["depth"] == d] for d in range(12))]
+        ax2.plot(range(12), by_depth, color=color, lw=2, marker="o", ms=4, mec="white", mew=1.0, label=label)
+        short, dy = {"floor": ("same task", 0), "G8": ("G8", 5), "G9": ("G9", -5)}[k]
+        ax2.annotate(short, (11, by_depth[-1]), xytext=(5, dy), textcoords="offset points",
+                     va="center", fontsize=7, color=INK_2)
+    ax1.set_xticks(range(len(types)), ["q", "k", "v", "attn out", "FFN in", "FFN out"])
+    ax1.set_title("by layer type")
+    ax2.set_xticks(range(0, 12, 2))
+    ax2.set_xlim(-0.5, 13.2)
+    ax2.set_xlabel("encoder layer")
+    ax2.set_title("by depth")
+    ax1.set_ylabel("subspace overlap with G3")
+    for ax in (ax1, ax2):
+        ax.set_ylim(0, 1)
+        ax.grid(axis="y", color=GRID, lw=0.6)
+        ax.set_axisbelow(True)
+    ax1.legend(frameon=False, fontsize=7, loc="lower left")
+    save(fig, "h4_layers")
+
+
 def save(fig, name):
     os.makedirs(OUT, exist_ok=True)
     for ext in ("png", "pdf"):
@@ -154,3 +187,4 @@ if __name__ == "__main__":
     s, g = scores()
     step0_vs_accuracy(s, g)
     lowres_lr(s)
+    h4_layers()

@@ -22,7 +22,8 @@ from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "summary")
-T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}
+T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+       11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145, 15: 2.131, 16: 2.120, 17: 2.110, 18: 2.101, 19: 2.093}
 TASKS = [("main", "sst2", "SST-2 (acc)"), ("main", "mrpc", "MRPC (F1)"), ("main", "rte", "RTE (acc)"),
          ("lowres", "sst2", "Low-res SST-2 1k (acc)")]
 SHARED = ["G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"]
@@ -166,7 +167,8 @@ def main():
                  score[("G1", "lowres", "sst2")], "G1 (shared)"),
                 (("G3", "lowres", "sst2", meta[("G3", "lowres", "sst2")][0]["lr"], 2.0, "A40"),
                  score[("G3", "lowres", "sst2")], "G3 (shared)")]
-        ctl_rows += [(k, d, k[0]) for k, d in sorted(ctl.items(), key=lambda kv: (kv[0][0], -kv[0][3], -(kv[0][4] or 0)))]
+        ctl_rows += [(k, d, k[0]) for k, d in sorted(ctl.items(), key=lambda kv: (kv[0][0], -kv[0][3], -(kv[0][4] or 0)))
+                     if k[1] == "lowres"]
         for (g, st, t, lr, rho, gpu), d, label in ctl_rows:
             m, sd = mean_sd([100 * v for v in d.values()])
             # same group's shared setting, rerun on the same GPU when there is such a rerun (G3: control_repro)
@@ -190,11 +192,11 @@ def main():
         r = json.load(open(path))
         if "group" not in r or not r.get("loss_first_steps") or r.get("shared_protocol_compliant") is False:
             continue
-        ctl = os.sep + "control" + os.sep in path
-        if ctl and r["group"] != "G1":   # only the G1 lr control is used as a reference here
+        is_ctl = os.sep + "control" + os.sep in path
+        if is_ctl and r["group"] != "G1":   # only the G1 lr control is used as a reference here
             continue
         setting = "low-res" if r["stage"] == "lowres" else r["task"]
-        curves[(r["group"] + ("@ctl" if ctl else ""), setting)][r["seed"]] = (r["lr"], r["loss_first_steps"])
+        curves[(r["group"] + ("@ctl" if is_ctl else ""), setting)][r["seed"]] = (r["lr"], r["loss_first_steps"])
     windows = [("1–50", 0, 50), ("51–200", 50, 200), ("201–500", 200, 500)]
 
     def window_diff(a, b, lo, hi):
@@ -247,6 +249,50 @@ def main():
             out.append(f"| {g} {stage} {task} | {lr:g} | {len(both)} | {m0:.2f} ± {sd0:.2f} | {m:.2f} ± {sd:.2f} | "
                        + (", ".join(f"seed {s}" for s in collapsed) if collapsed else "–") + f" | {vs_g1} |")
 
+    # Full-data checks: same-GPU reruns and equal-learning-rate comparisons with all available seeds
+    def runs(g, stage, task, lr, gpu=None, rho=None, extra_seeds=True):
+        """Seeds of one setting: control runs (filtered by GPU/rho), the shared run, and extra seeds, in that order of
+        preference for a given seed."""
+        d = {}
+        if meta.get((g, stage, task)) and meta[(g, stage, task)][0]["lr"] == lr and gpu is None:
+            d.update(score[(g, stage, task)])
+        if extra_seeds and meta.get((g, stage, task)) and meta[(g, stage, task)][0]["lr"] == lr:
+            d.update(extra.get((g, stage, task), {}))
+        for (cg, cst, ct, clr, crho, cgpu), v in ctl.items():
+            if (cg, cst, ct, clr) == (g, stage, task, lr) and (gpu is None or cgpu == gpu) and (rho is None or crho == rho):
+                d.update(v)
+        return d
+
+    def cell(a, b):
+        if len(set(a) & set(b)) < 2:
+            return "–"
+        n, dm, lo, hi = paired(a, b)
+        return f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}] (n = {n})" + (" *" if lo > 0 or hi < 0 else "")
+
+    def single_class(d, task):
+        return sum(1 for v in d.values() if task == "rte" and min(abs(v - 146 / 277), abs(v - 131 / 277)) < 1e-9)
+
+    g3_mrpc_l40s = {**ctl.get(("G3", "main", "mrpc", 2e-4, 2.0, "L40S"), {}), **extra.get(("G3", "main", "mrpc"), {})}
+    g1_mrpc = {**score.get(("G1", "main", "mrpc"), {}), **extra.get(("G1", "main", "mrpc"), {})}
+    g3_mrpc_all = {**score.get(("G3", "main", "mrpc"), {}), **extra.get(("G3", "main", "mrpc"), {})}
+    g1_rte_2e4 = runs("G1", "main", "rte", 2e-4)
+    g3_rte = {**score.get(("G3", "main", "rte"), {}), **extra.get(("G3", "main", "rte"), {})}
+    if g3_mrpc_l40s or g1_rte_2e4:
+        def ms(d):
+            if len(d) < 2:
+                return "–"
+            m, sd = mean_sd([100 * v for v in d.values()])
+            return f"{m:.2f} ± {sd:.2f} (n = {len(d)})"
+        out += ["", "## Full-data checks: same GPU and equal learning rates (outside the shared protocol)", "",
+                "| Check | a | b | b − a |", "|---|---|---|---|",
+                f"| G3 MRPC seeds 0–4 rerun on L40S vs the original A40 runs | {ms(score[('G3', 'main', 'mrpc')])} | "
+                f"{ms(ctl.get(('G3', 'main', 'mrpc', 2e-4, 2.0, 'L40S'), {}))} | "
+                f"{cell(score[('G3', 'main', 'mrpc')], ctl.get(('G3', 'main', 'mrpc', 2e-4, 2.0, 'L40S'), {}))} |",
+                f"| MRPC, G1 vs G3, all seeds, G3 on L40S only | {ms(g1_mrpc)} | {ms(g3_mrpc_l40s)} | {cell(g1_mrpc, g3_mrpc_l40s)} |",
+                f"| MRPC, G1 vs G3, all seeds, G3 seeds 0–4 from A40 | {ms(g1_mrpc)} | {ms(g3_mrpc_all)} | {cell(g1_mrpc, g3_mrpc_all)} |",
+                f"| RTE at equal lr 2e-4, G1 vs G3 | {ms(g1_rte_2e4)}, {single_class(g1_rte_2e4, 'rte')} single-class | "
+                f"{ms(g3_rte)}, {single_class(g3_rte, 'rte')} single-class | {cell(g1_rte_2e4, g3_rte)} |"]
+
     # H4: overlap of each group's initial lora_A with same-task, same-seed G3, per target task.
     # G9 on task t is EVA calibrated on another task (src below); G8 is EVA calibrated on wikitext-103 laid out
     # like G3's calibration batches.
@@ -292,6 +338,27 @@ def main():
             same = max(abs(h4["G9"]["mrpc"][s] - h4["G9"]["rte"][s]) for s in h4["G9"]["mrpc"])
             out += ["", f"G9's MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE) and agree "
                         f"to {same:.0e} per seed, so G9 gives two independent pairs, not three."]
+
+    # H4 per layer: floor / G8 / G9 against G3, all rebuilt on one GPU by G1G2/jobs/h4_layers.py
+    lay = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(ROOT, "*", "results", "h4_layers", "h4_*.json")))]
+    if lay:
+        kinds = [("floor", "same task, disjoint sample"), ("G8", "wikitext-103"), ("G9", "another task")]
+        types = ["q", "k", "v", "o", "ffn_in", "ffn_out"]
+        out += ["", "## H4 per layer type (rebuilt on one GPU, mean over tasks and seeds)", "",
+                f"{len(lay)} task-seed pairs; `G1G2/jobs/h4_layers.py` rebuilds G3, a disjoint same-task sample, G8 and "
+                "G9 with each group's calibration rule and compares the last three with G3.", "",
+                "| Compared with G3 | All layers | " + " | ".join(types) + " | Layers 0–3 | Layers 4–7 | Layers 8–11 |",
+                "|---|---|" + "---|" * (len(types) + 3)]
+        for k, label in kinds:
+            def avg(pred):
+                v = [l[f"{k}_vs_G3"] for r in lay for l in r["layers"].values() if pred(l)]
+                return f"{sum(v) / len(v):.3f}"
+            out.append(f"| {k} ({label}) | {avg(lambda l: True)} | "
+                       + " | ".join(avg(lambda l, t=t: l["type"] == t) for t in types) + " | "
+                       + " | ".join(avg(lambda l, a=a: a <= l["depth"] < a + 4) for a in (0, 4, 8)) + " |")
+        out += ["", "Per task (mean over seeds): " + "; ".join(
+            f"{t}: " + ", ".join(f"{k} {sum(r['mean'][k] for r in lay if r['task'] == t) / sum(1 for r in lay if r['task'] == t):.3f}"
+                                 for k, _ in kinds) for t in ("sst2", "mrpc", "rte"))]
 
     # Theory check: E||dL/dB||^2 = Tr(A Sigma_g A^T). For directions independent of Sigma_g it scales with the squared
     # row norm of A, so G2 (row norm 1) over G1 (Kaiming-uniform, row norm 1/sqrt(3)) should give sqrt(3) in norm.
