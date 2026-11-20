@@ -55,6 +55,7 @@ sbatch --export=ALL,STAGE=main,NPAR=2   jobs/g12.sbatch     # 读 tune 结果选
 sbatch --export=ALL,STAGE=lowres,NPAR=2 jobs/g12.sbatch
 sbatch --export=ALL,STAGE=lowres_ctl,NPAR=2 jobs/g12.sbatch # 学习率对照
 sbatch --export=ALL,STAGE=seeds10,NPAR=2 jobs/g12.sbatch    # G1 种子 5–9
+sbatch --export=ALL,STAGE=g3_lowres_ctl,NPAR=2 jobs/g12.sbatch  # G3 低资源对照，需要同级的 ../G3G4/src
 python jobs/summarize.py                                    # results/g12_summary.txt、results/g12_runs.csv
 ```
 
@@ -66,6 +67,7 @@ python jobs/summarize.py                                    # results/g12_summar
 | lowres | G1，SST-2 1k，5 个种子，lr 沿用 G1 在 SST-2 上的选择 | 5 |
 | lowres_ctl | 对照（不属于共享协议）：同上，但 lr 用 G3 的 1e-3，写入 `results/control/` | 5 |
 | seeds10 | G1 的 MRPC、RTE、低资源各加种子 5–9，沿用已选学习率，写入 `results/seeds10/` | 15 |
+| g3_lowres_ctl | G3 低资源：L40S 复现（lr 1e-3），lr 5e-4、2e-4，以及均匀秩 ρ = 1；用 G3G4 未改动的代码，写入 `results/control*/` | 20 |
 
 ## 4. 结果摘要
 
