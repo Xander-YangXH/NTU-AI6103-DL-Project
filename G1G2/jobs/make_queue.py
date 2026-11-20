@@ -1,6 +1,7 @@
 """Write the command queue for one stage of G1/G2 to jobs/queues/<stage>.txt (copied from G3G4/jobs/make_queue.py).
 
     python jobs/make_queue.py lowres_ctl   # extra: G1 low-resource at lr 1e-3 -> results/control/lowres/
+    python jobs/make_queue.py seeds10      # extra: G1 seeds 5-9 on MRPC, RTE, low resource -> results/seeds10/
 
     python jobs/make_queue.py pilot | tune | main | lowres
 main and lowres read the tuning results to pick each (group, task)'s learning rate.
@@ -14,6 +15,7 @@ LR_GRID = [2e-4, 5e-4, 1e-3]          # team-wide grid: confirm with the whole t
 TUNE_SEED = 0
 SEEDS = {"sst2": [0, 1, 2], "mrpc": [0, 1, 2, 3, 4], "rte": [0, 1, 2, 3, 4]}   # shared with all groups
 LOWRES_SEEDS = [0, 1, 2, 3, 4]
+EXTRA_SEEDS = [5, 6, 7, 8, 9]   # seeds10 stage: brings MRPC, RTE and low resource to 10 seeds
 TASKS = ["sst2", "mrpc", "rte"]        # SST-2 first: the longest runs start first
 GROUPS = ["G1", "G2"]
 
@@ -54,6 +56,12 @@ def main(stage):
         # learning-rate control, outside the shared protocol: G1 low-resource at G3's lr (1e-3), so that the
         # G1-vs-G3 low-resource gap is not confounded by lr. Kept in results/control/ to stay apart from lowres.
         lines = [cmd("lowres", "sst2", "G1", 1e-3, s, out="results/control") for s in LOWRES_SEEDS]
+    elif stage == "seeds10":
+        # more seeds for G1 where the intervals are widest, at the learning rates already chosen (no new tuning).
+        # Kept in results/seeds10/ so the shared tables stay on seeds 0-4 until the other groups catch up.
+        lrs = json.load(open("results/chosen_lr.json"))
+        lines = [cmd("main", t, "G1", lrs[f"G1_{t}"], s, out="results/seeds10") for t in ("mrpc", "rte") for s in EXTRA_SEEDS]
+        lines += [cmd("lowres", "sst2", "G1", lrs["G1_sst2"], s, out="results/seeds10") for s in EXTRA_SEEDS]
     else:
         sys.exit(f"unknown stage {stage}")
     os.makedirs("jobs/queues", exist_ok=True)
