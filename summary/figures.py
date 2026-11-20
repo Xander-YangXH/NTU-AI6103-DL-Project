@@ -144,7 +144,8 @@ def lowres_lr(score):
 def save(fig, name):
     os.makedirs(OUT, exist_ok=True)
     for ext in ("png", "pdf"):
-        fig.savefig(os.path.join(OUT, f"{name}.{ext}"), facecolor="white")
+        meta = {"CreationDate": None} if ext == "pdf" else {}   # no timestamp, so reruns give identical files
+        fig.savefig(os.path.join(OUT, f"{name}.{ext}"), facecolor="white", metadata=meta)
     plt.close(fig)
     print("wrote", os.path.join(OUT, name + ".{png,pdf}"))
 
