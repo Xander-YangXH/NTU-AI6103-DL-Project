@@ -103,12 +103,12 @@ All groups ran under the shared settings above and are paired by seed. Full tabl
 
 Official validation, mean ± sd (%); SST-2 3 seeds, MRPC / RTE 5, low resource 5 (G5/G6: 3):
 
-| Task | G1 LoRA | G2 | G3 EVA | G4 | G5 GW-EVA | G6 | G7 LoRA-GA | G9 |
-|---|---|---|---|---|---|---|---|---|
-| SST-2 (acc) | 93.92 ± 0.00 | 94.07 ± 0.24 | 94.19 ± 0.43 | 93.65 ± 0.24 | 94.04 ± 0.30 | **94.30 ± 0.24** | 93.96 ± 0.46 | 94.00 ± 0.63 |
-| MRPC (F1) | 91.34 ± 0.43 | 91.16 ± 1.11 | **92.02 ± 0.79** | 91.50 ± 0.68 | 91.14 ± 0.69 | 91.41 ± 0.52 | 91.83 ± 0.46 | 91.50 ± 0.60 |
-| RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 | 73.57 ± 2.06 | 73.57 ± 2.43 | 72.92 ± 2.09 | 56.68 ± 8.85 | **75.67 ± 1.70** |
-| Low-res SST-2 1k (acc) | **91.44 ± 0.28** | – | 88.81 ± 0.83 | – | 88.46 ± 0.29 | 89.98 ± 0.18 | – | – |
+| Task | G1 LoRA | G2 | G3 EVA | G4 | G5 GW-EVA | G6 | G7 LoRA-GA | G8 | G9 |
+|---|---|---|---|---|---|---|---|---|---|
+| SST-2 (acc) | 93.92 ± 0.00 | 94.07 ± 0.24 | 94.19 ± 0.43 | 93.65 ± 0.24 | 94.04 ± 0.30 | **94.30 ± 0.24** | 93.96 ± 0.46 | 93.88 ± 0.46 | 94.00 ± 0.63 |
+| MRPC (F1) | 91.34 ± 0.43 | 91.16 ± 1.11 | **92.02 ± 0.79** | 91.50 ± 0.68 | 91.14 ± 0.69 | 91.41 ± 0.52 | 91.83 ± 0.46 | 91.11 ± 0.34 | 91.50 ± 0.60 |
+| RTE (acc) | 73.94 ± 2.10 | 73.86 ± 1.04 | 74.80 ± 2.49 | 73.57 ± 2.06 | 73.57 ± 2.43 | 72.92 ± 2.09 | 56.68 ± 8.85 | 72.06 ± 2.18 | **75.67 ± 1.70** |
+| Low-res SST-2 1k (acc) | **91.44 ± 0.28** | – | 88.81 ± 0.83 | – | 88.46 ± 0.29 | 89.98 ± 0.18 | – | 89.89 ± 0.52 | – |
 
 Paired differences (percentage points, 95% CI; `*` = interval excludes 0):
 
@@ -118,20 +118,23 @@ Paired differences (percentage points, 95% CI; `*` = interval excludes 0):
 | G3 − G1 | +0.27 [−0.81, +1.35] | +0.68 [−0.60, +1.97] | +0.87 [−3.27, +5.01] | −2.64 [−3.70, −1.57] * |
 | G5 − G1 | +0.11 [−0.64, +0.87] | −0.20 [−1.14, +0.75] | −0.36 [−5.35, +4.63] | −3.10 [−3.59, −2.60] * |
 | G7 − G1 | +0.04 [−1.11, +1.19] | +0.49 [−0.44, +1.41] | −17.26 [−27.93, −6.59] * | – |
+| G3 − G1, each at its best low-resource lr⁵ | – | – | – | −0.57 [−1.10, −0.05] * |
 
 | Hypothesis | Verdict |
 |---|---|
 | H1: Σ_g's subspace differs from EVA's | Not measured yet |
 | H2: GW-EVA beats EVA | **Not supported**: G5 − G3 non-significant everywhere, means slightly negative, and no lower early loss, although GW-EVA's step-0 gradient is 1.3–2.1× EVA's |
-| H3: cost-based allocation matters | **Not supported on full data**: G4 − G3 and G6 − G5 non-significant |
-| H4: how task-specific the inputs are | **Partly answered**: EVA calibrated on another task (G9) loses nothing, though its subspace overlaps same-task EVA by only 0.49–0.66 |
+| H3: cost-based allocation matters | **Not supported**: G4 − G3 and G6 − G5 non-significant; EVA with uniform ranks matches the original in low resource |
+| H4: how task-specific the inputs are | **Answered for accuracy**: EVA calibrated on another task (G9) or on generic wikitext-103 text (G8) matches EVA on task data, though their subspaces overlap it by only 0.49–0.72 |
+
+⁵ G3 at lr 2e-4 against G1 at 5e-4, from the low-resource controls in [`summary/SUMMARY.md`](summary/SUMMARY.md); outside the shared protocol.
 
 Main findings:
 
-- **No initialisation beats plain LoRA on full data.** All groups except G7 are within ±1.8 points of G1, and every interval contains 0.
+- **No initialisation beats plain LoRA on full data.** All groups except G7 are within ±1.9 points of G1, and every interval contains 0. That includes EVA calibrated on another task (G9) or on generic text (G8).
 - **Data-aware inits fit faster early, but the gain does not last.** At equal lr on MRPC, EVA, GW-EVA and LoRA-GA all have a significantly lower training loss than LoRA over the first 500 steps, with no difference in final F1. GW-EVA is no faster than EVA at any stage.
 - **Larger initial gradients do not buy accuracy.** The step-0 gradient on B grows 7–37× from G1 to the data-aware inits; matching only EVA's magnitude (G2) or its directions (G3) or adding label gradients (G5) leaves accuracy flat.
-- **With 1k examples, every spectral init is significantly worse than LoRA** (G3 −2.64, G5 −3.10, G6 −1.57). A same-learning-rate control rules out the lr confound for G3, and the loss curves show EVA and GW-EVA fitting more slowly in steps 51–200.
+- **With 1k examples, spectral inits are worse than LoRA, mostly because of the learning rate.** Under the shared rule G3 trails G1 by 2.64 (G5 −3.10, G6 −1.57, G8 −1.56). Controls show that EVA, unlike LoRA, prefers a lower learning rate here: at lr 2e-4 it recovers to 90.87 and trails G1 by only 0.57, still significant. Removing EVA's rank redistribution changes nothing, so the remaining gap comes from its directions; the loss curves show EVA fitting more slowly in steps 51–200.
 - **RTE is fragile.** LoRA-GA averages 56.68 there (one seed predicts a single class, two are near chance), but plain LoRA also collapsed on 1 of 10 seeds once G1 was extended to ten; see [`summary/SUMMARY.md`](summary/SUMMARY.md) §2, finding 7.
 
 ## 6. Repository layout
@@ -140,12 +143,12 @@ Each member worked on their own branch with one folder per pair of groups, holdi
 
 | Folder | Contents | Source branch |
 |---|---|---|
-| `G1G2/` | G1 LoRA baseline, G2 magnitude control, low-resource lr control | `yxh` |
+| `G1G2/` | G1 LoRA baseline, G2 magnitude control, G1 extra seeds, low-resource controls for G1 and G3 | `yxh` |
 | `G3G4/` | G3 EVA reproduction, G4 parameter-cost allocation; the shared data split and training pipeline | `yinchenyu_g3g4` |
 | `G5G6/` | G5 / G6 GW-EVA under the shared settings | `hanyanze` |
 | `G7/` | G7 LoRA-GA | `liyouran` |
-| `G9/` | G9 EVA-cross and the H4 subspace overlap | `zjz_g9` |
 | `G8/` | G8 EVA-generic (wikitext-103 calibration in G3's token layout) and its subspace overlap with G3 | `eddy_G8` |
+| `G9/` | G9 EVA-cross and the H4 subspace overlap | `zjz_g9` |
 | `summary/` | Cross-group tables (`collect.py`), findings and next steps | `summary` |
 
 ## 7. Compute

@@ -9,6 +9,8 @@ Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 - **Step 2 is done.** hanyanze reran G5/G6 under the shared settings (11-18; low resource with 3 seeds). GW-EVA does not beat EVA: G5 − G3 is non-significant on every task, with slightly negative means (see [`SUMMARY.md`](SUMMARY.md) §2). On the decision table below, the story is now the analysis / negative-result one.
 - **Step 1 is partly done.** G9's cross-task overlap exists as a layer average (zjz, 11-07). The H1 measurement itself (GW-EVA vs EVA subspaces) and the noise floor are still missing.
 - **Step 5 is partly answered from existing data.** `collect.py` now compares the first-500-step training loss at equal learning rates (SUMMARY finding 3): data-aware inits fit faster early on MRPC, GW-EVA is no faster than EVA, and in low resource EVA/GW-EVA fit more slowly in steps 51–200. Evaluating on the dev/val split at fixed step budgets still needs the `train.py` option.
+- **Step 4 is done** (11-20, `G1G2/results/control*/`): EVA prefers a lower learning rate in low resource (lr 2e-4: 90.87 vs 89.50 at 1e-3) and then trails LoRA by only 0.57; uniform ranks (ρ = 1) change nothing. Still open: the same learning-rate check for G5/G6 and G8.
+- **Step 7 is done.** eddy ran G8 (13 main + 5 low-resource runs, branch `eddy_G8`): generic-text calibration matches task-data EVA in accuracy, with subspace overlap 0.64–0.72.
 - **Step 3 is started.** G1 has seeds 5–9 on MRPC, RTE and low resource (11-20, `G1G2/results/seeds10/`); G3 and G5 still need theirs before the extra seeds can be paired. One G1 RTE seed collapsed to a single class, which also bears on step 6.
 - Every other item below is still open.
 
@@ -48,7 +50,7 @@ The code already exists. `G5G6/src/gw_eva/calibrate.py` computes the subspace ov
 
 The RTE intervals are ±3–4 points wide and can only detect large effects. Extend G1, G3 and G5 to **10 seeds** on MRPC, RTE and low-resource (seeds 5–9, same lr). About 45 runs, around 2 GPU hours in total.
 
-### 4. Why EVA hurts in low resource (owner: yinchenyu)
+### 4. Why EVA hurts in low resource (owner: yinchenyu) — done 2026-11-20 (run by yxh)
 
 Per-epoch validation accuracy, mean of 5 seeds:
 
@@ -88,7 +90,7 @@ RTE seed 1 predicts one class for all 277 examples. Check whether this comes fro
 
 ## P2: side threads, if time allows
 
-### 7. G8 EVA-generic (owner: to be assigned; zjz suggested, since G9 already has the pipeline)
+### 7. G8 EVA-generic — done 2026-11-20 (eddy)
 
 Same code as G9 with the calibration set swapped to 1,024 wikitext-103 segments (length 128). Reuse G3's learning rates, 13 main runs. Together with G9 this completes the H4 line.
 
