@@ -6,3 +6,4 @@ jobs/queues/
 gweva-data/
 .venv*/
 cache_g3*/
+cache_g8/

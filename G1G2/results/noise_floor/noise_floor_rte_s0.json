@@ -1,0 +1,603 @@
+{
+ "task": "rte",
+ "seed": 0,
+ "calib_size": 1024,
+ "sample_a": "G3's calibration set (perm[:1024])",
+ "sample_b": "perm[1024:2048], disjoint from A",
+ "overlap_mean": 0.9582541081046928,
+ "random_overlap_mean": 0.009915025697943024,
+ "rank_l1": 22,
+ "by_type": {
+  "q": 0.9682743459410323,
+  "k": 0.9682743459410323,
+  "v": 0.9682743459410323,
+  "o": 0.9159667927187006,
+  "ffn_in": 0.9657308565459175,
+  "ffn_out": 0.9630039615404417
+ },
+ "layers": {
+  "roberta.encoder.layer.0.attention.output.dense": {
+   "type": "o",
+   "depth": 0,
+   "rank_a": 11,
+   "rank_b": 12,
+   "overlap": 0.954557247815184,
+   "random_overlap": 0.015136683934501629
+  },
+  "roberta.encoder.layer.0.attention.self.key": {
+   "type": "k",
+   "depth": 0,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9780151068066556,
+   "random_overlap": 0.012668677365529483
+  },
+  "roberta.encoder.layer.0.attention.self.query": {
+   "type": "q",
+   "depth": 0,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9780151068066556,
+   "random_overlap": 0.012117540556917083
+  },
+  "roberta.encoder.layer.0.attention.self.value": {
+   "type": "v",
+   "depth": 0,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9780151068066556,
+   "random_overlap": 0.012867701883211069
+  },
+  "roberta.encoder.layer.0.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 0,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9750589433213107,
+   "random_overlap": 0.014567650602732012
+  },
+  "roberta.encoder.layer.0.output.dense": {
+   "type": "ffn_out",
+   "depth": 0,
+   "rank_a": 7,
+   "rank_b": 6,
+   "overlap": 0.9725221033376443,
+   "random_overlap": 0.0020284851224779514
+  },
+  "roberta.encoder.layer.1.attention.output.dense": {
+   "type": "o",
+   "depth": 1,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9569854699385288,
+   "random_overlap": 0.015045961754905416
+  },
+  "roberta.encoder.layer.1.attention.self.key": {
+   "type": "k",
+   "depth": 1,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9813869433101341,
+   "random_overlap": 0.0123368994762987
+  },
+  "roberta.encoder.layer.1.attention.self.query": {
+   "type": "q",
+   "depth": 1,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9813869433101341,
+   "random_overlap": 0.012992029970859381
+  },
+  "roberta.encoder.layer.1.attention.self.value": {
+   "type": "v",
+   "depth": 1,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9813869433101341,
+   "random_overlap": 0.013950004811638524
+  },
+  "roberta.encoder.layer.1.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 1,
+   "rank_a": 11,
+   "rank_b": 11,
+   "overlap": 0.9825093483667245,
+   "random_overlap": 0.013821338768797198
+  },
+  "roberta.encoder.layer.1.output.dense": {
+   "type": "ffn_out",
+   "depth": 1,
+   "rank_a": 6,
+   "rank_b": 6,
+   "overlap": 0.9620923877620927,
+   "random_overlap": 0.0012465006836859813
+  },
+  "roberta.encoder.layer.10.attention.output.dense": {
+   "type": "o",
+   "depth": 10,
+   "rank_a": 4,
+   "rank_b": 4,
+   "overlap": 0.7556896628098929,
+   "random_overlap": 0.00721313636907071
+  },
+  "roberta.encoder.layer.10.attention.self.key": {
+   "type": "k",
+   "depth": 10,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.97730597454738,
+   "random_overlap": 0.008098622755745456
+  },
+  "roberta.encoder.layer.10.attention.self.query": {
+   "type": "q",
+   "depth": 10,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.97730597454738,
+   "random_overlap": 0.008991728600805349
+  },
+  "roberta.encoder.layer.10.attention.self.value": {
+   "type": "v",
+   "depth": 10,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.97730597454738,
+   "random_overlap": 0.010221011297811793
+  },
+  "roberta.encoder.layer.10.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 10,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9633569910788585,
+   "random_overlap": 0.013047741667243765
+  },
+  "roberta.encoder.layer.10.output.dense": {
+   "type": "ffn_out",
+   "depth": 10,
+   "rank_a": 1,
+   "rank_b": 1,
+   "overlap": 0.999878366945044,
+   "random_overlap": 0.00013058438230253603
+  },
+  "roberta.encoder.layer.11.attention.output.dense": {
+   "type": "o",
+   "depth": 11,
+   "rank_a": 4,
+   "rank_b": 3,
+   "overlap": 0.9120630373968105,
+   "random_overlap": 0.005882731123197781
+  },
+  "roberta.encoder.layer.11.attention.self.key": {
+   "type": "k",
+   "depth": 11,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9695008190568742,
+   "random_overlap": 0.012360668484063938
+  },
+  "roberta.encoder.layer.11.attention.self.query": {
+   "type": "q",
+   "depth": 11,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9695008190568742,
+   "random_overlap": 0.012143014109374795
+  },
+  "roberta.encoder.layer.11.attention.self.value": {
+   "type": "v",
+   "depth": 11,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9695008190568742,
+   "random_overlap": 0.012651773967620777
+  },
+  "roberta.encoder.layer.11.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 11,
+   "rank_a": 9,
+   "rank_b": 9,
+   "overlap": 0.977992133392871,
+   "random_overlap": 0.013141213224037905
+  },
+  "roberta.encoder.layer.11.output.dense": {
+   "type": "ffn_out",
+   "depth": 11,
+   "rank_a": 7,
+   "rank_b": 7,
+   "overlap": 0.9054307847317914,
+   "random_overlap": 0.0021841118552324425
+  },
+  "roberta.encoder.layer.2.attention.output.dense": {
+   "type": "o",
+   "depth": 2,
+   "rank_a": 7,
+   "rank_b": 8,
+   "overlap": 0.966028521043187,
+   "random_overlap": 0.012190239076572646
+  },
+  "roberta.encoder.layer.2.attention.self.key": {
+   "type": "k",
+   "depth": 2,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9790879948725933,
+   "random_overlap": 0.01781528883270191
+  },
+  "roberta.encoder.layer.2.attention.self.query": {
+   "type": "q",
+   "depth": 2,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9790879948725933,
+   "random_overlap": 0.014963436462005158
+  },
+  "roberta.encoder.layer.2.attention.self.value": {
+   "type": "v",
+   "depth": 2,
+   "rank_a": 10,
+   "rank_b": 10,
+   "overlap": 0.9790879948725933,
+   "random_overlap": 0.013248275016079997
+  },
+  "roberta.encoder.layer.2.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 2,
+   "rank_a": 10,
+   "rank_b": 11,
+   "overlap": 0.9782999480898299,
+   "random_overlap": 0.01437607171709033
+  },
+  "roberta.encoder.layer.2.output.dense": {
+   "type": "ffn_out",
+   "depth": 2,
+   "rank_a": 5,
+   "rank_b": 5,
+   "overlap": 0.9080658254662739,
+   "random_overlap": 0.0017322616061780695
+  },
+  "roberta.encoder.layer.3.attention.output.dense": {
+   "type": "o",
+   "depth": 3,
+   "rank_a": 9,
+   "rank_b": 10,
+   "overlap": 0.9409861416170315,
+   "random_overlap": 0.012191938369705745
+  },
+  "roberta.encoder.layer.3.attention.self.key": {
+   "type": "k",
+   "depth": 3,
+   "rank_a": 9,
+   "rank_b": 10,
+   "overlap": 0.9615360282541153,
+   "random_overlap": 0.012010380675437561
+  },
+  "roberta.encoder.layer.3.attention.self.query": {
+   "type": "q",
+   "depth": 3,
+   "rank_a": 9,
+   "rank_b": 10,
+   "overlap": 0.9615360282541153,
+   "random_overlap": 0.014471500694534031
+  },
+  "roberta.encoder.layer.3.attention.self.value": {
+   "type": "v",
+   "depth": 3,
+   "rank_a": 9,
+   "rank_b": 10,
+   "overlap": 0.9615360282541153,
+   "random_overlap": 0.012123385272739292
+  },
+  "roberta.encoder.layer.3.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 3,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9398811604950552,
+   "random_overlap": 0.009580943605384433
+  },
+  "roberta.encoder.layer.3.output.dense": {
+   "type": "ffn_out",
+   "depth": 3,
+   "rank_a": 5,
+   "rank_b": 5,
+   "overlap": 0.9594203682835791,
+   "random_overlap": 0.0014560736131095909
+  },
+  "roberta.encoder.layer.4.attention.output.dense": {
+   "type": "o",
+   "depth": 4,
+   "rank_a": 10,
+   "rank_b": 11,
+   "overlap": 0.9415606688984148,
+   "random_overlap": 0.011902864165184674
+  },
+  "roberta.encoder.layer.4.attention.self.key": {
+   "type": "k",
+   "depth": 4,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9342953928628774,
+   "random_overlap": 0.011739263326664532
+  },
+  "roberta.encoder.layer.4.attention.self.query": {
+   "type": "q",
+   "depth": 4,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9342953928628774,
+   "random_overlap": 0.01207452281155946
+  },
+  "roberta.encoder.layer.4.attention.self.value": {
+   "type": "v",
+   "depth": 4,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9342953928628774,
+   "random_overlap": 0.011907215704525551
+  },
+  "roberta.encoder.layer.4.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 4,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9535700884899767,
+   "random_overlap": 0.010099449391144964
+  },
+  "roberta.encoder.layer.4.output.dense": {
+   "type": "ffn_out",
+   "depth": 4,
+   "rank_a": 5,
+   "rank_b": 5,
+   "overlap": 0.9589066815716869,
+   "random_overlap": 0.0010755324550354088
+  },
+  "roberta.encoder.layer.5.attention.output.dense": {
+   "type": "o",
+   "depth": 5,
+   "rank_a": 11,
+   "rank_b": 12,
+   "overlap": 0.8504802873597138,
+   "random_overlap": 0.017344683476390187
+  },
+  "roberta.encoder.layer.5.attention.self.key": {
+   "type": "k",
+   "depth": 5,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9523343654573462,
+   "random_overlap": 0.010229931741409865
+  },
+  "roberta.encoder.layer.5.attention.self.query": {
+   "type": "q",
+   "depth": 5,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9523343654573462,
+   "random_overlap": 0.010563404296790459
+  },
+  "roberta.encoder.layer.5.attention.self.value": {
+   "type": "v",
+   "depth": 5,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9523343654573462,
+   "random_overlap": 0.010240213779513401
+  },
+  "roberta.encoder.layer.5.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 5,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.967083803463225,
+   "random_overlap": 0.00828414027077736
+  },
+  "roberta.encoder.layer.5.output.dense": {
+   "type": "ffn_out",
+   "depth": 5,
+   "rank_a": 5,
+   "rank_b": 5,
+   "overlap": 0.9633184862541126,
+   "random_overlap": 0.0013422938060655006
+  },
+  "roberta.encoder.layer.6.attention.output.dense": {
+   "type": "o",
+   "depth": 6,
+   "rank_a": 11,
+   "rank_b": 10,
+   "overlap": 0.9107602415035696,
+   "random_overlap": 0.013997774869210795
+  },
+  "roberta.encoder.layer.6.attention.self.key": {
+   "type": "k",
+   "depth": 6,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9799232402117694,
+   "random_overlap": 0.009340407147638763
+  },
+  "roberta.encoder.layer.6.attention.self.query": {
+   "type": "q",
+   "depth": 6,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9799232402117694,
+   "random_overlap": 0.012286070721783185
+  },
+  "roberta.encoder.layer.6.attention.self.value": {
+   "type": "v",
+   "depth": 6,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9799232402117694,
+   "random_overlap": 0.007042686170868228
+  },
+  "roberta.encoder.layer.6.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 6,
+   "rank_a": 8,
+   "rank_b": 9,
+   "overlap": 0.9549760757454335,
+   "random_overlap": 0.010155714746587451
+  },
+  "roberta.encoder.layer.6.output.dense": {
+   "type": "ffn_out",
+   "depth": 6,
+   "rank_a": 4,
+   "rank_b": 4,
+   "overlap": 0.9418628659645405,
+   "random_overlap": 0.002788361237791792
+  },
+  "roberta.encoder.layer.7.attention.output.dense": {
+   "type": "o",
+   "depth": 7,
+   "rank_a": 9,
+   "rank_b": 9,
+   "overlap": 0.9287387284860722,
+   "random_overlap": 0.009781769773997829
+  },
+  "roberta.encoder.layer.7.attention.self.key": {
+   "type": "k",
+   "depth": 7,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9639462742832174,
+   "random_overlap": 0.011277462182630617
+  },
+  "roberta.encoder.layer.7.attention.self.query": {
+   "type": "q",
+   "depth": 7,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9639462742832174,
+   "random_overlap": 0.009712663872350188
+  },
+  "roberta.encoder.layer.7.attention.self.value": {
+   "type": "v",
+   "depth": 7,
+   "rank_a": 8,
+   "rank_b": 8,
+   "overlap": 0.9639462742832174,
+   "random_overlap": 0.009814080126854925
+  },
+  "roberta.encoder.layer.7.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 7,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9796493674868958,
+   "random_overlap": 0.009858191149351967
+  },
+  "roberta.encoder.layer.7.output.dense": {
+   "type": "ffn_out",
+   "depth": 7,
+   "rank_a": 2,
+   "rank_b": 2,
+   "overlap": 0.984683244446839,
+   "random_overlap": 0.00026170690008654897
+  },
+  "roberta.encoder.layer.8.attention.output.dense": {
+   "type": "o",
+   "depth": 8,
+   "rank_a": 4,
+   "rank_b": 3,
+   "overlap": 0.9421810644236593,
+   "random_overlap": 0.006359802381773097
+  },
+  "roberta.encoder.layer.8.attention.self.key": {
+   "type": "k",
+   "depth": 8,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9752163280976119,
+   "random_overlap": 0.010482399407213489
+  },
+  "roberta.encoder.layer.8.attention.self.query": {
+   "type": "q",
+   "depth": 8,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9752163280976119,
+   "random_overlap": 0.014780583784469982
+  },
+  "roberta.encoder.layer.8.attention.self.value": {
+   "type": "v",
+   "depth": 8,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9752163280976119,
+   "random_overlap": 0.012392909348128742
+  },
+  "roberta.encoder.layer.8.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 8,
+   "rank_a": 9,
+   "rank_b": 9,
+   "overlap": 0.9634834547626282,
+   "random_overlap": 0.015295923768109933
+  },
+  "roberta.encoder.layer.8.output.dense": {
+   "type": "ffn_out",
+   "depth": 8,
+   "rank_a": 1,
+   "rank_b": 1,
+   "overlap": 0.9999170638297222,
+   "random_overlap": 2.0654034401088006e-05
+  },
+  "roberta.encoder.layer.9.attention.output.dense": {
+   "type": "o",
+   "depth": 9,
+   "rank_a": 2,
+   "rank_b": 3,
+   "overlap": 0.9315704413323435,
+   "random_overlap": 0.0014652082015284055
+  },
+  "roberta.encoder.layer.9.attention.self.key": {
+   "type": "k",
+   "depth": 9,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9667436835318142,
+   "random_overlap": 0.011345162253149249
+  },
+  "roberta.encoder.layer.9.attention.self.query": {
+   "type": "q",
+   "depth": 9,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9667436835318142,
+   "random_overlap": 0.011485826542501586
+  },
+  "roberta.encoder.layer.9.attention.self.value": {
+   "type": "v",
+   "depth": 9,
+   "rank_a": 9,
+   "rank_b": 8,
+   "overlap": 0.9667436835318142,
+   "random_overlap": 0.012390015089200526
+  },
+  "roberta.encoder.layer.9.intermediate.dense": {
+   "type": "ffn_in",
+   "depth": 9,
+   "rank_a": 9,
+   "rank_b": 9,
+   "overlap": 0.9529089638582017,
+   "random_overlap": 0.01293218089361415
+  },
+  "roberta.encoder.layer.9.output.dense": {
+   "type": "ffn_out",
+   "depth": 9,
+   "rank_a": 1,
+   "rank_b": 1,
+   "overlap": 0.9999493598919749,
+   "random_overlap": 0.0008051727139935298
+  }
+ },
+ "time_s": 23.69209337234497,
+ "gpu": "NVIDIA L40S",
+ "versions": {
+  "torch": "2.11.0+cu128",
+  "transformers": "5.21.0",
+  "peft": "0.21.2"
+ }
+}

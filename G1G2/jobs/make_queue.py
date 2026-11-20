@@ -3,6 +3,7 @@
     python jobs/make_queue.py lowres_ctl   # extra: G1 low-resource at lr 1e-3 -> results/control/lowres/
     python jobs/make_queue.py seeds10      # extra: G1 seeds 5-9 on MRPC, RTE, low resource -> results/seeds10/
     python jobs/make_queue.py g3_lowres_ctl  # extra: why EVA hurts in low resource (G3 runs, needs ../G3G4/src)
+    python jobs/make_queue.py quick4       # extra: H4 noise floor, G8 low-resource lr, G3 seeds 5-9 (needs ../G3G4, ../G8)
 
     python jobs/make_queue.py pilot | tune | main | lowres
 main and lowres read the tuning results to pick each (group, task)'s learning rate.
@@ -75,6 +76,19 @@ def main(stage):
         lines = [g3(1e-3, s, 2, "results/control_repro", "cache_g3") for s in LOWRES_SEEDS]
         lines += [g3(lr, s, 2, "results/control", "cache_g3") for lr in (5e-4, 2e-4) for s in LOWRES_SEEDS]
         lines += [g3(1e-3, s, 1, "results/control_rho1", "cache_g3_rho1") for s in LOWRES_SEEDS]
+    elif stage == "quick4":
+        # noise floor for the H4 overlaps: EVA vs EVA on two disjoint calibration samples (no training, one process)
+        lines = ["python jobs/eva_noise_floor.py --out results/noise_floor > logs/noise_floor.log 2>&1"]
+        # G8 low resource at the learning rates that helped G3 (G8's own unchanged train.py, needs wikitext103 data)
+        lines += [f"python ../G8/src/train.py --stage lowres --task sst2 --lr {lr:g} --seed {s} --out results/control_g8"
+                  f" --cache cache_g8 > logs/lowres_G8_sst2_lr{lr:g}_s{s}.log 2>&1" for lr in (5e-4, 2e-4) for s in LOWRES_SEEDS]
+        # G3 seeds 5-9 at G3's shared learning rates, to pair with G1's extra seeds (results/seeds10/)
+        g3_lr = {"mrpc": 2e-4, "rte": 2e-4}   # G3G4/results/chosen_lr.json
+        lines += [f"python jobs/g3_control.py --rho 2 --stage main --task {t} --group G3 --lr {g3_lr[t]:g} --seed {s}"
+                  f" --out results/seeds10 --cache cache_g3 > logs/main_G3_{t}_lr{g3_lr[t]:g}_s{s}.log 2>&1"
+                  for t in ("mrpc", "rte") for s in EXTRA_SEEDS]
+        lines += [f"python jobs/g3_control.py --rho 2 --stage lowres --task sst2 --group G3 --lr 1e-3 --seed {s}"
+                  f" --out results/seeds10 --cache cache_g3 > logs/lowres_G3_sst2_lr0.001_s{s}.log 2>&1" for s in EXTRA_SEEDS]
     else:
         sys.exit(f"unknown stage {stage}")
     os.makedirs("jobs/queues", exist_ok=True)
