@@ -1,0 +1,722 @@
+{
+  "overall": {
+    "eva_gw": 0.5858351407573544,
+    "gw_gw": 0.880230365132449,
+    "mean_angle_deg": 38.81600318160701,
+    "pearson": 0.13497923648571672,
+    "pearson_n": 864,
+    "eva_eva": null,
+    "eva_eva_n": 0
+  },
+  "tasks": {
+    "rte": {
+      "overall": {
+        "eva_gw": 0.49319871640967944,
+        "gw_gw": 0.8658876108442215,
+        "mean_angle_deg": 45.96067865962731,
+        "pearson": 0.14299657492880596,
+        "pearson_n": 216,
+        "eva_eva": null,
+        "eva_eva_n": 0
+      },
+      "layer_types": {
+        "q": {
+          "eva_gw": 0.5012926729074277,
+          "gw_gw": 0.8416880240790753,
+          "mean_angle_deg": 45.57846872875151,
+          "pearson": 0.08066138360103448,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "k": {
+          "eva_gw": 0.5466529395523959,
+          "gw_gw": 0.8628676727614448,
+          "mean_angle_deg": 41.84904043945811,
+          "pearson": 0.25934603729997757,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "v": {
+          "eva_gw": 0.5315215624779124,
+          "gw_gw": 0.8907832337975625,
+          "mean_angle_deg": 42.861026499050766,
+          "pearson": 0.38029504734478836,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "o": {
+          "eva_gw": 0.4355005501371509,
+          "gw_gw": 0.8218132495103077,
+          "mean_angle_deg": 50.90235560326738,
+          "pearson": -0.08889145112235755,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN input": {
+          "eva_gw": 0.49589506337752726,
+          "gw_gw": 0.8855817171461127,
+          "mean_angle_deg": 45.709512948665974,
+          "pearson": 0.2740886711588586,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN output": {
+          "eva_gw": 0.44832951000566235,
+          "gw_gw": 0.892591767770826,
+          "mean_angle_deg": 48.86366773857016,
+          "pearson": -0.04752023870946559,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      },
+      "blocks": {
+        "0": {
+          "eva_gw": 0.48155453619986427,
+          "gw_gw": 0.6070546607518631,
+          "mean_angle_deg": 47.394592334356055,
+          "pearson": -0.0029083153329315164,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "1": {
+          "eva_gw": 0.4170392228769889,
+          "gw_gw": 0.6409913595469477,
+          "mean_angle_deg": 51.82642678613866,
+          "pearson": 0.027540130838594835,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "2": {
+          "eva_gw": 0.3713821614522242,
+          "gw_gw": 0.7513098792689412,
+          "mean_angle_deg": 55.26031232506194,
+          "pearson": 0.030201166519718655,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "3": {
+          "eva_gw": 0.4704570278833253,
+          "gw_gw": 0.8749024389787821,
+          "mean_angle_deg": 48.241726837553905,
+          "pearson": 0.051795872143434785,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "4": {
+          "eva_gw": 0.5496129805393329,
+          "gw_gw": 0.9368087944543769,
+          "mean_angle_deg": 42.391572872300856,
+          "pearson": 0.08533774661699255,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "5": {
+          "eva_gw": 0.5395976779601954,
+          "gw_gw": 0.906286247462488,
+          "mean_angle_deg": 42.53727619947162,
+          "pearson": 0.16129723497051807,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "6": {
+          "eva_gw": 0.5530801146034463,
+          "gw_gw": 0.925061765379597,
+          "mean_angle_deg": 41.36190354396299,
+          "pearson": 0.2070292181572526,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "7": {
+          "eva_gw": 0.5746635410962041,
+          "gw_gw": 0.9358692441560044,
+          "mean_angle_deg": 39.28484913810996,
+          "pearson": 0.19460021785499942,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "8": {
+          "eva_gw": 0.5800439457693849,
+          "gw_gw": 0.9565330593983595,
+          "mean_angle_deg": 38.80433149842788,
+          "pearson": 0.1866326422463168,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "9": {
+          "eva_gw": 0.5909463594439079,
+          "gw_gw": 0.9827915722260449,
+          "mean_angle_deg": 37.860817721241204,
+          "pearson": 0.266126978595024,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "10": {
+          "eva_gw": 0.5247033442419128,
+          "gw_gw": 0.971053838651835,
+          "mean_angle_deg": 42.83506192496407,
+          "pearson": 0.3289907125458658,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "11": {
+          "eva_gw": 0.26530368484936623,
+          "gw_gw": 0.9019884698554184,
+          "mean_angle_deg": 63.729272733938636,
+          "pearson": 0.17931529398988574,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      }
+    },
+    "mrpc": {
+      "overall": {
+        "eva_gw": 0.5221438781632193,
+        "gw_gw": 0.8676735124013266,
+        "mean_angle_deg": 43.768971268817054,
+        "pearson": 0.09650504800941924,
+        "pearson_n": 216,
+        "eva_eva": null,
+        "eva_eva_n": 0
+      },
+      "layer_types": {
+        "q": {
+          "eva_gw": 0.5135942212892577,
+          "gw_gw": 0.8617697813360524,
+          "mean_angle_deg": 44.989167840829964,
+          "pearson": 0.033880518610432224,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "k": {
+          "eva_gw": 0.5547872842392343,
+          "gw_gw": 0.8668220810459112,
+          "mean_angle_deg": 41.10200786819879,
+          "pearson": 0.1678004920930699,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "v": {
+          "eva_gw": 0.5889622400985902,
+          "gw_gw": 0.8880442712602876,
+          "mean_angle_deg": 38.43273708538758,
+          "pearson": 0.3105489326884281,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "o": {
+          "eva_gw": 0.4504001132256193,
+          "gw_gw": 0.823343764360195,
+          "mean_angle_deg": 49.764462068602874,
+          "pearson": -0.08819014778153732,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN input": {
+          "eva_gw": 0.5336107938139024,
+          "gw_gw": 0.8833227292388833,
+          "mean_angle_deg": 42.99919555992209,
+          "pearson": 0.19701046380513124,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN output": {
+          "eva_gw": 0.4915086163127119,
+          "gw_gw": 0.8827384471666301,
+          "mean_angle_deg": 45.326257189961034,
+          "pearson": -0.04201997135900867,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      },
+      "blocks": {
+        "0": {
+          "eva_gw": 0.5433544488430978,
+          "gw_gw": 0.633126817618502,
+          "mean_angle_deg": 42.59153942217883,
+          "pearson": -0.005248356236316847,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "1": {
+          "eva_gw": 0.5213838146995877,
+          "gw_gw": 0.6964717673456503,
+          "mean_angle_deg": 44.46845445574717,
+          "pearson": 0.030996168788097824,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "2": {
+          "eva_gw": 0.46808388636036113,
+          "gw_gw": 0.7292320085810571,
+          "mean_angle_deg": 48.35897852204044,
+          "pearson": 0.04515056656677643,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "3": {
+          "eva_gw": 0.5019418981885616,
+          "gw_gw": 0.7994310290689641,
+          "mean_angle_deg": 45.705529899433245,
+          "pearson": 0.05211087183730569,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "4": {
+          "eva_gw": 0.5496087138299026,
+          "gw_gw": 0.8890019943372036,
+          "mean_angle_deg": 42.077136824876156,
+          "pearson": 0.07478962653166127,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "5": {
+          "eva_gw": 0.580192856171671,
+          "gw_gw": 0.9608625618450484,
+          "mean_angle_deg": 39.26202699369132,
+          "pearson": 0.11497132222316893,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "6": {
+          "eva_gw": 0.5696160502404972,
+          "gw_gw": 0.9533417304527401,
+          "mean_angle_deg": 40.294338381071185,
+          "pearson": 0.15196069161073394,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "7": {
+          "eva_gw": 0.5690510904496096,
+          "gw_gw": 0.9798924903516728,
+          "mean_angle_deg": 39.569593562390146,
+          "pearson": 0.07709760173401994,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "8": {
+          "eva_gw": 0.5893600518349859,
+          "gw_gw": 0.9821838206122236,
+          "mean_angle_deg": 38.62989639170876,
+          "pearson": 0.07339084856860063,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "9": {
+          "eva_gw": 0.5887036493894375,
+          "gw_gw": 0.9571605014875525,
+          "mean_angle_deg": 38.26275482367156,
+          "pearson": 0.18141164504432045,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "10": {
+          "eva_gw": 0.5238905337056874,
+          "gw_gw": 0.9673640923525868,
+          "mean_angle_deg": 42.39454410426608,
+          "pearson": 0.23130145452875167,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "11": {
+          "eva_gw": 0.26053954424523207,
+          "gw_gw": 0.8640133347627174,
+          "mean_angle_deg": 63.61286184472978,
+          "pearson": 0.130128134915911,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      }
+    },
+    "sst2": {
+      "overall": {
+        "eva_gw": 0.6396693506334182,
+        "gw_gw": 0.8402609231825069,
+        "mean_angle_deg": 34.77390732856322,
+        "pearson": 0.11308904996837511,
+        "pearson_n": 216,
+        "eva_eva": null,
+        "eva_eva_n": 0
+      },
+      "layer_types": {
+        "q": {
+          "eva_gw": 0.5799281475288117,
+          "gw_gw": 0.7418103025447439,
+          "mean_angle_deg": 39.727222405363875,
+          "pearson": 0.026599976365805748,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "k": {
+          "eva_gw": 0.7359155258741574,
+          "gw_gw": 0.8562536871620738,
+          "mean_angle_deg": 27.07538657787827,
+          "pearson": 0.20922190836465776,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "v": {
+          "eva_gw": 0.7195049514796705,
+          "gw_gw": 0.9027688935707885,
+          "mean_angle_deg": 28.237250415944867,
+          "pearson": 0.41264156525061757,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "o": {
+          "eva_gw": 0.5415676231784786,
+          "gw_gw": 0.8280509014193053,
+          "mean_angle_deg": 43.29601989137636,
+          "pearson": -0.21353577057752632,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN input": {
+          "eva_gw": 0.6352506189985424,
+          "gw_gw": 0.825536701678061,
+          "mean_angle_deg": 34.632705092235796,
+          "pearson": 0.28934366875721573,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN output": {
+          "eva_gw": 0.6258492367408488,
+          "gw_gw": 0.887145052720069,
+          "mean_angle_deg": 35.67485958858013,
+          "pearson": -0.04573704835051986,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      },
+      "blocks": {
+        "0": {
+          "eva_gw": 0.5414543296920301,
+          "gw_gw": 0.6485220322382793,
+          "mean_angle_deg": 42.08821217639873,
+          "pearson": -0.0076354466564523635,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "1": {
+          "eva_gw": 0.560527073919256,
+          "gw_gw": 0.6775296417651302,
+          "mean_angle_deg": 40.74755059282083,
+          "pearson": 0.04674737630068144,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "2": {
+          "eva_gw": 0.6171911059025754,
+          "gw_gw": 0.7479847921175433,
+          "mean_angle_deg": 36.76567103409003,
+          "pearson": 0.03307042990172813,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "3": {
+          "eva_gw": 0.7106529551691276,
+          "gw_gw": 0.8449783461691617,
+          "mean_angle_deg": 29.372804401869626,
+          "pearson": 0.06657070459849179,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "4": {
+          "eva_gw": 0.7386967479808838,
+          "gw_gw": 0.8976224272593105,
+          "mean_angle_deg": 27.23925311040133,
+          "pearson": 0.07460675389659133,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "5": {
+          "eva_gw": 0.7575483526150619,
+          "gw_gw": 0.9031869132892356,
+          "mean_angle_deg": 25.844385841830693,
+          "pearson": 0.10141315187737787,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "6": {
+          "eva_gw": 0.7321306792306299,
+          "gw_gw": 0.918823031855633,
+          "mean_angle_deg": 27.623282648776023,
+          "pearson": 0.1136741306889657,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "7": {
+          "eva_gw": 0.7199440115540915,
+          "gw_gw": 0.9144429030436201,
+          "mean_angle_deg": 28.373813796763415,
+          "pearson": 0.09802829157501636,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "8": {
+          "eva_gw": 0.7069370697131467,
+          "gw_gw": 0.9217997901413584,
+          "mean_angle_deg": 30.41643039168735,
+          "pearson": 0.18601028132553102,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "9": {
+          "eva_gw": 0.6512408350133042,
+          "gw_gw": 0.9106693445034147,
+          "mean_angle_deg": 33.88092910512206,
+          "pearson": 0.1978231060308011,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "10": {
+          "eva_gw": 0.6141630876993575,
+          "gw_gw": 0.9408440602391428,
+          "mean_angle_deg": 36.496152361384866,
+          "pearson": 0.30099543536105783,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "11": {
+          "eva_gw": 0.3255459591115543,
+          "gw_gw": 0.7567277955682535,
+          "mean_angle_deg": 58.43840248161364,
+          "pearson": 0.14576438472071107,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      }
+    },
+    "sst2_lowres": {
+      "overall": {
+        "eva_gw": 0.6883286178231006,
+        "gw_gw": 0.9470994141017409,
+        "mean_angle_deg": 30.76045546942044,
+        "pearson": 0.18732627303626656,
+        "pearson_n": 216,
+        "eva_eva": null,
+        "eva_eva_n": 0
+      },
+      "layer_types": {
+        "q": {
+          "eva_gw": 0.6525203724892036,
+          "gw_gw": 0.9045164904316374,
+          "mean_angle_deg": 33.65378791762956,
+          "pearson": 0.07379235263281375,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "k": {
+          "eva_gw": 0.7946111283546021,
+          "gw_gw": 0.9561795293175464,
+          "mean_angle_deg": 22.20405750626176,
+          "pearson": 0.38762575570118357,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "v": {
+          "eva_gw": 0.7756544032774249,
+          "gw_gw": 0.9710891680810004,
+          "mean_angle_deg": 23.50370184423833,
+          "pearson": 0.6257947978299367,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "o": {
+          "eva_gw": 0.5690099003538409,
+          "gw_gw": 0.9315806161865533,
+          "mean_angle_deg": 41.347124993474615,
+          "pearson": -0.331475713836612,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN input": {
+          "eva_gw": 0.7005809461522884,
+          "gw_gw": 0.9561923570402874,
+          "mean_angle_deg": 29.40462671274904,
+          "pearson": 0.4463766016740371,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "FFN output": {
+          "eva_gw": 0.6375949563112436,
+          "gw_gw": 0.9630383235534203,
+          "mean_angle_deg": 34.449433842169334,
+          "pearson": -0.0781561557837597,
+          "pearson_n": 36,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      },
+      "blocks": {
+        "0": {
+          "eva_gw": 0.7878172301449691,
+          "gw_gw": 0.9126458973382481,
+          "mean_angle_deg": 23.499070053969746,
+          "pearson": -0.028905098784348993,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "1": {
+          "eva_gw": 0.7510468068053311,
+          "gw_gw": 0.9275351893632402,
+          "mean_angle_deg": 26.19374334805549,
+          "pearson": 0.08044748599466864,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "2": {
+          "eva_gw": 0.7330498504820335,
+          "gw_gw": 0.9330912546655034,
+          "mean_angle_deg": 27.04922030687898,
+          "pearson": 0.07221217185171612,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "3": {
+          "eva_gw": 0.7627188031023299,
+          "gw_gw": 0.9683514694308589,
+          "mean_angle_deg": 25.00284833897425,
+          "pearson": 0.1227141311253279,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "4": {
+          "eva_gw": 0.7406049353853976,
+          "gw_gw": 0.9743688397619843,
+          "mean_angle_deg": 26.6411748375857,
+          "pearson": 0.12157843615165399,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "5": {
+          "eva_gw": 0.7608638004882866,
+          "gw_gw": 0.9688216901099611,
+          "mean_angle_deg": 25.316450869416983,
+          "pearson": 0.1853876517345934,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "6": {
+          "eva_gw": 0.7244942138316527,
+          "gw_gw": 0.9743621026280458,
+          "mean_angle_deg": 28.02598327232409,
+          "pearson": 0.25146773519897886,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "7": {
+          "eva_gw": 0.7162434026432007,
+          "gw_gw": 0.9601708781448022,
+          "mean_angle_deg": 28.461576341129348,
+          "pearson": 0.16146164650055012,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "8": {
+          "eva_gw": 0.7173603221855699,
+          "gw_gw": 0.9535142119825386,
+          "mean_angle_deg": 29.097469588939095,
+          "pearson": 0.29934871845897976,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "9": {
+          "eva_gw": 0.6518776346709053,
+          "gw_gw": 0.9657944355364597,
+          "mean_angle_deg": 33.3069486495724,
+          "pearson": 0.3263753745438744,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "10": {
+          "eva_gw": 0.5945364682719014,
+          "gw_gw": 0.9762308077962238,
+          "mean_angle_deg": 37.836610747331,
+          "pearson": 0.4426268575718939,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        },
+        "11": {
+          "eva_gw": 0.3193299458656293,
+          "gw_gw": 0.8503061924630243,
+          "mean_angle_deg": 58.69436927886818,
+          "pearson": 0.21320016608731077,
+          "pearson_n": 18,
+          "eva_eva": null,
+          "eva_eva_n": 0
+        }
+      }
+    }
+  },
+  "completed": 12
+}
