@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- standalone-only above -->
+<title>GW-EVA Results</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of numbered result sections under a sticky section bar; each section = claim, then the chart that backs it, then its table. */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --ink: #111820;
+  --ink-2: #47505c;
+  --muted: #7a828e;
+  --line: #e1e4e9;
+  --axis: #c2c8d0;
+  --accent: #1d3b63;
+  --accent-soft: #e6ecf5;
+  --s-base: #5f6873;
+  --s-eva: #2a78d6;
+  --s-gw: #eb6834;
+  --s-ga: #1baf7a;
+  --good: #0a7d0a;
+  --bad: #c23434;
+  --warn-bg: #fff4dc;
+  --font-display: "Instrument Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1013; --surface: #151a1f; --ink: #eef1f4; --ink-2: #b8c0ca; --muted: #8b939d;
+    --line: #262d34; --axis: #3b444e; --accent: #a9c3e6; --accent-soft: #1d2836;
+    --s-base: #aab3be; --s-eva: #3987e5; --s-gw: #d95926; --s-ga: #199e70;
+    --good: #3fbf3f; --bad: #e66767; --warn-bg: #2d2516; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1013; --surface: #151a1f; --ink: #eef1f4; --ink-2: #b8c0ca; --muted: #8b939d;
+  --line: #262d34; --axis: #3b444e; --accent: #a9c3e6; --accent-soft: #1d2836;
+  --s-base: #aab3be; --s-eva: #3987e5; --s-gw: #d95926; --s-ga: #199e70;
+  --good: #3fbf3f; --bad: #e66767; --warn-bg: #2d2516; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--font-body); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(28px, 4.4vw, 44px); line-height: 1.1; font-weight: 700; }
+h2 { font-size: 24px; line-height: 1.2; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 70ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+a { color: var(--accent); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* header + section bar */
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-block: 40px 28px; display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1.4 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--ink-2); font-size: 17px; max-width: 72ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; color: var(--ink-2); font-size: 13px; }
+.facts b { color: var(--ink); font-weight: 600; }
+nav.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+nav.bar .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; scrollbar-width: none; }
+nav.bar a { flex: none; text-decoration: none; color: var(--ink-2); font-size: 13px; padding: 5px 10px; border-radius: 6px; white-space: nowrap; }
+nav.bar a:hover, nav.bar a:focus-visible { background: var(--accent-soft); color: var(--ink); outline: none; }
+
+main .wrap { display: grid; gap: 56px; padding-block: 40px 64px; }
+section { display: grid; gap: 18px; scroll-margin-top: 64px; min-width: 0; }
+.sec-head { display: grid; gap: 8px; }
+.sec-head .idx { font: 500 12px var(--font-mono); color: var(--muted); }
+.claim { color: var(--ink-2); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; align-content: start; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 18px; }
+.panel-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
+.panel-title .sub { color: var(--muted); font-size: 12.5px; }
+.note { color: var(--muted); font-size: 12.5px; max-width: 80ch; }
+
+/* hypotheses */
+.hyps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.hyp { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 8px; align-content: start; }
+.hyp .h-id { font: 600 13px var(--font-mono); color: var(--muted); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 12px var(--font-body); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); width: fit-content; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.no { color: var(--bad); }
+.pill.yes { color: var(--good); }
+.pill.open { color: var(--muted); }
+.hyp p { font-size: 13.5px; color: var(--ink-2); }
+
+/* controls */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; padding: 2px; background: var(--bg); flex-wrap: wrap; }
+.seg button { font: 500 13px var(--font-body); color: var(--ink-2); background: transparent; border: 0; padding: 5px 11px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.seg button:focus-visible, .chip:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ctl-label { font-size: 12.5px; color: var(--muted); margin-right: 6px; }
+select { font: 13px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 12.5px var(--font-body); color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px 3px 7px; cursor: pointer; }
+.chip[aria-pressed="false"] { opacity: 0.55; }
+.chip[aria-pressed="false"] svg { filter: grayscale(1); }
+.chip[disabled] { display: none; }
+
+/* legend */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* charts */
+.chart { width: 100%; min-width: 0; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--ink-2); font: 11.5px var(--font-body); }
+.chart .tick text { fill: var(--muted); font: 11px var(--font-mono); }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .axis-line { stroke: var(--axis); stroke-width: 1; }
+.chart .zero { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .lab-strong { fill: var(--ink); font-weight: 600; }
+.chart .hit { fill: transparent; cursor: default; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; font-variant-numeric: tabular-nums; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell, th.wrap-cell { white-space: normal; min-width: 220px; text-align: left; }
+thead th { font: 600 12px var(--font-body); color: var(--muted); background: var(--bg); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.best { font-weight: 700; }
+td.sig { color: var(--ink); font-weight: 600; }
+td.dim { color: var(--muted); }
+.swatch { display: inline-flex; align-items: center; gap: 7px; }
+
+.findings { display: grid; gap: 12px; counter-reset: f; padding: 0; margin: 0; list-style: none; }
+.findings li { display: grid; grid-template-columns: 28px 1fr; gap: 4px; }
+.findings li::before { counter-increment: f; content: counter(f); font: 600 13px var(--font-mono); color: var(--muted); padding-top: 2px; }
+.findings b { color: var(--ink); }
+.findings p { color: var(--ink-2); }
+
+.callout { background: var(--warn-bg); border-radius: var(--r); padding: 12px 14px; font-size: 13.5px; color: var(--ink-2); }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; overflow-x: auto; font: 12.5px/1.6 var(--font-mono); margin: 0; }
+footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
+
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 12px/1.5 var(--font-body); box-shadow: 0 6px 24px rgba(0,0,0,0.14); max-width: 300px; }
+#tip b { font-weight: 600; }
+#tip .m { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-2); }
+@media (prefers-reduced-motion: no-preference) { nav.bar a, .chip, .seg button { transition: background-color .15s, opacity .15s; } }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow">AI6103 Deep Learning · Group project · Option 2</div>
+    <h1>GW-EVA: does a gradient-weighted LoRA initialisation help?</h1>
+    <p class="lede">We replace EVA's activation covariance with the gradient-weighted covariance Σ<sub>g</sub> = E[‖g‖² x xᵀ], derived by dropping an independence assumption from EVA's optimality proof, and test it against eight other initialisations of LoRA's A matrix on RoBERTa-base. Every number below comes from the run files in the repository and is paired by seed.</p>
+    <div class="facts" id="facts"></div>
+  </div>
+</header>
+<nav class="bar" aria-label="Sections">
+  <div class="wrap">
+    <a href="#verdict">Verdict</a><a href="#groups">Groups</a><a href="#main">Main results</a><a href="#lowres">Low resource</a><a href="#checks">Same-GPU checks</a><a href="#early">Early training</a><a href="#gradient">Step-0 gradient</a><a href="#h4">Subspaces (H4)</a><a href="#setup">Setup &amp; caveats</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<section id="verdict">
+  <div class="sec-head"><span class="idx">01</span><h2>Verdict on the four hypotheses</h2>
+    <p class="claim">Data-aware initialisations change the step-0 gradient by an order of magnitude and speed up early fitting, but at a tuned learning rate none of them beats plain LoRA on final accuracy. GW-EVA is no better than EVA.</p></div>
+  <div class="hyps">
+    <div class="hyp"><span class="h-id">H1</span><h3>Σ<sub>g</sub>'s subspace differs from EVA's</h3><span class="pill open">Not measured</span><p>The overlap between the GW-EVA and EVA subspaces, with a same-task noise floor, is the one open diagnostic.</p></div>
+    <div class="hyp"><span class="h-id">H2</span><h3>GW-EVA beats EVA</h3><span class="pill no">Not supported</span><p id="h2-text">Only the step-0 gradient is larger. Early loss is equal or slightly higher and every accuracy interval contains 0.</p></div>
+    <div class="hyp"><span class="h-id">H3</span><h3>Allocating ranks by parameter cost matters</h3><span class="pill no">Not supported</span><p>G4 − G3 and G6 − G5 are non-significant on full data; EVA with uniform ranks matches the original in low resource.</p></div>
+    <div class="hyp"><span class="h-id">H4</span><h3>EVA's subspace is task-specific</h3><span class="pill yes">Answered</span><p>The subspace is task-specific (overlap 0.49–0.72 against a same-task floor of 0.92–0.95), but accuracy does not depend on it.</p></div>
+  </div>
+  <ol class="findings">
+    <li><p><b>No initialisation beats plain LoRA on full data at its tuned learning rate.</b> G2–G6, G8 and G9 are within ±1.9 points of G1 on every task, and every interval contains 0.</p></li>
+    <li><p><b>Data-aware inits fit faster early, but the gain does not last.</b> On MRPC at equal lr, EVA, GW-EVA and LoRA-GA have a lower training loss for the first 500 steps and the same final F1.</p></li>
+    <li><p><b>Larger initial gradients do not buy accuracy.</b> ‖∂L/∂B‖ at step 0 grows 7–37× from LoRA to the data-aware inits while accuracy stays flat. The magnitude part matches theory: G2/G1 measures 1.78–1.83 against the predicted √3 ≈ 1.73.</p></li>
+    <li><p><b>With 1k examples, EVA trails LoRA only because of the learning rate.</b> At the shared rule G3 − G1 = −2.64; with both at lr 2e-4 on one GPU the gap is −0.57 and not significant.</p></li>
+    <li><p><b>EVA helps on RTE when the learning rate is held fixed</b> (+2.13 at lr 2e-4, 10 seeds), a robustness effect: LoRA needs a higher lr there, which occasionally collapses.</p></li>
+    <li><p><b>GPU numerics shift single seeds by up to 2.5 points.</b> Cross-GPU seed pairing produced an MRPC "edge" for EVA that disappears on one GPU.</p></li>
+  </ol>
+</section>
+
+<section id="groups">
+  <div class="sec-head"><span class="idx">02</span><h2>Nine initialisations under one protocol</h2>
+    <p class="claim">A 2×2 core (direction × rank allocation, G3–G6) plus reference groups. Colour marks the family of A's direction; the marker shape tells groups within a family apart and is used in every chart.</p></div>
+  <div class="tbl-wrap"><table id="tbl-groups"></table></div>
+</section>
+
+<section id="main">
+  <div class="sec-head"><span class="idx">03</span><h2>Main results: paired against a baseline</h2>
+    <p class="claim">Official validation after the last epoch. SST-2 has 3 seeds, MRPC and RTE 5, low resource 5 (G5/G6: 3). Differences are same-seed, in percentage points, with a t-based 95% interval.</p></div>
+  <div class="controls">
+    <div><span class="ctl-label">Task</span><span class="seg" id="seg-task"></span></div>
+    <div><label class="ctl-label" for="sel-base">Baseline</label><select id="sel-base"><option value="G1">G1 LoRA</option><option value="G3">G3 EVA</option><option value="G5">G5 GW-EVA</option></select></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="panel-title"><h3 id="forest-title">Difference from baseline</h3><span class="sub">dot = mean, bar = 95% CI, ✱ = excludes 0</span></div><div class="chart" id="ch-forest"></div></div>
+    <div class="panel"><div class="panel-title"><h3 id="strip-title">Every seed</h3><span class="sub">dots = seeds, tick = mean</span></div><div class="chart" id="ch-strip"></div></div>
+  </div>
+  <div class="tbl-wrap"><table id="tbl-main"></table></div>
+  <p class="note">Bold = highest mean in the row. RTE runs that predict a single class score exactly 52.71 or 47.29; G7 (LoRA-GA) has one such seed and two near chance.</p>
+</section>
+
+<section id="lowres">
+  <div class="sec-head"><span class="idx">04</span><h2>Low resource: the gap is the learning rate</h2>
+    <p class="claim">The shared rule reuses each group's full-SST-2 learning rate, which gave EVA its worst setting. LoRA is flat across the grid; EVA and EVA-generic improve as the learning rate drops.</p></div>
+  <div class="panel">
+    <div class="panel-title"><h3>Low-resource SST-2 (1,000 examples): accuracy vs learning rate</h3><span class="sub">mean ± 95% CI over 5 seeds (G5/G6: 3); all on L40S except the hollow G3 point (A40)</span></div>
+    <div class="legend" id="lg-lowres"></div>
+    <div class="chart" id="ch-lowres"></div>
+  </div>
+  <div class="tbl-wrap"><table id="tbl-lowres"></table></div>
+  <p class="note">Rows other than the shared ones are controls outside the shared protocol (<code>G1G2/jobs/g3_control.py</code> reruns G3G4's unchanged code). ρ = 1 removes EVA's rank redistribution.</p>
+</section>
+
+<section id="checks">
+  <div class="sec-head"><span class="idx">05</span><h2>Same-GPU and equal-learning-rate checks</h2>
+    <p class="claim">Rerunning G3 on the GPU that G1 used, and putting both at the same learning rate, changes two conclusions: the MRPC edge disappears and an RTE advantage appears.</p></div>
+  <div class="tbl-wrap"><table id="tbl-checks"></table></div>
+  <div class="callout">G3 and G4 ran on A40; G1, G2, G7, G8 and every control on L40S. The same code, versions and seeds move single low-resource seeds by up to 2.5 points between the two GPUs (bf16 numerics already differ at the first step), so only same-GPU pairs decide a finding.</div>
+</section>
+
+<section id="early">
+  <div class="sec-head"><span class="idx">06</span><h2>Early training: faster start, same finish</h2>
+    <p class="claim">Mean training-batch loss over the first 500 LoRA steps, averaged over seeds and over bins of 10 steps. Only groups at the same learning rate are shown together.</p></div>
+  <div class="panel">
+    <div class="controls">
+      <div><span class="ctl-label">Setting</span><span class="seg" id="seg-early"></span></div>
+      <div><label class="ctl-label" for="sel-ref">Δ against</label><select id="sel-ref"></select></div>
+    </div>
+    <div class="chips" id="chips-early" aria-label="Groups shown"></div>
+    <div class="chart" id="ch-early"></div>
+  </div>
+  <div class="tbl-wrap"><table id="tbl-early"></table></div>
+  <p class="note">Δ = paired difference in mean loss over each step window (negative = fits faster than the reference). Batch order is shared by G1–G4 and G8, but not by G5/G6.</p>
+</section>
+
+<section id="gradient">
+  <div class="sec-head"><span class="idx">07</span><h2>A larger step-0 gradient does not buy accuracy</h2>
+    <p class="claim">At B = 0, E‖∂L/∂B‖² = Tr(AΣ<sub>g</sub>Aᵀ). The data-aware inits raise this by 7–37×; accuracy stays inside a one-point band.</p></div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title"><h3>Step-0 ‖∂L/∂B‖ vs accuracy</h3><div class="seg" id="seg-grad"></div></div>
+      <div class="chart" id="ch-grad"></div>
+      <p class="note">Log x-axis; mean over the shared seeds.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><h3>Theory check: same-seed gradient ratios</h3></div>
+      <p class="note">For directions independent of Σ<sub>g</sub>, the gradient scales with A's row norm: G2 (orthonormal rows) over G1 (Kaiming-uniform, row norm 1/√3) should give √3 ≈ 1.73. G3 / G2 isolates EVA's directions at equal row norm; G5 / G3 is GW-EVA's directions over EVA's. Mean (range) over seeds.</p>
+      <div class="tbl-wrap"><table id="tbl-ratio"></table></div>
+    </div>
+  </div>
+</section>
+
+<section id="h4">
+  <div class="sec-head"><span class="idx">08</span><h2>Subspaces (H4): calibration data moves the subspace, not the accuracy</h2>
+    <p class="claim">Overlap between each initial lora_A and same-task, same-seed EVA (mean squared cosine of the principal angles; 1 = identical). The floor is EVA on a disjoint sample of the same task.</p></div>
+  <div class="panel">
+    <div class="panel-title"><h3>Overlap with same-task EVA (G3), mean over 72 layers</h3><span class="sub">dots = seeds, tick = mean</span></div>
+    <div class="legend" id="lg-h4"></div>
+    <div class="chart" id="ch-h4"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><h3>By layer: type × depth</h3><span class="sub">mean over 13 task-seed pairs, rebuilt on one GPU by <code>G1G2/jobs/h4_layers.py</code></span></div>
+    <div class="chart" id="ch-heat"></div>
+    <p class="note">Colour = overlap with G3 (0.3–1.0); columns are layers 0–11. q, k and v read the same input, so their EVA subspaces coincide. The attention output projection (o) has the lowest overlap everywhere, and layers 3–7 the lowest for G8 and G9.</p>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="sec-head"><span class="idx">09</span><h2>Setup and caveats</h2></div>
+  <div class="grid2">
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Shared setting</th><th class="wrap-cell">Value</th></tr></thead>
+      <tbody>
+        <tr><td>Model / tasks</td><td class="wrap-cell">RoBERTa-base; GLUE SST-2, MRPC, RTE; 1,000-example SST-2 subset</td></tr>
+        <tr><td>LoRA</td><td class="wrap-cell">All 72 attention and FFN linear layers; budget 1,327,104 parameters (uniform r = 8); α/r = 1; dropout 0</td></tr>
+        <tr><td>Learning-rate grid</td><td class="wrap-cell">2e-4, 5e-4, 1e-3, tuned on a 10% dev split with seed 0</td></tr>
+        <tr><td>Epochs</td><td class="wrap-cell">SST-2 3, MRPC 10, RTE 10, low resource 20</td></tr>
+        <tr><td>Optimisation</td><td class="wrap-cell">Batch 32, max length 128, 6% warm-up, weight decay 0, bf16, no clipping; 1-epoch head warm-up at 1e-3</td></tr>
+        <tr><td>EVA calibration</td><td class="wrap-cell">1,024 training examples, batch 16; τ = 0.99, ρ = 2</td></tr>
+        <tr><td>Reporting</td><td class="wrap-cell">Last epoch on the official validation set; same-seed paired t-intervals</td></tr>
+      </tbody></table></div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Caveat</th><th class="wrap-cell">Effect</th></tr></thead>
+      <tbody>
+        <tr><td>GPU</td><td class="wrap-cell">G3/G4 on A40, G9 on a laptop RTX 3050 Ti, G5/G6 not recorded, the rest on L40S. Cross-GPU seed pairing is unreliable.</td></tr>
+        <tr><td>Parameter count</td><td class="wrap-cell">EVA's rank-count budget leaves G3, G8, G9 3.8–6.4% under budget; G5 ranges −3.6% to +2.4%. Reported, not corrected.</td></tr>
+        <tr><td>Multiple comparisons</td><td class="wrap-cell">About 20 comparisons per table, uncorrected. Read single borderline intervals (e.g. G8 − G3 on MRPC) with care.</td></tr>
+        <tr><td>Low-resource seeds</td><td class="wrap-cell">G5/G6 have 3 seeds and no learning-rate controls.</td></tr>
+        <tr><td>Early loss</td><td class="wrap-cell">Training-batch loss, not a validation metric; G5/G6 use their own batch order.</td></tr>
+      </tbody></table></div>
+  </div>
+  <pre>python summary/collect.py          # tables.md and all_runs.csv
+python summary/figures.py          # report figures (PNG + PDF)
+python summary/site/build_data.py  # data.js for this page</pre>
+</section>
+
+</div>
+</main>
+<footer><div class="wrap">
+  <span id="foot-count"></span>
+  <span>Source: <code>summary/site/data.js</code>, generated from the run JSONs in G1G2/ … G9/ on branch <code>summary</code>. Paired intervals use the t distribution with n − 1 degrees of freedom, as in <code>summary/collect.py</code>.</span>
+</div></footer>
+<div id="tip" hidden></div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+"use strict";
+const D = window.GWEVA_DATA;
+const NS = "http://www.w3.org/2000/svg";
+
+/* ---------- metadata ---------- */
+const GROUPS = {
+  G1: { name: "LoRA", fam: "base", shape: "circle", dir: "Kaiming-uniform random", alloc: "Uniform r = 8", role: "Baseline" },
+  G2: { name: "Magnitude control", fam: "base", shape: "square", dir: "Random orthonormal, row norms matched to EVA", alloc: "Uniform r = 8", role: "Direction or magnitude?" },
+  G3: { name: "EVA", fam: "eva", shape: "circle", dir: "Activation covariance (task data)", alloc: "By rank count, ρ = 2", role: "Reproduce the paper" },
+  G4: { name: "EVA + cost allocation", fam: "eva", shape: "square", dir: "Activation covariance (task data)", alloc: "By parameter cost", role: "Allocation only (H3)" },
+  G5: { name: "GW-EVA", fam: "gw", shape: "circle", dir: "Σ_g = E[‖g‖² x xᵀ]", alloc: "By rank count", role: "Direction only (H2)" },
+  G6: { name: "GW-EVA + cost allocation", fam: "gw", shape: "square", dir: "Σ_g = E[‖g‖² x xᵀ]", alloc: "By parameter cost", role: "Direction and allocation" },
+  G7: { name: "LoRA-GA", fam: "ga", shape: "circle", dir: "SVD of the mean gradient (B ≠ 0, W rewritten)", alloc: "Uniform r = 8", role: "Mean-gradient term" },
+  G8: { name: "EVA-generic", fam: "eva", shape: "triangle", dir: "Activation covariance on wikitext-103", alloc: "By rank count", role: "Task-agnostic end (H4)" },
+  G9: { name: "EVA-cross", fam: "eva", shape: "diamond", dir: "Activation covariance from another task", alloc: "By rank count", role: "Another task's inputs (H4)" },
+};
+const FAM = { base: "--s-base", eva: "--s-eva", gw: "--s-gw", ga: "--s-ga" };
+const FAM_NAME = { base: "Random directions", eva: "Activation covariance (EVA)", gw: "Gradient-weighted (GW-EVA)", ga: "Mean gradient (LoRA-GA)" };
+const DASH = { circle: "", square: "6 4", triangle: "2 3", diamond: "9 3 2 3" };
+const ORDER = ["G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9"];
+const SETTINGS = { sst2: "SST-2", mrpc: "MRPC", rte: "RTE", lowres: "Low-res SST-2" };
+const METRIC = { sst2: "accuracy", mrpc: "F1", rte: "accuracy", lowres: "accuracy" };
+const T95 = [NaN, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.160, 2.145, 2.131, 2.120, 2.110, 2.101, 2.093];
+
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const color = (g) => css(FAM[GROUPS[g].fam]);
+const fmt = (x, d = 2) => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(d);
+const fmtCI = (r, d = 2) => `${fmt(r.m, d)} [${fmt(r.lo, d)}, ${fmt(r.hi, d)}]`;
+const lrs = (x) => ({ 0.0002: "2e-4", 0.0005: "5e-4", 0.001: "1e-3" }[x] || String(x));
+
+/* ---------- statistics (same as summary/collect.py) ---------- */
+function meanSd(xs) {
+  const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : NaN;
+  return { n, m, sd };
+}
+function ci(xs) {
+  const s = meanSd(xs), h = s.n > 1 ? T95[s.n - 1] * s.sd / Math.sqrt(s.n) : NaN;
+  return { ...s, lo: s.m - h, hi: s.m + h, sig: s.m - h > 0 || s.m + h < 0 };
+}
+function paired(a, b) {
+  const seeds = Object.keys(a).filter((s) => s in b);
+  if (seeds.length < 2) return null;
+  return ci(seeds.map((s) => b[s] - a[s]));
+}
+/* seed -> value for runs matching the filter; later kinds override earlier ones for the same seed */
+function sel(g, s, { lr, kinds = ["shared"], gpu, rho, field = "v" } = {}) {
+  const out = {};
+  for (const k of kinds) for (const r of D.runs)
+    if (r.g === g && r.s === s && r.kind === k && (lr === undefined || r.lr === lr) && (gpu === undefined || r.gpu === gpu) && (rho === undefined || r.rho === rho))
+      out[r.seed] = r[field];
+  return out;
+}
+const vals = (o) => Object.values(o);
+const sharedLr = (g, s) => { const r = D.runs.find((r) => r.g === g && r.s === s && r.kind === "shared"); return r ? r.lr : undefined; };
+
+/* ---------- svg helpers ---------- */
+function el(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) if (v !== undefined && v !== null) e.setAttribute(k, v);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function txt(parent, x, y, s, attrs = {}) { const t = el("text", { x, y, ...attrs }, parent); t.textContent = s; return t; }
+function scale(d0, d1, r0, r1) { const f = (x) => r0 + (x - d0) / (d1 - d0) * (r1 - r0); f.d = [d0, d1]; return f; }
+function niceTicks(lo, hi, n = 5) {
+  const span = hi - lo, step0 = span / n, mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((s) => span / s <= n) || 10 * mag;
+  const out = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+function mark(parent, shape, x, y, size, fill, stroke, sw = 1.5) {
+  const r = size / 2;
+  let e;
+  if (shape === "square") e = el("rect", { x: x - r * 0.88, y: y - r * 0.88, width: r * 1.76, height: r * 1.76, rx: 1.5 }, parent);
+  else if (shape === "triangle") e = el("path", { d: `M${x},${y - r * 1.1} L${x + r * 1.05},${y + r * 0.8} L${x - r * 1.05},${y + r * 0.8} Z` }, parent);
+  else if (shape === "diamond") e = el("path", { d: `M${x},${y - r * 1.2} L${x + r * 1.05},${y} L${x},${y + r * 1.2} L${x - r * 1.05},${y} Z` }, parent);
+  else e = el("circle", { cx: x, cy: y, r }, parent);
+  e.setAttribute("fill", fill); e.setAttribute("stroke", stroke); e.setAttribute("stroke-width", sw);
+  return e;
+}
+function swatch(g, size = 12) {
+  const s = el("svg", { width: size + 4, height: size + 4, viewBox: `0 0 ${size + 4} ${size + 4}`, "aria-hidden": "true" });
+  mark(s, GROUPS[g].shape, (size + 4) / 2, (size + 4) / 2, size - 1, color(g), css("--surface"), 1);
+  return s;
+}
+function svgFor(container, w, h) {
+  container.innerHTML = "";
+  return el("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, role: "img" }, container);
+}
+function xAxis(svg, x, y0, y1, ticks, label, fmtTick = (v) => v) {
+  const g = el("g", { class: "grid" }, svg);
+  for (const t of ticks) el("line", { x1: x(t), x2: x(t), y1: y0, y2: y1 }, g);
+  const tg = el("g", { class: "tick" }, svg);
+  for (const t of ticks) txt(tg, x(t), y1 + 16, fmtTick(t), { "text-anchor": "middle" });
+  if (label) txt(svg, (x.r0 ?? (x(ticks[0]) + x(ticks[ticks.length - 1])) / 2), y1 + 34, label, { "text-anchor": "middle" });
+}
+function yAxis(svg, y, x0, x1, ticks, fmtTick = (v) => v) {
+  const g = el("g", { class: "grid" }, svg);
+  for (const t of ticks) el("line", { x1: x0, x2: x1, y1: y(t), y2: y(t) }, g);
+  const tg = el("g", { class: "tick" }, svg);
+  for (const t of ticks) txt(tg, x0 - 6, y(t) + 4, fmtTick(t), { "text-anchor": "end" });
+}
+
+/* ---------- tooltip ---------- */
+const tip = document.getElementById("tip");
+function showTip(ev, html) {
+  tip.innerHTML = html; tip.hidden = false;
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = ev.clientY - h - pad;
+  tip.style.left = Math.max(8, x) + "px"; tip.style.top = Math.max(8, y) + "px";
+}
+function hideTip() { tip.hidden = true; }
+function hover(node, html) {
+  node.addEventListener("pointermove", (e) => showTip(e, typeof html === "function" ? html() : html));
+  node.addEventListener("pointerleave", hideTip);
+}
+const width = (c) => Math.max(300, Math.floor(c.getBoundingClientRect().width));
+
+/* ---------- state ---------- */
+const state = { task: "sst2", base: "G1", early: "mrpc|0.0002", ref: "G1", shown: null, grad: "mrpc" };
+try { const s = JSON.parse(localStorage.getItem("gweva-ui") || "{}"); Object.assign(state, s, { shown: null }); } catch (e) {}
+function save() { try { localStorage.setItem("gweva-ui", JSON.stringify({ task: state.task, base: state.base, early: state.early, grad: state.grad })); } catch (e) {} }
+
+function segmented(host, options, get, set) {
+  host.innerHTML = "";
+  for (const [val, label] of options) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", String(get() === val));
+    b.addEventListener("click", () => { set(val); save(); for (const x of host.children) x.setAttribute("aria-pressed", String(x === b)); });
+    host.appendChild(b);
+  }
+}
+
+/* ---------- header facts ---------- */
+(function facts() {
+  const shared = D.runs.filter((r) => r.kind === "shared").length;
+  const extra = D.runs.length - shared;
+  document.getElementById("facts").innerHTML =
+    `<span><b>9</b> initialisations</span><span><b>${shared}</b> shared-protocol runs</span><span><b>${extra}</b> control and extra-seed runs</span><span><b>RoBERTa-base</b> · SST-2, MRPC, RTE, 1k SST-2</span><span>LoRA budget <b>1,327,104</b> parameters</span>`;
+  document.getElementById("foot-count").textContent = `${D.runs.length} runs in total; tuning and pilot runs are not included.`;
+})();
+
+/* ---------- groups table ---------- */
+(function groupsTable() {
+  const t = document.getElementById("tbl-groups");
+  t.innerHTML = `<thead><tr><th>Group</th><th class="wrap-cell">Direction of A</th><th class="wrap-cell">Rank allocation</th><th class="wrap-cell">Question</th><th>lr SST-2 / MRPC / RTE</th></tr></thead>`;
+  const tb = document.createElement("tbody");
+  for (const g of ORDER) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    const sw = document.createElement("span"); sw.className = "swatch"; sw.appendChild(swatch(g));
+    sw.append(`${g} ${GROUPS[g].name}`); td.appendChild(sw); tr.appendChild(td);
+    tr.insertAdjacentHTML("beforeend", `<td class="wrap-cell">${GROUPS[g].dir}</td><td class="wrap-cell">${GROUPS[g].alloc}</td><td class="wrap-cell">${GROUPS[g].role}</td><td class="mono">${["sst2", "mrpc", "rte"].map((s) => lrs(sharedLr(g, s))).join(" / ")}</td>`);
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+})();
+
+/* ---------- 03 main results ---------- */
+function groupsIn(s) { return ORDER.filter((g) => vals(sel(g, s)).length); }
+
+function drawForest() {
+  const c = document.getElementById("ch-forest"), W = width(c), s = state.task, base = state.base;
+  const a = sel(base, s);
+  const rows = groupsIn(s).filter((g) => g !== base).map((g) => ({ g, r: paired(a, sel(g, s)) })).filter((x) => x.r);
+  document.getElementById("forest-title").textContent = `${SETTINGS[s]}: group − ${base} (${METRIC[s]}, points)`;
+  if (!vals(a).length) { c.innerHTML = `<p class="note">${base} has no ${SETTINGS[s]} runs.</p>`; return; }
+  const showNums = W >= 600, showNames = W >= 420, L = showNames ? 150 : 40, R = showNums ? 150 : 14, top = 8, rowH = 32, H = top + rows.length * rowH + 44;
+  const lo = Math.min(-1, ...rows.map((x) => x.r.lo)), hi = Math.max(1, ...rows.map((x) => x.r.hi));
+  const ticks = niceTicks(lo, hi, W < 420 ? 4 : 6);
+  const x = scale(Math.min(lo, ticks[0]), Math.max(hi, ticks[ticks.length - 1]), L, W - R);
+  const svg = svgFor(c, W, H);
+  xAxis(svg, x, top, top + rows.length * rowH, ticks, null, (v) => (v > 0 ? "+" : "") + v);
+  el("line", { x1: x(0), x2: x(0), y1: top, y2: top + rows.length * rowH, class: "zero" }, svg);
+  rows.forEach(({ g, r }, i) => {
+    const y = top + i * rowH + rowH / 2, col = color(g);
+    txt(svg, 8, y + 4, g, { class: "lab-strong" });
+    if (showNames) txt(svg, 30, y + 4, GROUPS[g].name.replace(" + cost allocation", " + cost"), { "font-size": 11 });
+    el("line", { x1: x(r.lo), x2: x(r.hi), y1: y, y2: y, stroke: col, "stroke-width": 2, "stroke-linecap": "round" }, svg);
+    mark(svg, GROUPS[g].shape, x(r.m), y, 10, r.sig ? col : css("--surface"), r.sig ? css("--surface") : col, r.sig ? 2 : 2);
+    if (showNums) txt(svg, W - R + 10, y + 4, fmtCI(r) + (r.sig ? " ✱" : ""), { class: "mono" + (r.sig ? " lab-strong" : ""), "font-family": "JetBrains Mono, monospace", "font-size": 11 });
+    const hit = el("rect", { x: 0, y: y - rowH / 2, width: W, height: rowH, class: "hit" }, svg);
+    hover(hit, `<b>${g} − ${base}</b> · ${SETTINGS[s]}<br><span class="m">${fmtCI(r)} (n = ${r.n})</span><br>${r.sig ? "Interval excludes 0" : "Interval contains 0"}`);
+  });
+  txt(svg, (L + W - R) / 2, H - 6, `${g0(base)} better ←   → group better`, { "text-anchor": "middle", fill: css("--muted"), "font-size": 11 });
+}
+const g0 = (g) => g;
+
+function drawStrip() {
+  const c = document.getElementById("ch-strip"), W = width(c), s = state.task;
+  const gs = groupsIn(s);
+  document.getElementById("strip-title").textContent = `${SETTINGS[s]}: every seed (${METRIC[s]}, %)`;
+  const all = gs.flatMap((g) => vals(sel(g, s)));
+  const lo = Math.min(...all), hi = Math.max(...all), pad = (hi - lo) * 0.06 || 0.5;
+  const ticks = niceTicks(lo - pad, hi + pad, W < 420 ? 4 : 6);
+  const L = 44, R = 16, top = 8, rowH = 30, H = top + gs.length * rowH + 30;
+  const x = scale(Math.min(lo - pad, ticks[0]), Math.max(hi + pad, ticks[ticks.length - 1]), L, W - R);
+  const svg = svgFor(c, W, H);
+  xAxis(svg, x, top, top + gs.length * rowH, ticks, null);
+  gs.forEach((g, i) => {
+    const y = top + i * rowH + rowH / 2, col = color(g), d = sel(g, s), st = meanSd(vals(d));
+    txt(svg, 8, y + 4, g, { class: g === state.base ? "lab-strong" : "" });
+    el("line", { x1: x(st.m), x2: x(st.m), y1: y - 10, y2: y + 10, stroke: css("--ink"), "stroke-width": 2 }, svg);
+    Object.entries(d).forEach(([seed, v], j) => {
+      const yy = y + ((j % 3) - 1) * 5;
+      mark(svg, GROUPS[g].shape, x(v), yy, 9, col, css("--surface"), 1.5);
+      const hit = el("circle", { cx: x(v), cy: yy, r: 9, class: "hit" }, svg);
+      const single = s === "rte" && (Math.abs(v - 52.7076) < 0.01 || Math.abs(v - 47.2924) < 0.01);
+      hover(hit, `<b>${g} ${GROUPS[g].name}</b>, seed ${seed}<br><span class="m">${v.toFixed(2)}% ${METRIC[s]}</span>${single ? "<br>Predicts a single class" : ""}<br><span class="m">mean ${st.m.toFixed(2)} ± ${st.sd.toFixed(2)} (n = ${st.n})</span>`);
+    });
+  });
+}
+
+function mainTable() {
+  const t = document.getElementById("tbl-main");
+  const gs = ORDER;
+  let h = `<thead><tr><th>Task (metric)</th>${gs.map((g) => `<th>${g}</th>`).join("")}</tr></thead><tbody>`;
+  for (const s of ["sst2", "mrpc", "rte", "lowres"]) {
+    const cells = gs.map((g) => { const v = vals(sel(g, s)); return v.length ? meanSd(v) : null; });
+    const best = Math.max(...cells.filter(Boolean).map((c) => c.m));
+    h += `<tr><td>${SETTINGS[s]} (${METRIC[s]})</td>` + cells.map((c) => c ? `<td class="${c.m === best ? "best" : ""}">${c.m.toFixed(2)} ± ${c.sd.toFixed(2)}</td>` : `<td class="dim">–</td>`).join("") + "</tr>";
+  }
+  t.innerHTML = h + "</tbody>";
+}
+
+/* ---------- 04 low resource ---------- */
+const LR = [0.0002, 0.0005, 0.001];
+function lowresSeries() {
+  const L = { kinds: ["shared", "lr control", "L40S rerun"], gpu: "L40S" };
+  const ser = [
+    { g: "G1", label: "G1 LoRA", pts: LR.map((lr) => ({ lr, d: sel("G1", "lowres", { ...L, lr }) })) },
+    { g: "G3", label: "G3 EVA", pts: LR.map((lr) => ({ lr, d: sel("G3", "lowres", { ...L, lr, rho: 2 }) })) },
+    { g: "G8", label: "G8 EVA-generic", pts: LR.map((lr) => ({ lr, d: sel("G8", "lowres", { ...L, lr }) })) },
+  ];
+  const singles = [
+    { g: "G3", label: "G3 on A40 (shared run)", lr: 0.001, d: sel("G3", "lowres", { gpu: "A40" }), hollow: true },
+    { g: "G5", label: "G5 GW-EVA", lr: 0.001, d: sel("G5", "lowres") },
+    { g: "G6", label: "G6", lr: 0.0005, d: sel("G6", "lowres") },
+  ];
+  return { ser, singles };
+}
+function drawLowres() {
+  const c = document.getElementById("ch-lowres"), W = width(c), { ser, singles } = lowresSeries();
+  const pts = [...ser.flatMap((s) => s.pts.map((p) => ({ ...p, g: s.g }))), ...singles].map((p) => ({ ...p, c: ci(vals(p.d)) }));
+  const lo = Math.min(...pts.map((p) => p.c.lo)), hi = Math.max(...pts.map((p) => p.c.hi));
+  const L = 48, R = W < 480 ? 46 : 130, top = 12, H = Math.round(Math.min(420, Math.max(300, W * 0.45)));
+  const ticks = niceTicks(lo - 0.2, hi + 0.2, 6);
+  const y = scale(Math.min(lo - 0.2, ticks[0]), Math.max(hi + 0.2, ticks[ticks.length - 1]), H - 40, top);
+  const xi = scale(0, 2, L + 40, W - R - 30);
+  const xOf = (lr) => xi(LR.indexOf(lr));
+  const svg = svgFor(c, W, H);
+  yAxis(svg, y, L, W - R, ticks, (v) => v.toFixed(0));
+  const tg = el("g", { class: "tick" }, svg);
+  LR.forEach((lr, i) => txt(tg, xi(i), H - 16, "lr " + lrs(lr), { "text-anchor": "middle" }));
+  const offs = { G1: -8, G3: 0, G8: 8, G5: -28, G6: 16 };
+  for (const s of ser) {
+    const col = color(s.g), p = s.pts.map((q) => ({ x: xOf(q.lr) + offs[s.g], c: ci(vals(q.d)), lr: q.lr, d: q.d }));
+    el("path", { d: p.map((q, i) => `${i ? "L" : "M"}${q.x},${y(q.c.m)}`).join(" "), fill: "none", stroke: col, "stroke-width": 2, "stroke-dasharray": DASH[GROUPS[s.g].shape] }, svg);
+    for (const q of p) {
+      el("line", { x1: q.x, x2: q.x, y1: y(q.c.lo), y2: y(q.c.hi), stroke: col, "stroke-width": 1.5 }, svg);
+      mark(svg, GROUPS[s.g].shape, q.x, y(q.c.m), 10, col, css("--surface"), 2);
+      const hit = el("circle", { cx: q.x, cy: y(q.c.m), r: 12, class: "hit" }, svg);
+      hover(hit, `<b>${s.label}</b>, lr ${lrs(q.lr)}<br><span class="m">${q.c.m.toFixed(2)} ± ${q.c.sd.toFixed(2)} (n = ${q.c.n})<br>95% CI of mean [${q.c.lo.toFixed(2)}, ${q.c.hi.toFixed(2)}]</span>`);
+    }
+    const last = p[p.length - 1];
+    txt(svg, last.x + 16 + (s.g === "G1" ? 8 : 0), y(last.c.m) + 4, W < 480 ? s.g : s.label, { class: "lab-strong", fill: col });
+  }
+  for (const s of singles) {
+    const col = color(s.g), cc = ci(vals(s.d)), xx = xOf(s.lr) + (s.hollow ? -18 : offs[s.g]);
+    el("line", { x1: xx, x2: xx, y1: y(cc.lo), y2: y(cc.hi), stroke: col, "stroke-width": 1.5, "stroke-dasharray": s.hollow ? "2 2" : "" }, svg);
+    mark(svg, GROUPS[s.g].shape, xx, y(cc.m), 10, s.hollow ? css("--surface") : col, s.hollow ? col : css("--surface"), 2);
+    const hit = el("circle", { cx: xx, cy: y(cc.m), r: 12, class: "hit" }, svg);
+    hover(hit, `<b>${s.label}</b>, lr ${lrs(s.lr)}<br><span class="m">${cc.m.toFixed(2)} ± ${cc.sd.toFixed(2)} (n = ${cc.n})</span>`);
+    if (!s.hollow) txt(svg, xx + (s.g === "G5" ? -10 : 10), y(cc.m) + 4, s.g, { fill: col, "text-anchor": s.g === "G5" ? "end" : "start", "font-weight": 600 });
+  }
+  const lg = document.getElementById("lg-lowres"); lg.innerHTML = "";
+  for (const [g, l] of [["G1", "G1 LoRA"], ["G3", "G3 EVA"], ["G8", "G8 EVA-generic"], ["G5", "G5 GW-EVA"], ["G6", "G6 GW-EVA + cost"]]) {
+    const sp = document.createElement("span"); sp.appendChild(swatch(g)); sp.append(l); lg.appendChild(sp);
+  }
+}
+function lowresTable() {
+  const t = document.getElementById("tbl-lowres");
+  const g1 = (lr) => sel("G1", "lowres", { kinds: ["shared", "lr control"], lr, gpu: "L40S" });
+  const rows = [
+    ["G1 (shared)", "G1", 0.0005, null, "L40S", sel("G1", "lowres")],
+    ["G1", "G1", 0.0002, null, "L40S", sel("G1", "lowres", { kinds: ["lr control"], lr: 0.0002 })],
+    ["G1", "G1", 0.001, null, "L40S", sel("G1", "lowres", { kinds: ["lr control"], lr: 0.001 })],
+    ["G3 (shared)", "G3", 0.001, 2, "A40", sel("G3", "lowres")],
+    ["G3 rerun", "G3", 0.001, 2, "L40S", sel("G3", "lowres", { kinds: ["L40S rerun"] })],
+    ["G3, uniform ranks", "G3", 0.001, 1, "L40S", sel("G3", "lowres", { kinds: ["uniform ranks"] })],
+    ["G3", "G3", 0.0005, 2, "L40S", sel("G3", "lowres", { kinds: ["lr control"], lr: 0.0005 })],
+    ["G3", "G3", 0.0002, 2, "L40S", sel("G3", "lowres", { kinds: ["lr control"], lr: 0.0002 })],
+    ["G5 (shared)", "G5", 0.001, null, "n/r", sel("G5", "lowres")],
+    ["G6 (shared)", "G6", 0.0005, null, "n/r", sel("G6", "lowres")],
+    ["G8 (shared)", "G8", 0.001, null, "L40S", sel("G8", "lowres")],
+    ["G8", "G8", 0.0005, null, "L40S", sel("G8", "lowres", { kinds: ["lr control"], lr: 0.0005 })],
+    ["G8", "G8", 0.0002, null, "L40S", sel("G8", "lowres", { kinds: ["lr control"], lr: 0.0002 })],
+  ];
+  let h = `<thead><tr><th>Run</th><th>lr</th><th>ρ</th><th>GPU</th><th>Accuracy (%)</th><th>− G1 at the same lr</th></tr></thead><tbody>`;
+  for (const [lab, g, lr, rho, gpu, d] of rows) {
+    const st = meanSd(vals(d)), r = g === "G1" ? null : paired(g1(lr), d);
+    h += `<tr><td><span class="swatch">${swatch(g).outerHTML}${lab}</span></td><td class="mono">${lrs(lr)}</td><td>${rho ?? "–"}</td><td>${gpu}</td><td>${st.m.toFixed(2)} ± ${st.sd.toFixed(2)}</td>` +
+      `<td class="${r && r.sig ? "sig" : r ? "" : "dim"}">${r ? fmtCI(r) + (r.sig ? " ✱" : "") + ` (n = ${r.n})` : "–"}</td></tr>`;
+  }
+  t.innerHTML = h + "</tbody>";
+}
+
+/* ---------- 05 checks ---------- */
+function checksTable() {
+  const t = document.getElementById("tbl-checks");
+  const g1mrpc = sel("G1", "mrpc", { kinds: ["shared", "extra seeds"] });
+  const rows = [
+    ["G3 MRPC seeds 0–4: A40 (a) vs rerun on L40S (b)", sel("G3", "mrpc"), sel("G3", "mrpc", { kinds: ["L40S rerun"] }), "F1"],
+    ["MRPC, 15 seeds: G1 (a) vs G3 (b), G3 seeds 0–4 from A40", g1mrpc, sel("G3", "mrpc", { kinds: ["shared", "extra seeds"] }), "F1"],
+    ["MRPC, 15 seeds, all on L40S: G1 (a) vs G3 (b)", g1mrpc, sel("G3", "mrpc", { kinds: ["L40S rerun", "extra seeds"] }), "F1"],
+    ["RTE at equal lr 2e-4, 10 seeds: G1 (a) vs G3 (b)", sel("G1", "rte", { kinds: ["lr control"], lr: 0.0002 }), sel("G3", "rte", { kinds: ["shared", "extra seeds"] }), "acc"],
+    ["RTE at each group's tuned lr, 10 seeds: G1 5e-4 (a) vs G3 2e-4 (b)", sel("G1", "rte", { kinds: ["shared", "extra seeds"] }), sel("G3", "rte", { kinds: ["shared", "extra seeds"] }), "acc"],
+    ["Low resource at the shared rule, 10 seeds: G1 (a) vs G3 (b)", sel("G1", "lowres", { kinds: ["shared", "extra seeds"] }), sel("G3", "lowres", { kinds: ["shared", "extra seeds"] }), "acc"],
+    ["Low resource at equal lr 2e-4, L40S: G1 (a) vs G3 (b)", sel("G1", "lowres", { kinds: ["lr control"], lr: 0.0002 }), sel("G3", "lowres", { kinds: ["lr control"], lr: 0.0002 }), "acc"],
+  ];
+  let h = `<thead><tr><th class="wrap-cell">Check</th><th>a</th><th>b</th><th>b − a (95% CI)</th><th>n</th></tr></thead><tbody>`;
+  for (const [lab, a, b] of rows) {
+    const sa = meanSd(vals(a)), sb = meanSd(vals(b)), r = paired(a, b);
+    h += `<tr><td class="wrap-cell">${lab}</td><td>${sa.m.toFixed(2)} ± ${sa.sd.toFixed(2)}</td><td>${sb.m.toFixed(2)} ± ${sb.sd.toFixed(2)}</td><td class="${r.sig ? "sig" : ""}">${fmtCI(r)}${r.sig ? " ✱" : ""}</td><td>${r.n}</td></tr>`;
+  }
+  t.innerHTML = h + "</tbody>";
+}
+
+/* ---------- 06 early training ---------- */
+function earlyOptions() {
+  const opts = [];
+  for (const s of ["mrpc", "rte", "sst2", "lowres"]) for (const lr of LR) {
+    const gs = ORDER.filter((g) => Object.keys(earlyRuns(g, s, lr)).length >= 2);
+    if (gs.length >= 3) opts.push({ key: `${s}|${lr}`, s, lr, gs });
+  }
+  return opts;
+}
+function earlyRuns(g, s, lr) {
+  const shared = sel(g, s, { lr, field: "loss", gpu: g === "G3" ? "A40" : undefined });
+  if (Object.keys(shared).length) return shared;
+  return sel(g, s, { lr, field: "loss", kinds: ["lr control"] });
+}
+function earlyMean(d) { const cs = vals(d).filter(Boolean); return cs[0].map((_, i) => cs.reduce((a, c) => a + c[i], 0) / cs.length); }
+let EARLY = [];
+function setupEarly() {
+  EARLY = earlyOptions();
+  if (!EARLY.find((o) => o.key === state.early)) state.early = EARLY[0].key;
+  segmented(document.getElementById("seg-early"), EARLY.map((o) => [o.key, `${SETTINGS[o.s]} · lr ${lrs(o.lr)}`]), () => state.early, (v) => { state.early = v; state.shown = null; renderEarly(); });
+  document.getElementById("sel-ref").addEventListener("change", (e) => { state.ref = e.target.value; renderEarlyTable(); });
+}
+function renderEarly() {
+  const o = EARLY.find((x) => x.key === state.early);
+  if (!state.shown) state.shown = new Set(o.gs.filter((g) => ["G1", "G3", "G5", "G7", "G8"].includes(g)).slice(0, 4));
+  if (state.shown.size < 2) o.gs.slice(0, 3).forEach((g) => state.shown.add(g));
+  const chips = document.getElementById("chips-early"); chips.innerHTML = "";
+  for (const g of o.gs) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip";
+    b.setAttribute("aria-pressed", String(state.shown.has(g))); b.appendChild(swatch(g)); b.append(`${g} ${GROUPS[g].name}`);
+    b.addEventListener("click", () => { state.shown.has(g) ? state.shown.delete(g) : state.shown.add(g); renderEarly(); });
+    chips.appendChild(b);
+  }
+  const sr = document.getElementById("sel-ref");
+  sr.innerHTML = o.gs.map((g) => `<option value="${g}">${g} ${GROUPS[g].name}</option>`).join("");
+  if (!o.gs.includes(state.ref)) state.ref = o.gs.includes("G1") ? "G1" : o.gs.includes("G3") ? "G3" : o.gs[0];
+  sr.value = state.ref;
+  drawEarly(); renderEarlyTable();
+}
+function drawEarly() {
+  const o = EARLY.find((x) => x.key === state.early), c = document.getElementById("ch-early"), W = width(c);
+  const shown = o.gs.filter((g) => state.shown.has(g));
+  const lines = shown.map((g) => ({ g, d: earlyRuns(g, o.s, o.lr) })).map((l) => ({ ...l, m: earlyMean(l.d) }));
+  const ys = lines.flatMap((l) => l.m), lo = Math.min(...ys), hi = Math.max(...ys);
+  const L = 48, R = W < 480 ? 34 : 50, top = 10, H = Math.round(Math.min(400, Math.max(280, W * 0.42)));
+  const ticks = niceTicks(Math.max(0, lo - 0.02), hi + 0.02, 5);
+  const y = scale(ticks[0], ticks[ticks.length - 1], H - 44, top);
+  const x = scale(0, 500, L, W - R);
+  const svg = svgFor(c, W, H);
+  yAxis(svg, y, L, W - R, ticks, (v) => v.toFixed(2));
+  const tg = el("g", { class: "tick" }, svg);
+  for (const t of [0, 100, 200, 300, 400, 500]) txt(tg, x(t), H - 26, t, { "text-anchor": "middle" });
+  txt(svg, (L + W - R) / 2, H - 6, "LoRA training step", { "text-anchor": "middle" });
+  for (const [a, b] of [[50, 200]]) { el("line", { x1: x(a), x2: x(a), y1: top, y2: H - 44, class: "zero" }, svg); el("line", { x1: x(b), x2: x(b), y1: top, y2: H - 44, class: "zero" }, svg); }
+  const bx = (i) => x(i * D.bin + D.bin / 2);
+  for (const l of lines) {
+    const col = color(l.g);
+    el("path", { d: l.m.map((v, i) => `${i ? "L" : "M"}${bx(i).toFixed(1)},${y(v).toFixed(1)}`).join(" "), fill: "none", stroke: col, "stroke-width": 2, "stroke-dasharray": DASH[GROUPS[l.g].shape], "stroke-linejoin": "round" }, svg);
+    const i = l.m.length - 1;
+    mark(svg, GROUPS[l.g].shape, bx(i), y(l.m[i]), 8, col, css("--surface"), 1.5);
+  }
+  // crosshair
+  const cross = el("line", { y1: top, y2: H - 44, stroke: css("--axis"), "stroke-width": 1, visibility: "hidden" }, svg);
+  const dots = lines.map((l) => el("circle", { r: 4, fill: color(l.g), stroke: css("--surface"), "stroke-width": 2, visibility: "hidden" }, svg));
+  const ov = el("rect", { x: L, y: top, width: W - R - L, height: H - 44 - top, class: "hit" }, svg);
+  ov.addEventListener("pointermove", (e) => {
+    const rect = svg.getBoundingClientRect(), px = (e.clientX - rect.left) * (W / rect.width);
+    const i = Math.max(0, Math.min(49, Math.round((px - x(D.bin / 2)) / (x(D.bin) - x(0)))));
+    cross.setAttribute("x1", bx(i)); cross.setAttribute("x2", bx(i)); cross.setAttribute("visibility", "visible");
+    lines.forEach((l, k) => { dots[k].setAttribute("cx", bx(i)); dots[k].setAttribute("cy", y(l.m[i])); dots[k].setAttribute("visibility", "visible"); });
+    const rows = lines.map((l) => ({ g: l.g, v: l.m[i], n: vals(l.d).length })).sort((a, b) => a.v - b.v);
+    showTip(e, `<b>Steps ${i * D.bin + 1}–${(i + 1) * D.bin}</b><br>` + rows.map((r) => `<span class="m">${r.g}</span> ${r.v.toFixed(4)} <span class="m">(n = ${r.n})</span>`).join("<br>"));
+  });
+  ov.addEventListener("pointerleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); dots.forEach((d) => d.setAttribute("visibility", "hidden")); });
+}
+function renderEarlyTable() {
+  const o = EARLY.find((x) => x.key === state.early), ref = state.ref;
+  const W = [["Steps 1–50", 0, 5], ["Steps 51–200", 5, 20], ["Steps 201–500", 20, 50]];
+  const a = earlyRuns(ref, o.s, o.lr);
+  const win = (d, lo, hi) => Object.fromEntries(Object.entries(d).filter(([, c]) => c).map(([s, c]) => [s, c.slice(lo, hi).reduce((p, q) => p + q, 0) / (hi - lo)]));
+  let h = `<thead><tr><th>${SETTINGS[o.s]}, lr ${lrs(o.lr)}: group − ${ref}</th>${W.map((w) => `<th>${w[0]}</th>`).join("")}<th>Final ${METRIC[o.s]} − ${ref}</th></tr></thead><tbody>`;
+  for (const g of o.gs.filter((g) => g !== ref)) {
+    const b = earlyRuns(g, o.s, o.lr);
+    const cells = W.map(([, lo, hi]) => paired(win(a, lo, hi), win(b, lo, hi)));
+    const va = sel(ref, o.s, { lr: o.lr, kinds: ["shared", "lr control"], gpu: ref === "G3" ? "A40" : undefined });
+    const vb = sel(g, o.s, { lr: o.lr, kinds: ["shared", "lr control"], gpu: g === "G3" ? "A40" : undefined });
+    const fin = paired(va, vb);
+    h += `<tr><td><span class="swatch">${swatch(g).outerHTML}${g} ${GROUPS[g].name}</span></td>` + cells.map((r) => r ? `<td class="${r.sig ? "sig" : ""}">${fmtCI(r, 3)}${r.sig ? " ✱" : ""}</td>` : `<td class="dim">–</td>`).join("") +
+      (fin ? `<td class="${fin.sig ? "sig" : ""}">${fmtCI(fin)}${fin.sig ? " ✱" : ""}</td>` : `<td class="dim">–</td>`) + "</tr>";
+  }
+  document.getElementById("tbl-early").innerHTML = h + "</tbody>";
+}
+
+/* ---------- 07 gradient ---------- */
+function drawGrad() {
+  const c = document.getElementById("ch-grad"), W = width(c), s = state.grad;
+  const pts = groupsIn(s).map((g) => {
+    const st = vals(sel(g, s, { field: "step0" })).filter((v) => v != null);
+    return { g, gx: meanSd(st).m, acc: meanSd(vals(sel(g, s))) };
+  }).filter((p) => p.gx > 0);
+  const L = 48, R = 18, top = 14, H = Math.round(Math.min(380, Math.max(280, W * 0.62)));
+  const lx = pts.map((p) => Math.log10(p.gx)), x0 = Math.floor(Math.min(...lx) * 2) / 2, x1 = Math.ceil(Math.max(...lx) * 2) / 2;
+  const x = scale(x0, x1, L + 6, W - R - 14);
+  const ys = pts.map((p) => p.acc.m), ylo = Math.min(...ys), yhi = Math.max(...ys);
+  const ticks = niceTicks(ylo - 0.6, yhi + 0.6, 5);
+  const y = scale(ticks[0], ticks[ticks.length - 1], H - 44, top);
+  const svg = svgFor(c, W, H);
+  yAxis(svg, y, L, W - R, ticks, (v) => v.toFixed(s === "rte" ? 0 : 1));
+  const tg = el("g", { class: "tick" }, svg);
+  for (let e = Math.ceil(x0); e <= x1; e++) { el("line", { x1: x(e), x2: x(e), y1: top, y2: H - 44, stroke: css("--line") }, svg); txt(tg, x(e), H - 26, 10 ** e >= 1 ? String(10 ** e) : (10 ** e).toFixed(Math.max(0, -e)), { "text-anchor": "middle" }); }
+  txt(svg, (L + W - R) / 2, H - 6, "step-0 ‖∂L/∂B‖ (log scale)", { "text-anchor": "middle" });
+  const placed = [];
+  for (const p of pts.sort((a, b) => a.gx - b.gx)) {
+    const col = color(p.g), px = x(Math.log10(p.gx)), py = y(p.acc.m);
+    mark(svg, GROUPS[p.g].shape, px, py, 11, col, css("--surface"), 2);
+    let ly = py - 10; while (placed.some((q) => Math.abs(q.x - px) < 26 && Math.abs(q.y - ly) < 12)) ly += 24;
+    placed.push({ x: px, y: ly });
+    txt(svg, px, ly, p.g, { "text-anchor": "middle", "font-weight": 600, fill: css("--ink") });
+    const hit = el("circle", { cx: px, cy: py, r: 12, class: "hit" }, svg);
+    hover(hit, `<b>${p.g} ${GROUPS[p.g].name}</b> · ${SETTINGS[s]}<br><span class="m">‖∂L/∂B‖ = ${p.gx.toFixed(2)}<br>${METRIC[s]} ${p.acc.m.toFixed(2)} ± ${p.acc.sd.toFixed(2)} (n = ${p.acc.n})</span>`);
+  }
+}
+function ratioTable() {
+  const pairs = [["G2", "G1", "G2 / G1 (√3 = 1.73)"], ["G3", "G2", "G3 / G2"], ["G5", "G3", "G5 / G3"]];
+  let h = `<thead><tr><th>Task</th>${pairs.map((p) => `<th>${p[2]}</th>`).join("")}</tr></thead><tbody>`;
+  for (const s of ["sst2", "mrpc", "rte"]) {
+    h += `<tr><td>${SETTINGS[s]}</td>` + pairs.map(([b, a]) => {
+      const A = sel(a, s, { field: "step0" }), B = sel(b, s, { field: "step0" });
+      const r = Object.keys(A).filter((k) => k in B && A[k] && B[k]).map((k) => B[k] / A[k]);
+      return `<td>${meanSd(r).m.toFixed(2)} <span class="dim">(${Math.min(...r).toFixed(2)}–${Math.max(...r).toFixed(2)})</span></td>`;
+    }).join("") + "</tr>";
+  }
+  document.getElementById("tbl-ratio").innerHTML = h + "</tbody>";
+}
+
+/* ---------- 08 H4 ---------- */
+const H4K = [
+  { k: "floor", label: "Noise floor: same task, disjoint sample", short: "Floor", g: "G3", hollow: true },
+  { k: "G8", label: "G8: wikitext-103", short: "G8", g: "G8" },
+  { k: "G9", label: "G9: another task", short: "G9", g: "G9" },
+  { k: "random", label: "Random orthonormal, same ranks", short: "Random", g: "G1", hollow: true },
+];
+function drawH4() {
+  const c = document.getElementById("ch-h4"), W = width(c);
+  const rows = [];
+  for (const t of ["sst2", "mrpc", "rte"]) for (const k of H4K) {
+    const d = D.h4.filter((r) => r.kind === k.k && r.task === t);
+    if (d.length) rows.push({ t, k, d });
+  }
+  const L = W < 480 ? 92 : 150, R = 54, top = 6, rowH = 22, gap = 12;
+  const H = top + rows.length * rowH + 2 * gap + 34;
+  const x = scale(0, 1, L, W - R);
+  const svg = svgFor(c, W, H);
+  const yOf = (i) => top + i * rowH + Math.floor(i / 4) * gap + rowH / 2;
+  xAxis(svg, x, top, H - 34, [0, 0.2, 0.4, 0.6, 0.8, 1], null, (v) => v.toFixed(1));
+  rows.forEach((r, i) => {
+    const y = yOf(i), col = color(r.k.g), m = meanSd(r.d.map((q) => q.v));
+    if (i % 4 === 0) txt(svg, 8, y + 4, SETTINGS[r.t], { class: "lab-strong" });
+    txt(svg, L - 8, y + 4, r.k.short, { "text-anchor": "end", "font-size": 11 });
+    el("line", { x1: x(m.m), x2: x(m.m), y1: y - 8, y2: y + 8, stroke: css("--ink"), "stroke-width": 2 }, svg);
+    for (const q of r.d) mark(svg, GROUPS[r.k.g].shape, x(q.v), y, 8, r.k.hollow ? css("--surface") : col, r.k.hollow ? col : css("--surface"), 1.5);
+    txt(svg, W - R + 8, y + 4, m.m.toFixed(3), { "font-family": "JetBrains Mono, monospace", "font-size": 11 });
+    const hit = el("rect", { x: 0, y: y - rowH / 2, width: W, height: rowH, class: "hit" }, svg);
+    hover(hit, `<b>${r.k.label}</b> · ${SETTINGS[r.t]}<br><span class="m">${m.m.toFixed(3)} ± ${(m.sd || 0).toFixed(3)} over ${m.n} seeds</span>${r.k.k === "G9" && r.t !== "sst2" ? "<br>MRPC and RTE compare the same pair of subspaces" : ""}`);
+  });
+  const lg = document.getElementById("lg-h4"); lg.innerHTML = "";
+  for (const k of H4K) {
+    const s = el("svg", { width: 16, height: 16, viewBox: "0 0 16 16", "aria-hidden": "true" });
+    mark(s, GROUPS[k.g].shape, 8, 8, 10, k.hollow ? css("--surface") : color(k.g), k.hollow ? color(k.g) : css("--surface"), 1.5);
+    const sp = document.createElement("span"); sp.appendChild(s); sp.append(k.label); lg.appendChild(sp);
+  }
+}
+function isDark() {
+  const t = document.documentElement.getAttribute("data-theme");
+  return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function ramp(t) {
+  // sequential blue (palette steps 100..700): low values sit near the surface, so light-to-dark on a light page
+  // and dark-to-light on a dark page
+  const stops = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
+  if (isDark()) { stops.reverse(); stops[0] = "#13355f"; }
+  const u = Math.max(0, Math.min(1, t)) * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(u)), f = u - i;
+  const h = (s) => [1, 3, 5].map((k) => parseInt(s.slice(k, k + 2), 16));
+  const a = h(stops[i]), b = h(stops[i + 1]);
+  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`;
+}
+function drawHeat() {
+  const c = document.getElementById("ch-heat"), W = width(c);
+  const types = ["q", "k", "v", "o", "ffn_in", "ffn_out"], kinds = [["floor", "Noise floor"], ["G8", "G8 wikitext-103"], ["G9", "G9 another task"]];
+  const lo = 0.3, hi = 1.0, cell = (k, t, d) => D.h4_layers.find((r) => r.type === t && r.depth === d)[k];
+  const narrow = W < 760, L = 54, gapX = 22;
+  const panelW = narrow ? W - L - 8 : (W - L - 2 * gapX - 8) / 3;
+  const cw = panelW / 12, ch = Math.min(22, Math.max(16, cw * 0.9));
+  const panelH = 18 + types.length * ch + 22;
+  const H = (narrow ? 3 * panelH + 2 * 10 : panelH) + 44;
+  const svg = svgFor(c, W, H);
+  kinds.forEach(([k, name], p) => {
+    const ox = narrow ? L : L + p * (panelW + gapX), oy = narrow ? p * (panelH + 10) : 0;
+    txt(svg, ox, oy + 12, name, { class: "lab-strong" });
+    types.forEach((t, ti) => {
+      if (p === 0 || narrow) txt(svg, ox - 6, oy + 18 + ti * ch + ch / 2 + 4, t, { "text-anchor": "end", "font-size": 11 });
+      for (let d = 0; d < 12; d++) {
+        const v = cell(k, t, d), r = el("rect", { x: ox + d * cw + 1, y: oy + 18 + ti * ch + 1, width: cw - 2, height: ch - 2, rx: 2, fill: ramp((v - lo) / (hi - lo)) }, svg);
+        hover(r, `<b>${name}</b><br>layer ${d}, ${t}<br><span class="m">overlap with G3 ${v.toFixed(3)}</span>`);
+      }
+    });
+    const tg = el("g", { class: "tick" }, svg);
+    for (const d of [0, 3, 6, 9, 11]) txt(tg, ox + d * cw + cw / 2, oy + 18 + types.length * ch + 14, d, { "text-anchor": "middle" });
+  });
+  // colour scale
+  const ly = H - 26, lx0 = L, lw = Math.min(260, W - L - 30);
+  const defs = el("defs", {}, svg), gr = el("linearGradient", { id: "h4ramp" }, defs);
+  for (let i = 0; i <= 10; i++) el("stop", { offset: i * 10 + "%", "stop-color": ramp(i / 10) }, gr);
+  el("rect", { x: lx0, y: ly, width: lw, height: 8, rx: 2, fill: "url(#h4ramp)" }, svg);
+  const tg = el("g", { class: "tick" }, svg);
+  for (const v of [0.3, 0.5, 0.7, 0.9, 1.0]) txt(tg, lx0 + (v - lo) / (hi - lo) * lw, ly + 22, v.toFixed(1), { "text-anchor": "middle" });
+  if (W >= 560) txt(svg, lx0 + lw + 10, ly + 8, "overlap with G3; x = layer 0–11", { "font-size": 11 });
+}
+
+/* ---------- wiring ---------- */
+segmented(document.getElementById("seg-task"), Object.entries(SETTINGS), () => state.task, (v) => { state.task = v; drawForest(); drawStrip(); });
+segmented(document.getElementById("seg-grad"), [["sst2", "SST-2"], ["mrpc", "MRPC"], ["rte", "RTE"], ["lowres", "Low-res"]], () => state.grad, (v) => { state.grad = v; drawGrad(); });
+const sb = document.getElementById("sel-base"); sb.value = state.base;
+sb.addEventListener("change", (e) => { state.base = e.target.value; save(); drawForest(); drawStrip(); });
+setupEarly();
+
+function drawAll() { drawForest(); drawStrip(); drawLowres(); drawEarly(); drawGrad(); drawH4(); drawHeat(); }
+mainTable(); lowresTable(); checksTable(); ratioTable(); renderEarly(); drawAll();
+let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(drawAll, 120); }).observe(document.querySelector("main"));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawAll(); });
+new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+</body>
+</html>
