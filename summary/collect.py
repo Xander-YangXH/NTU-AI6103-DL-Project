@@ -5,6 +5,8 @@
 Reads */results/{main,lowres}/*.json, writes summary/all_runs.csv and summary/tables.md.
 Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV,
 and so do extra seeds beyond the shared ones (*/results/seeds10/<stage>/*.json).
+Early training is compared through each run's loss_first_steps (training-batch loss of the first 500 LoRA steps),
+only between groups that used the same learning rate.
 G9's H4 measurement (G9/results/h4_overlap.csv, written by G9/src/overlap_analysis.ipynb) is summarised per task pair.
 All groups share the data split, so they are paired by seed. G5/G6 name their low-resource task "sst2_lowres";
 it is read as task "sst2" of stage "lowres" like everyone else's. Runs that still carry
@@ -148,6 +150,46 @@ def main():
                 n, dm, lo, hi = paired(a, b)
                 diffs.append(f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else ""))
             out.append(f"| {g} {stage} {task} | {lr:g} | {m:.2f} ± {sd:.2f} | {diffs[0]} | {diffs[1]} |")
+
+    # Early training: mean training loss over step windows, paired by seed, only at equal learning rates.
+    # The low-resource G1 reference is the lr 1e-3 control, which matches G3/G5's learning rate there.
+    curves = defaultdict(dict)   # (group, setting) -> {seed: (lr, losses)}
+    paths = (glob.glob(os.path.join(ROOT, "*", "results", "main", "*.json"))
+             + glob.glob(os.path.join(ROOT, "*", "results", "lowres", "*.json"))
+             + glob.glob(os.path.join(ROOT, "*", "results", "control", "lowres", "*.json")))
+    for path in paths:
+        r = json.load(open(path))
+        if "group" not in r or not r.get("loss_first_steps") or r.get("shared_protocol_compliant") is False:
+            continue
+        ctl = os.sep + "control" + os.sep in path
+        setting = "low-res" if r["stage"] == "lowres" else r["task"]
+        curves[(r["group"] + ("@ctl" if ctl else ""), setting)][r["seed"]] = (r["lr"], r["loss_first_steps"])
+    windows = [("1–50", 0, 50), ("51–200", 50, 200), ("201–500", 200, 500)]
+
+    def window_diff(a, b, lo, hi):
+        seeds = sorted(set(a) & set(b))
+        d = [sum(b[s][1][lo:hi]) / (hi - lo) - sum(a[s][1][lo:hi]) / (hi - lo) for s in seeds]
+        m, sd = mean_sd(d)
+        h = T95[len(d) - 1] * sd / math.sqrt(len(d))
+        return f"{m:+.3f} [{m - h:+.3f}, {m + h:+.3f}]" + (" *" if m - h > 0 or m + h < 0 else "")
+
+    out += ["", "## Early training: paired difference in training loss (b − a), equal learning rates only", "",
+            "Mean training-batch loss over each step window; negative = b fits faster. G1@ctl is G1 at lr 1e-3 "
+            "(the low-resource control). Batches are in the same order for G1/G2/G3/G4 (shared loader) but not "
+            "for G5/G6, which use their own loader.", "",
+            "| b − a | Setting | lr | Seeds | " + " | ".join(f"Steps {n}" for n, _, _ in windows) + " |",
+            "|---|---|---|---|" + "---|" * len(windows)]
+    pairs = [("G3", "G5"), ("G3", "G9"), ("G3", "G4"), ("G5", "G6"), ("G1", "G2"), ("G1", "G3"), ("G1", "G5"),
+             ("G1", "G7"), ("G1@ctl", "G3"), ("G1@ctl", "G5")]
+    for ga, gb in pairs:
+        for setting in ("sst2", "mrpc", "rte", "low-res"):
+            a, b = curves.get((ga, setting), {}), curves.get((gb, setting), {})
+            seeds = sorted(set(a) & set(b))
+            if len(seeds) < 2 or a[seeds[0]][0] != b[seeds[0]][0]:
+                continue
+            out.append(f"| {gb} − {ga} | {setting} | {a[seeds[0]][0]:g} | {len(seeds)} | "
+                       + " | ".join(window_diff(a, b, lo, hi) for _, lo, hi in windows) + " |")
+    out += ["", "`*` the interval excludes 0."]
 
     extra = defaultdict(dict)   # (group, stage, task) -> {seed: primary}, seeds beyond the shared ones
     for path in sorted(glob.glob(os.path.join(ROOT, "*", "results", "seeds10", "*", "*.json"))):

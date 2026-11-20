@@ -68,6 +68,19 @@ Extra seeds (outside the shared tables until the other groups have them): G1 wit
 | RTE (acc) | 73.94 ± 2.10 | 72.13 ± 7.01 (seed 8 single-class; other 9: 74.29 ± 1.71) | ±2.60 → ±5.02 |
 | Low resource (acc) | 91.44 ± 0.28 | 91.35 ± 0.44 | ±0.34 → ±0.31 |
 
+Early training: paired difference in mean training loss over step windows (b − a; negative = b fits faster), equal learning rates only. The full table is in [`tables.md`](tables.md).
+
+| b − a | Setting | Steps 1–50 | Steps 51–200 | Steps 201–500 | Final accuracy |
+|---|---|---|---|---|---|
+| G5 − G3 (GW-EVA vs EVA) | SST-2 | +0.002 | **+0.018** \* | **+0.021** \* | −0.15 |
+| G5 − G3 | MRPC | +0.001 | −0.002 | +0.004 | −0.88 |
+| G5 − G3 | RTE | −0.000 | +0.005 | +0.048 | −1.23 |
+| G3 − G1 (EVA vs LoRA) | MRPC | **−0.015** \* | **−0.054** \* | **−0.038** \* | +0.68 |
+| G5 − G1 | MRPC | **−0.014** \* | **−0.056** \* | **−0.034** \* | −0.20 |
+| G7 − G1 | MRPC | **−0.024** \* | **−0.054** \* | **−0.039** \* | +0.49 |
+| G3 − G1, lr 1e-3 | Low resource | −0.029 | **+0.092** \* | **+0.034** \* | −2.66 \* |
+| G5 − G1, lr 1e-3 | Low resource | −0.015 | **+0.154** \* | **+0.043** \* | −3.06 \* |
+
 Step-0 ‖∂L/∂B‖ (mean over seeds):
 
 | Task | G1 | G2 | G3 | G4 | G5 | G6 | G7 | G9 |
@@ -88,24 +101,25 @@ The CSV lists MRPC and RTE separately, but they borrow from each other, so both 
 
 ## 2. Findings
 
-1. **GW-EVA does not beat EVA (H2 not supported).** Under the shared protocol G5 − G3 is −0.15, −0.88, −1.23 and −0.46 points on SST-2, MRPC, RTE and low resource; every interval contains 0 and every mean is slightly negative. The first half of H2 does hold: GW-EVA's step-0 gradient on B is 1.3–2.1× EVA's (e.g. 3.36 vs 1.63 on MRPC). As with every other group, the larger initial gradient does not carry over to accuracy.
+1. **GW-EVA does not beat EVA (H2 not supported).** Under the shared protocol G5 − G3 is −0.15, −0.88, −1.23 and −0.46 points on SST-2, MRPC, RTE and low resource; every interval contains 0 and every mean is slightly negative. Only the step-0 part of H2 holds: GW-EVA's step-0 gradient on B is 1.3–2.1× EVA's (e.g. 3.36 vs 1.63 on MRPC). H2's other early-training claim, a lower loss over the first 500 steps, fails at equal learning rates: G5 and G3 are indistinguishable in steps 1–50 on every task, and on SST-2 G5's loss is slightly higher afterwards (+0.02, significant).
 2. **On the full-data tasks, no initialisation beats plain LoRA.** All of G2–G6 and G9 are within ±1.8 points of G1 on every task, and every interval contains 0. The spread between the best and worst of these seven groups is under 1.2 points on SST-2 and MRPC, smaller than the seed noise on RTE.
-3. **A larger initial gradient does not translate into accuracy.** The step-0 gradient grows 7–37× from G1 to G3–G7. Matching EVA's row norm with random directions (G2) changes nothing; EVA's directions (G3) add a 4–9× larger gradient at the same norm, GW-EVA (G5) another 1.3–2.1×, and accuracy stays flat throughout.
-4. **With little data, every spectral initialisation is significantly worse than plain LoRA.** On SST-2 1k: G3 −2.64, G5 −3.10, G6 −1.57 against G1, all significant. The G1 vs G3 gap survives a same-learning-rate control (−2.66 at lr 1e-3). This is the opposite of H2's premise that data-aware initialisation helps most when data is scarce.
-5. **Allocating ranks by parameter cost (H3) has no effect on full data.** G4 − G3 and G6 − G5 are all non-significant on SST-2, MRPC and RTE. The one significant difference, G6 − G5 = +1.53 on low resource, is confounded by learning rate (footnote 1).
-6. **RTE training is fragile, and LoRA-GA (G7) is the worst case.** G7 averages 56.68 on RTE, 17.3 points below G1 and significant: seed 1 predicts one class for all 277 examples and seeds 2–3 are near chance; on SST-2 and MRPC it matches the others. Single-class collapse is not unique to LoRA-GA, though: with ten seeds, plain LoRA (G1, lr 5e-4) collapses on seed 8 (52.71, training loss stuck at ln 2), and at lr 1e-3 six of the seven tuned groups collapse to 48% on the RTE dev split. G7 differs in degree, with all five seeds below 67 against nine of ten above 70 for G1. RTE results should therefore be reported with the collapse rate, not just the mean.
-7. **Calibrating EVA on another task (G9, H4) leaves accuracy unchanged, although the subspace changes.** G9 − G3 is within ±0.9 points and never significant, while the cross-task and same-task subspaces overlap by only 0.49 (MRPC vs SST-2) and 0.66 (RTE vs MRPC). A third to a half of the top-r subspace moves with the calibration data, and accuracy does not notice. Together with findings 1–3, this suggests that at r = 8 on RoBERTa-base, accuracy is insensitive to which directions A starts from.
+3. **Data-aware initialisations fit faster early on, but the advantage does not last.** On MRPC, where all groups share lr 2e-4, EVA, GW-EVA and LoRA-GA all have a significantly lower training loss than plain LoRA throughout the first 500 steps (−0.014 to −0.024 in steps 1–50, about −0.055 in steps 51–200), yet their final F1 is not significantly different. EVA calibrated on another task (G9) is indistinguishable from G3 here too, so the early advantage does not need task-specific calibration, and matching only the magnitude (G2) moves the loss by 0.004 at most.
+4. **A larger initial gradient does not translate into accuracy.** The step-0 gradient grows 7–37× from G1 to G3–G7. Matching EVA's row norm with random directions (G2) changes nothing; EVA's directions (G3) add a 4–9× larger gradient at the same norm, GW-EVA (G5) another 1.3–2.1×, and accuracy stays flat throughout.
+5. **With little data, every spectral initialisation is significantly worse than plain LoRA, because it fits more slowly mid-training.** On SST-2 1k: G3 −2.64, G5 −3.10, G6 −1.57 against G1, all significant. The G1 vs G3 gap survives a same-learning-rate control (−2.66 at lr 1e-3). The loss curves at that shared lr show where it comes from: EVA and GW-EVA start level with LoRA (steps 1–50, not significant) and then fit the training set markedly more slowly in steps 51–200 (+0.09 and +0.15, significant), so this is an optimisation problem, not overfitting. This is the opposite of H2's premise that data-aware initialisation helps most when data is scarce.
+6. **Allocating ranks by parameter cost (H3) has no effect on full data.** G4 − G3 and G6 − G5 are all non-significant on SST-2, MRPC and RTE. The one significant difference, G6 − G5 = +1.53 on low resource, is confounded by learning rate (footnote 1).
+7. **RTE training is fragile, and LoRA-GA (G7) is the worst case.** G7 averages 56.68 on RTE, 17.3 points below G1 and significant: seed 1 predicts one class for all 277 examples and seeds 2–3 are near chance; on SST-2 and MRPC it matches the others. Single-class collapse is not unique to LoRA-GA, though: with ten seeds, plain LoRA (G1, lr 5e-4) collapses on seed 8 (52.71, training loss stuck at ln 2), and at lr 1e-3 six of the seven tuned groups collapse to 48% on the RTE dev split. G7 differs in degree, with all five seeds below 67 against nine of ten above 70 for G1. RTE results should therefore be reported with the collapse rate, not just the mean.
+8. **Calibrating EVA on another task (G9, H4) leaves accuracy unchanged, although the subspace changes.** G9 − G3 is within ±0.9 points and never significant, while the cross-task and same-task subspaces overlap by only 0.49 (MRPC vs SST-2) and 0.66 (RTE vs MRPC). A third to a half of the top-r subspace moves with the calibration data, and accuracy does not notice. Together with findings 1–4, this suggests that at r = 8 on RoBERTa-base, accuracy is insensitive to which directions A starts from.
 
 ### Hypotheses
 
 | Hypothesis | Verdict | Evidence |
 |---|---|---|
 | H1: Σ_g's subspace differs from the activation covariance's | **Not measured** | No branch has the overlap between GW-EVA and EVA subspaces |
-| H2: GW-EVA beats EVA, at least in low resource | **Not supported** | G5 − G3 non-significant everywhere, means slightly negative (finding 1) |
-| H3: cost-based allocation changes the result | **Not supported on full data** | G4 − G3, G6 − G5 non-significant; low-resource G6 − G5 confounded (finding 5) |
-| H4: how task-specific the inputs are | **Partly answered** | Accuracy unchanged, subspace overlap 0.49–0.66; no noise floor, no G8 (finding 7) |
+| H2: GW-EVA has a larger step-0 gradient, lower early loss and higher accuracy than EVA | **Not supported** | Only the step-0 gradient is larger; early loss equal or slightly higher, accuracy non-significant with slightly negative means (finding 1) |
+| H3: cost-based allocation changes the result | **Not supported on full data** | G4 − G3, G6 − G5 non-significant; low-resource G6 − G5 confounded (finding 6) |
+| H4: how task-specific the inputs are | **Partly answered** | Accuracy and early loss unchanged, subspace overlap 0.49–0.66; no noise floor, no G8 (finding 8) |
 
-Following the decision table in [`NEXT_STEPS.md`](NEXT_STEPS.md), the results point to the **analysis / negative-result** story: data-aware LoRA initialisations (EVA, GW-EVA, LoRA-GA) change the early gradients a lot and the final accuracy not at all on these tasks, and hurt in low resource. Whether the "subspaces differ" or "subspaces almost identical" branch applies still depends on H1.
+Following the decision table in [`NEXT_STEPS.md`](NEXT_STEPS.md), the results point to the **analysis / negative-result** story: data-aware LoRA initialisations (EVA, GW-EVA, LoRA-GA) change the early gradients a lot and speed up early fitting, but leave the final accuracy unchanged on these tasks, and in low resource they slow fitting down mid-training and hurt. Whether the "subspaces differ" or "subspaces almost identical" branch applies still depends on H1.
 
 ## 3. Comparability caveats
 
@@ -116,6 +130,7 @@ Following the decision table in [`NEXT_STEPS.md`](NEXT_STEPS.md), the results po
 | Parameter count | Budget 1,327,104. G3 1.24–1.28 M (−3.8% to −6.4%) and G9 (−4.5% to −6.4%) by EVA's rank-count budget; G5 1.28–1.36 M (−3.6% to +2.4%); G4, G6 within 0.1% | Reported, not corrected |
 | Seeds | Low resource: G5/G6 3 seeds, G1/G3 5 | G5/G6 low-resource comparisons are paired on seeds 0–2 only |
 | Learning rate | Low resource: G6 (5e-4) vs G5 (1e-3) | G6 − G5 confounded; G1 vs G3 ruled out by a control |
+| Early-loss comparisons | All | Training-batch loss, not a validation metric; batch order is shared by G1–G4 but not by G5/G6; only equal-lr pairs are compared, so SST-2 and RTE have no clean G1 comparison |
 | Earlier G5/G6 runs | The independent-protocol runs (max length 512, longer training) were replaced on `hanyanze` on 11-18 | Their RTE 78.84 is no longer reported anywhere |
 
 ## 4. What is missing

@@ -122,16 +122,17 @@ Paired differences (percentage points, 95% CI; `*` = interval excludes 0):
 | Hypothesis | Verdict |
 |---|---|
 | H1: Σ_g's subspace differs from EVA's | Not measured yet |
-| H2: GW-EVA beats EVA | **Not supported**: G5 − G3 non-significant everywhere, means slightly negative, although GW-EVA's step-0 gradient is 1.3–2.1× EVA's |
+| H2: GW-EVA beats EVA | **Not supported**: G5 − G3 non-significant everywhere, means slightly negative, and no lower early loss, although GW-EVA's step-0 gradient is 1.3–2.1× EVA's |
 | H3: cost-based allocation matters | **Not supported on full data**: G4 − G3 and G6 − G5 non-significant |
 | H4: how task-specific the inputs are | **Partly answered**: EVA calibrated on another task (G9) loses nothing, though its subspace overlaps same-task EVA by only 0.49–0.66 |
 
 Main findings:
 
 - **No initialisation beats plain LoRA on full data.** All groups except G7 are within ±1.8 points of G1, and every interval contains 0.
+- **Data-aware inits fit faster early, but the gain does not last.** At equal lr on MRPC, EVA, GW-EVA and LoRA-GA all have a significantly lower training loss than LoRA over the first 500 steps, with no difference in final F1. GW-EVA is no faster than EVA at any stage.
 - **Larger initial gradients do not buy accuracy.** The step-0 gradient on B grows 7–37× from G1 to the data-aware inits; matching only EVA's magnitude (G2) or its directions (G3) or adding label gradients (G5) leaves accuracy flat.
-- **With 1k examples, every spectral init is significantly worse than LoRA** (G3 −2.64, G5 −3.10, G6 −1.57). A same-learning-rate control rules out the lr confound for G3.
-- **RTE is fragile.** LoRA-GA averages 56.68 there (one seed predicts a single class, two are near chance), but plain LoRA also collapsed on 1 of 10 seeds once G1 was extended to ten; see [`summary/SUMMARY.md`](summary/SUMMARY.md) §2.6.
+- **With 1k examples, every spectral init is significantly worse than LoRA** (G3 −2.64, G5 −3.10, G6 −1.57). A same-learning-rate control rules out the lr confound for G3, and the loss curves show EVA and GW-EVA fitting more slowly in steps 51–200.
+- **RTE is fragile.** LoRA-GA averages 56.68 there (one seed predicts a single class, two are near chance), but plain LoRA also collapsed on 1 of 10 seeds once G1 was extended to ten; see [`summary/SUMMARY.md`](summary/SUMMARY.md) §2, finding 7.
 
 ## 6. Repository layout
 
