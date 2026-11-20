@@ -8,6 +8,7 @@ Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 
 - **Step 2 is done.** hanyanze reran G5/G6 under the shared settings (11-18; low resource with 3 seeds). GW-EVA does not beat EVA: G5 − G3 is non-significant on every task, with slightly negative means (see [`SUMMARY.md`](SUMMARY.md) §2). On the decision table below, the story is now the analysis / negative-result one.
 - **Step 1 is partly done.** G9's cross-task overlap exists as a layer average (zjz, 11-07). The H1 measurement itself (GW-EVA vs EVA subspaces) and the noise floor are still missing.
+- **Step 3 is started.** G1 has seeds 5–9 on MRPC, RTE and low resource (11-20, `G1G2/results/seeds10/`); G3 and G5 still need theirs before the extra seeds can be paired. One G1 RTE seed collapsed to a single class, which also bears on step 6.
 - Every other item below is still open.
 
 ## Where we stand

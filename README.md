@@ -131,7 +131,7 @@ Main findings:
 - **No initialisation beats plain LoRA on full data.** All groups except G7 are within ±1.8 points of G1, and every interval contains 0.
 - **Larger initial gradients do not buy accuracy.** The step-0 gradient on B grows 7–37× from G1 to the data-aware inits; matching only EVA's magnitude (G2) or its directions (G3) or adding label gradients (G5) leaves accuracy flat.
 - **With 1k examples, every spectral init is significantly worse than LoRA** (G3 −2.64, G5 −3.10, G6 −1.57). A same-learning-rate control rules out the lr confound for G3.
-- **LoRA-GA collapses on RTE** (one seed predicts a single class).
+- **RTE is fragile.** LoRA-GA averages 56.68 there (one seed predicts a single class, two are near chance), but plain LoRA also collapsed on 1 of 10 seeds once G1 was extended to ten; see [`summary/SUMMARY.md`](summary/SUMMARY.md) §2.6.
 
 ## 6. Repository layout
 

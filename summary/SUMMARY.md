@@ -6,7 +6,7 @@ State on 2026-11-20. Every member branch is merged:
 
 | Branch | Commit | Folder | Groups | State |
 |---|---|---|---|---|
-| `yxh` | `d9a6ef4` | `G1G2/` | G1 LoRA, G2 magnitude control | Done (51 runs + 5-run low-resource lr control) |
+| `yxh` | `ed14b44` | `G1G2/` | G1 LoRA, G2 magnitude control | Done (51 runs + 5-run low-resource lr control + G1 seeds 5–9) |
 | `yinchenyu_g3g4` | `2661637` | `G3G4/` | G3 EVA, G4 parameter-cost allocation | Done (53 runs) |
 | `hanyanze` | `2fc2763` | `G5G6/` | G5 / G6 GW-EVA | Done under the shared settings (18 tune, 26 main, 6 low-resource runs) |
 | `liyouran` | `0c1b768` | `G7/` | G7 LoRA-GA | Done (22 runs) |
@@ -60,6 +60,14 @@ The comparisons the hypotheses ask for:
 
 Learning-rate control (outside the shared protocol): G1 low resource at G3's lr 1e-3 scores 91.47 ± 0.66, unchanged from 5e-4 (+0.02 [−0.72, +0.77]); at equal lr, G3 − G1 = −2.66 [−3.22, −2.11] \*.
 
+Extra seeds (outside the shared tables until the other groups have them): G1 with seeds 5–9 added, at its chosen learning rates.
+
+| Setting | Seeds 0–4 | All 10 seeds | 95% CI half-width (5 → 10) |
+|---|---|---|---|
+| MRPC (F1) | 91.34 ± 0.43 | 91.29 ± 0.62 | ±0.53 → ±0.44 |
+| RTE (acc) | 73.94 ± 2.10 | 72.13 ± 7.01 (seed 8 single-class; other 9: 74.29 ± 1.71) | ±2.60 → ±5.02 |
+| Low resource (acc) | 91.44 ± 0.28 | 91.35 ± 0.44 | ±0.34 → ±0.31 |
+
 Step-0 ‖∂L/∂B‖ (mean over seeds):
 
 | Task | G1 | G2 | G3 | G4 | G5 | G6 | G7 | G9 |
@@ -85,7 +93,7 @@ The CSV lists MRPC and RTE separately, but they borrow from each other, so both 
 3. **A larger initial gradient does not translate into accuracy.** The step-0 gradient grows 7–37× from G1 to G3–G7. Matching EVA's row norm with random directions (G2) changes nothing; EVA's directions (G3) add a 4–9× larger gradient at the same norm, GW-EVA (G5) another 1.3–2.1×, and accuracy stays flat throughout.
 4. **With little data, every spectral initialisation is significantly worse than plain LoRA.** On SST-2 1k: G3 −2.64, G5 −3.10, G6 −1.57 against G1, all significant. The G1 vs G3 gap survives a same-learning-rate control (−2.66 at lr 1e-3). This is the opposite of H2's premise that data-aware initialisation helps most when data is scarce.
 5. **Allocating ranks by parameter cost (H3) has no effect on full data.** G4 − G3 and G6 − G5 are all non-significant on SST-2, MRPC and RTE. The one significant difference, G6 − G5 = +1.53 on low resource, is confounded by learning rate (footnote 1).
-6. **LoRA-GA (G7) is unstable on RTE.** It averages 56.68, 17.3 points below G1 and significant, with seed 1 predicting one class for all 277 examples; on SST-2 and MRPC it matches the others.
+6. **RTE training is fragile, and LoRA-GA (G7) is the worst case.** G7 averages 56.68 on RTE, 17.3 points below G1 and significant: seed 1 predicts one class for all 277 examples and seeds 2–3 are near chance; on SST-2 and MRPC it matches the others. Single-class collapse is not unique to LoRA-GA, though: with ten seeds, plain LoRA (G1, lr 5e-4) collapses on seed 8 (52.71, training loss stuck at ln 2), and at lr 1e-3 six of the seven tuned groups collapse to 48% on the RTE dev split. G7 differs in degree, with all five seeds below 67 against nine of ten above 70 for G1. RTE results should therefore be reported with the collapse rate, not just the mean.
 7. **Calibrating EVA on another task (G9, H4) leaves accuracy unchanged, although the subspace changes.** G9 − G3 is within ±0.9 points and never significant, while the cross-task and same-task subspaces overlap by only 0.49 (MRPC vs SST-2) and 0.66 (RTE vs MRPC). A third to a half of the top-r subspace moves with the calibration data, and accuracy does not notice. Together with findings 1–3, this suggests that at r = 8 on RoBERTa-base, accuracy is insensitive to which directions A starts from.
 
 ### Hypotheses
@@ -116,7 +124,8 @@ Following the decision table in [`NEXT_STEPS.md`](NEXT_STEPS.md), the results po
 - **G8 EVA-generic**: no branch.
 - **H4 noise floor and per-layer breakdown**: the G9 CSV holds one layer-averaged number per seed, with no same-task baseline. The lora_A caches it was computed from are git-ignored, so the numbers cannot be regenerated from the repository.
 - **G5/G6 low-resource seeds 3–4** and a same-lr control for G6 − G5.
-- **Why G7 collapses on RTE.**
+- **Why G7 collapses on RTE**, now that plain LoRA is known to collapse occasionally too.
+- **Seeds 5–9 for G3 and G5** on MRPC, RTE and low resource, so the extra G1 seeds can be paired (G1 is done).
 
 The plan for these is in [`NEXT_STEPS.md`](NEXT_STEPS.md).
 

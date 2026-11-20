@@ -66,6 +66,14 @@ Seeds: SST-2 3, MRPC / RTE 5, low-resource 5 (G5/G6: 3; paired on their common s
 |---|---|---|---|---|
 | G1 lowres sst2 | 0.001 | 91.47 ± 0.66 | +0.02 [-0.72, +0.77] | -2.66 [-3.22, -2.11] * |
 
+## Extra seeds (outside the shared tables until every group has them)
+
+| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs |
+|---|---|---|---|---|---|
+| G1 lowres sst2 | 0.0005 | 10 | 91.44 ± 0.28 | 91.35 ± 0.44 | – |
+| G1 main mrpc | 0.0002 | 10 | 91.34 ± 0.43 | 91.29 ± 0.62 | – |
+| G1 main rte | 0.0005 | 10 | 73.94 ± 2.10 | 72.13 ± 7.01 | seed 8 |
+
 ## H4: subspace overlap of cross-task EVA (G9) with same-task EVA (G3)
 
 Mean squared cosine of the principal angles between the two lora_A row spaces, averaged over the 72 layers; 1 = identical, at most about 0.02 for random subspaces of these ranks (r ≤ 16 in d ≥ 768).

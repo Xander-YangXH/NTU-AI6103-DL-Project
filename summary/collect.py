@@ -3,7 +3,8 @@
     python summary/collect.py        # run from the repository root of the summary branch
 
 Reads */results/{main,lowres}/*.json, writes summary/all_runs.csv and summary/tables.md.
-Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV.
+Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV,
+and so do extra seeds beyond the shared ones (*/results/seeds10/<stage>/*.json).
 G9's H4 measurement (G9/results/h4_overlap.csv, written by G9/src/overlap_analysis.ipynb) is summarised per task pair.
 All groups share the data split, so they are paired by seed. G5/G6 name their low-resource task "sst2_lowres";
 it is read as task "sst2" of stage "lowres" like everyone else's. Runs that still carry
@@ -147,6 +148,25 @@ def main():
                 n, dm, lo, hi = paired(a, b)
                 diffs.append(f"{dm:+.2f} [{lo:+.2f}, {hi:+.2f}]" + (" *" if lo > 0 or hi < 0 else ""))
             out.append(f"| {g} {stage} {task} | {lr:g} | {m:.2f} ± {sd:.2f} | {diffs[0]} | {diffs[1]} |")
+
+    extra = defaultdict(dict)   # (group, stage, task) -> {seed: primary}, seeds beyond the shared ones
+    for path in sorted(glob.glob(os.path.join(ROOT, "*", "results", "seeds10", "*", "*.json"))):
+        r = json.load(open(path))
+        extra[(r["group"], r["stage"], r["task"])][r["seed"]] = r["final"]["primary"]
+    if extra:
+        out += ["", "## Extra seeds (outside the shared tables until every group has them)", "",
+                "| Run | lr | Seeds | Shared seeds | All seeds | Single-class runs |", "|---|---|---|---|---|---|"]
+        for (g, stage, task), d in sorted(extra.items()):
+            base = score.get((g, stage, task), {})
+            both = {**base, **d}
+            m0, sd0 = mean_sd([100 * v for v in base.values()])
+            m, sd = mean_sd([100 * v for v in both.values()])
+            lr = meta[(g, stage, task)][0]["lr"]
+            # a run that predicts one class scores exactly one class's share (RTE val: 146 / 277 or 131 / 277)
+            collapsed = sorted(s for s, v in both.items()
+                               if task == "rte" and min(abs(v - 146 / 277), abs(v - 131 / 277)) < 1e-9)
+            out.append(f"| {g} {stage} {task} | {lr:g} | {len(both)} | {m0:.2f} ± {sd0:.2f} | {m:.2f} ± {sd:.2f} | "
+                       + (", ".join(f"seed {s}" for s in collapsed) if collapsed else "–") + " |")
 
     h4_path = os.path.join(ROOT, "G9", "results", "h4_overlap.csv")
     if os.path.exists(h4_path):
