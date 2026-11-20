@@ -5,8 +5,9 @@
 Reads */results/{main,lowres}/*.json, writes summary/all_runs.csv and summary/tables.md.
 Control runs outside the shared protocol (*/results/control/<stage>/*.json) get their own table and stay out of the CSV.
 G9's H4 measurement (G9/results/h4_overlap.csv, written by G9/src/overlap_analysis.ipynb) is summarised per task pair.
-Groups on the shared protocol are paired by seed; G5/G6 follow an independent protocol
-(shared_protocol_compliant = False in their JSONs) and are reported separately, never paired.
+All groups share the data split, so they are paired by seed. G5/G6 name their low-resource task "sst2_lowres";
+it is read as task "sst2" of stage "lowres" like everyone else's. Runs that still carry
+shared_protocol_compliant = False are skipped.
 """
 import csv
 import glob
@@ -20,8 +21,7 @@ OUT = os.path.join(ROOT, "summary")
 T95 = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}
 TASKS = [("main", "sst2", "SST-2 (acc)"), ("main", "mrpc", "MRPC (F1)"), ("main", "rte", "RTE (acc)"),
          ("lowres", "sst2", "Low-res SST-2 1k (acc)")]
-SHARED = ["G1", "G2", "G3", "G4", "G7", "G9"]
-INDEPENDENT = ["G5", "G6"]
+SHARED = ["G1", "G2", "G3", "G4", "G5", "G6", "G7", "G9"]
 
 
 def mean_sd(xs):
@@ -47,8 +47,10 @@ def load():
         r = json.load(open(path))
         if "group" not in r or "final" not in r:
             continue
-        if stage == "pilot":   # pilots are never part of the final tables
+        if stage == "pilot" or r.get("shared_protocol_compliant") is False:   # pilots and off-protocol runs
             continue
+        if r["task"] == "sst2_lowres":
+            r["task"] = "sst2"
         rows.append(dict(
             folder=os.path.relpath(path, ROOT).split(os.sep)[0], stage=r["stage"], group=r["group"], task=r["task"],
             lr=r["lr"], seed=r["seed"], eval_split=r["eval_split"], primary=r["final"]["primary"],
@@ -85,7 +87,7 @@ def main():
            "| Task | " + " | ".join(SHARED) + " |", "|---|" + "---|" * len(SHARED)]
     for stage, task, label in TASKS:
         out.append(f"| {label} | " + " | ".join(cell(g, stage, task) for g in SHARED) + " |")
-    out += ["", "Seeds: SST-2 3, MRPC / RTE / low-resource 5. Learning rates:", "",
+    out += ["", "Seeds: SST-2 3, MRPC / RTE 5, low-resource 5 (G5/G6: 3; paired on their common seeds). Learning rates:", "",
             "| Task | " + " | ".join(SHARED) + " |", "|---|" + "---|" * len(SHARED)]
     for stage, task, label in TASKS:
         out.append(f"| {label} | " + " | ".join(
@@ -120,21 +122,16 @@ def main():
 
     out += ["", "## Environment per group", "", "| Group | Runs | GPU | torch / transformers / peft | LoRA params |",
             "|---|---|---|---|---|"]
-    for g in SHARED + INDEPENDENT:
+    for g in SHARED:
         rs = [r for r in rows if r["group"] == g]
         if not rs:
             continue
-        gpus = ", ".join(sorted({r["gpu"] for r in rs}))
-        vers = ", ".join(sorted({f"{r['torch']} / {r['transformers']} / {r['peft']}" for r in rs}))
+        gpus = ", ".join(sorted({r["gpu"] or "not recorded" for r in rs}))
+        vers = ", ".join(sorted({f"{r['torch']} / {r['transformers']} / {r['peft']}" if r["torch"] else "not recorded"
+                                 for r in rs}))
         p = sorted({r["lora_params"] for r in rs})
         params = f"{p[0]:,}" if len(p) == 1 else f"{p[0]:,}–{p[-1]:,}"
         out.append(f"| {g} | {len(rs)} | {gpus} | {vers} | {params} |")
-
-    out += ["", "## G5 / G6: independent protocol (not pairable with the table above)", "",
-            "| Task | G5 | G6 | G5 lr | G6 lr |", "|---|---|---|---|---|"]
-    for stage, task, label in TASKS[:3]:
-        lr = lambda g: (f"{meta[(g, stage, task)][0]['lr']:g}" if meta.get((g, stage, task)) else "–")
-        out.append(f"| {label} | {cell('G5', stage, task)} | {cell('G6', stage, task)} | {lr('G5')} | {lr('G6')} |")
 
     ctl = defaultdict(dict)   # (group, task, lr) -> {seed: primary}
     for path in sorted(glob.glob(os.path.join(ROOT, "*", "results", "control", "*", "*.json"))):

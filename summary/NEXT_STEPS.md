@@ -4,7 +4,11 @@
 
 Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 
-**Status on 2026-11-16:** the only new result since then is G9's cross-task overlap (`zjz_g9`, part of step 1). No other branch has new commits, so every other item below is still open, including both P0 items.
+**Status on 2026-11-20:**
+
+- **Step 2 is done.** hanyanze reran G5/G6 under the shared settings (11-18; low resource with 3 seeds). GW-EVA does not beat EVA: G5 − G3 is non-significant on every task, with slightly negative means (see [`SUMMARY.md`](SUMMARY.md) §2). On the decision table below, the story is now the analysis / negative-result one.
+- **Step 1 is partly done.** G9's cross-task overlap exists as a layer average (zjz, 11-07). The H1 measurement itself (GW-EVA vs EVA subspaces) and the noise floor are still missing.
+- Every other item below is still open.
 
 ## Where we stand
 
@@ -29,7 +33,7 @@ The code already exists. `G5G6/src/gw_eva/calibrate.py` computes the subspace ov
 - **Cross-task overlap (for H4):** also compute the overlap of EVA calibrated on task X with EVA calibrated on the G9 source task. This turns G9's accuracy result into a direct measurement. *Done by zjz on 2026-11-07 as a layer average (0.49 MRPC vs SST-2, 0.66 RTE vs MRPC); still needed: the noise floor above, the per-layer values, and the SST-2 vs RTE pair.*
 - Output: `G5G6/results/h1/*.json` plus one figure of overlap by layer.
 
-### 2. G5 / G6 under the shared protocol (owners: hanyanze + yinchenyu)
+### 2. G5 / G6 under the shared protocol (owners: hanyanze + yinchenyu) — done 2026-11-18
 
 - Plug the GW-EVA initialisation into the shared pipeline in `G3G4/src/train.py`, keeping everything else identical to G3 (split, head warm-up, epochs, lr grid, seeds, budget).
 - Run tune (3 lr × 3 tasks, seed 0), main (SST-2 3 seeds, MRPC / RTE 5 seeds) and low-resource (5 seeds) for G5; then the same for G6.
