@@ -159,6 +159,26 @@ G9's MRPC and RTE rows compare the same two subspaces (EVA on MRPC vs EVA on RTE
 
 Per task (mean over seeds): sst2: floor 0.919, G8 0.642, G9 0.493; mrpc: floor 0.944, G8 0.716, G9 0.662; rte: floor 0.954, G8 0.694, G9 0.662
 
+## H1: GW-EVA's subspace against EVA's (rank 8, same calibration sample)
+
+Each run sketches EVA (centred activation covariance) and GW-EVA (Σ_g = E[‖g‖² x xᵀ], uncentred) on the same 1,024 training examples with the shared classification-head checkpoint, and compares their top-8 subspaces in all 72 layers (mean squared cosine of the principal angles). The floor GW–GW compares GW-EVA on two disjoint 1,024-example samples of the same task; for low-resource SST-2 both floor samples come from full SST-2 outside the 1k subset. Difference: EVA–GW − GW–GW, paired by seed, 95% CI. Pearson: per-token ‖g‖² against ‖x‖², mean over layers.
+
+| Task | Seeds | EVA–GW | GW–GW (floor) | Difference | Layers with EVA–GW ≥ floor | Mean principal angle | Pearson ‖g‖², ‖x‖² |
+|---|---|---|---|---|---|---|---|
+| SST-2 | 3 | 0.640 ± 0.020 | 0.840 ± 0.021 | -0.201 [-0.224, -0.178] | 1 / 216 | 34.8° | 0.113 |
+| MRPC | 3 | 0.522 ± 0.037 | 0.868 ± 0.015 | -0.346 [-0.439, -0.252] | 3 / 216 | 43.8° | 0.097 |
+| RTE | 3 | 0.493 ± 0.025 | 0.866 ± 0.033 | -0.373 [-0.396, -0.350] | 1 / 216 | 46.0° | 0.143 |
+| Low-res SST-2 1k | 3 | 0.688 ± 0.009 | 0.947 ± 0.005 | -0.259 [-0.295, -0.223] | 2 / 216 | 30.8° | 0.187 |
+
+Per layer type and depth, the three full tasks (9 runs):
+
+| | All layers | q | k | v | o | FFN input | FFN output | Blocks 0–3 | Blocks 4–7 | Blocks 8–11 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| EVA–GW | 0.552 | 0.532 | 0.612 | 0.613 | 0.476 | 0.555 | 0.522 | 0.517 | 0.619 | 0.518 |
+| GW–GW (floor) | 0.858 | 0.815 | 0.862 | 0.894 | 0.824 | 0.865 | 0.887 | 0.721 | 0.927 | 0.926 |
+
+Both floors are high (EVA against EVA on a disjoint sample 0.92–0.95 in H4, GW–GW 0.84–0.95 here), so GW-EVA's subspace (0.49–0.69 from EVA per task) is about as far from EVA's as EVA calibrated on other data (G8 0.64–0.72, G9 0.49–0.66). H1 compares top-8 subspaces and H4 the groups' allocated ranks, so the two scales are close but not identical.
+
 ## Theory check: ratios of the step-0 gradient on B, same seed
 
 Prediction for G2 / G1 (random directions, row norm 1 vs 1/√3): √3 = 1.73. G3 / G2 isolates EVA's directions at equal row norm; G5 / G3 is GW-EVA's directions over EVA's. Mean (range over seeds).

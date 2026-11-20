@@ -81,6 +81,7 @@ section { display: grid; gap: 18px; scroll-margin-top: 64px; min-width: 0; }
 .panel-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 14px; }
 .panel-title .sub { color: var(--muted); font-size: 12.5px; }
 .note { color: var(--muted); font-size: 12.5px; max-width: 80ch; }
+.muted { color: var(--muted); }
 
 /* hypotheses */
 .hyps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
@@ -164,7 +165,7 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
 </header>
 <nav class="bar" aria-label="Sections">
   <div class="wrap">
-    <a href="#verdict">Verdict</a><a href="#groups">Groups</a><a href="#main">Main results</a><a href="#lowres">Low resource</a><a href="#checks">Same-GPU checks</a><a href="#early">Early training</a><a href="#gradient">Step-0 gradient</a><a href="#h4">Subspaces (H4)</a><a href="#setup">Setup &amp; caveats</a>
+    <a href="#verdict">Verdict</a><a href="#groups">Groups</a><a href="#main">Main results</a><a href="#lowres">Low resource</a><a href="#checks">Same-GPU checks</a><a href="#early">Early training</a><a href="#gradient">Step-0 gradient</a><a href="#h1">Subspaces (H1)</a><a href="#h4">Subspaces (H4)</a><a href="#setup">Setup &amp; caveats</a>
   </div>
 </nav>
 
@@ -173,9 +174,9 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
 
 <section id="verdict">
   <div class="sec-head"><span class="idx">01</span><h2>Verdict on the four hypotheses</h2>
-    <p class="claim">Data-aware initialisations change the step-0 gradient by an order of magnitude and speed up early fitting, but at a tuned learning rate none of them beats plain LoRA on final accuracy. GW-EVA is no better than EVA.</p></div>
+    <p class="claim">Data-aware initialisations change the step-0 gradient by an order of magnitude and speed up early fitting, but at a tuned learning rate none of them beats plain LoRA on final accuracy. GW-EVA picks a genuinely different subspace from EVA, and is still no better.</p></div>
   <div class="hyps">
-    <div class="hyp"><span class="h-id">H1</span><h3>Σ<sub>g</sub>'s subspace differs from EVA's</h3><span class="pill open">Not measured</span><p>The overlap between the GW-EVA and EVA subspaces, with a same-task noise floor, is the one open diagnostic.</p></div>
+    <div class="hyp"><span class="h-id">H1</span><h3>Σ<sub>g</sub>'s subspace differs from EVA's</h3><span class="pill yes">Supported</span><p>On the same calibration sample the top-8 subspaces overlap 0.49–0.69, against 0.84–0.95 between two GW-EVA estimates; ‖g‖² is only weakly correlated with ‖x‖².</p></div>
     <div class="hyp"><span class="h-id">H2</span><h3>GW-EVA beats EVA</h3><span class="pill no">Not supported</span><p id="h2-text">Only the step-0 gradient is larger. Early loss is equal or slightly higher and every accuracy interval contains 0.</p></div>
     <div class="hyp"><span class="h-id">H3</span><h3>Allocating ranks by parameter cost matters</h3><span class="pill no">Not supported</span><p>G4 − G3 and G6 − G5 are non-significant on full data; EVA with uniform ranks matches the original in low resource.</p></div>
     <div class="hyp"><span class="h-id">H4</span><h3>EVA's subspace is task-specific</h3><span class="pill yes">Answered</span><p>The subspace is task-specific (overlap 0.49–0.72 against a same-task floor of 0.92–0.95), but accuracy does not depend on it.</p></div>
@@ -187,6 +188,7 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
     <li><p><b>With 1k examples, EVA trails LoRA only because of the learning rate.</b> At the shared rule G3 − G1 = −2.64; with both at lr 2e-4 on one GPU the gap is −0.57 and not significant.</p></li>
     <li><p><b>EVA helps on RTE when the learning rate is held fixed</b> (+2.13 at lr 2e-4, 10 seeds), a robustness effect: LoRA needs a higher lr there, which occasionally collapses.</p></li>
     <li><p><b>GPU numerics shift single seeds by up to 2.5 points.</b> Cross-GPU seed pairing produced an MRPC "edge" for EVA that disappears on one GPU.</p></li>
+    <li><p><b>Where A points barely matters.</b> Gradient weighting (H1) and other calibration data (H4) each move a third to a half of EVA's subspace, far beyond the noise floor, and neither changes accuracy.</p></li>
   </ol>
 </section>
 
@@ -262,8 +264,25 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
   </div>
 </section>
 
+<section id="h1">
+  <div class="sec-head"><span class="idx">08</span><h2>Subspaces (H1): gradient weighting moves the subspace, not the accuracy</h2>
+    <p class="claim">For each task and seed, EVA (centred activation covariance) and GW-EVA (Σ<sub>g</sub> = E[‖g‖² x xᵀ]) are sketched on the same 1,024 training examples and their top-8 subspaces compared in all 72 layers. The floor compares GW-EVA estimated on two disjoint samples of the same task.</p></div>
+  <div class="panel">
+    <div class="panel-title"><h3>EVA vs GW-EVA, mean over 72 layers</h3><span class="sub">dots = seeds, tick = mean; the EVA floor is the H4 one</span></div>
+    <div class="legend" id="lg-h1"></div>
+    <div class="chart" id="ch-h1"></div>
+  </div>
+  <div class="tbl-wrap"><table id="tbl-h1"></table></div>
+  <div class="panel">
+    <div class="panel-title"><h3>By layer: type × depth</h3><span class="sub">mean over the 9 full-task runs (SST-2, MRPC, RTE × 3 seeds)</span></div>
+    <div class="chart" id="ch-h1heat"></div>
+    <p class="note">Colour = overlap (0–1); columns are blocks 0–11. EVA vs GW-EVA stays well below the floor in every cell. The attention output projection (o) and the last block differ most; the floor itself is lowest in blocks 0–3, where GW-EVA's estimate is noisiest.</p>
+  </div>
+  <p class="note">Data and code: <code>H1 Diagnosis/</code> (hanyanze), calibration only, reusing the shared runs' head checkpoints. The EVA side is centred and the GW side is not, so centring and gradient weighting are not separated. Low-resource floor samples come from full SST-2 outside the 1k subset.</p>
+</section>
+
 <section id="h4">
-  <div class="sec-head"><span class="idx">08</span><h2>Subspaces (H4): calibration data moves the subspace, not the accuracy</h2>
+  <div class="sec-head"><span class="idx">09</span><h2>Subspaces (H4): calibration data moves the subspace, not the accuracy</h2>
     <p class="claim">Overlap between each initial lora_A and same-task, same-seed EVA (mean squared cosine of the principal angles; 1 = identical). The floor is EVA on a disjoint sample of the same task.</p></div>
   <div class="panel">
     <div class="panel-title"><h3>Overlap with same-task EVA (G3), mean over 72 layers</h3><span class="sub">dots = seeds, tick = mean</span></div>
@@ -278,7 +297,7 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
 </section>
 
 <section id="setup">
-  <div class="sec-head"><span class="idx">09</span><h2>Setup and caveats</h2></div>
+  <div class="sec-head"><span class="idx">10</span><h2>Setup and caveats</h2></div>
   <div class="grid2">
     <div class="tbl-wrap"><table>
       <thead><tr><th>Shared setting</th><th class="wrap-cell">Value</th></tr></thead>
@@ -298,6 +317,7 @@ footer .wrap { padding-block: 22px 36px; display: grid; gap: 6px; }
         <tr><td>Parameter count</td><td class="wrap-cell">EVA's rank-count budget leaves G3, G8, G9 3.8–6.4% under budget; G5 ranges −3.6% to +2.4%. Reported, not corrected.</td></tr>
         <tr><td>Multiple comparisons</td><td class="wrap-cell">About 20 comparisons per table, uncorrected. Read single borderline intervals (e.g. G8 − G3 on MRPC) with care.</td></tr>
         <tr><td>Low-resource seeds</td><td class="wrap-cell">G5/G6 have 3 seeds and no learning-rate controls.</td></tr>
+        <tr><td>H1 overlaps</td><td class="wrap-cell">Top-8 subspaces, centred EVA against uncentred Σ<sub>g</sub>; H4 compares the groups' allocated ranks. Close scales, not identical.</td></tr>
         <tr><td>Early loss</td><td class="wrap-cell">Training-batch loss, not a validation metric; G5/G6 use their own batch order.</td></tr>
       </tbody></table></div>
   </div>
@@ -310,7 +330,7 @@ python summary/site/build_data.py  # data.js for this page</pre>
 </main>
 <footer><div class="wrap">
   <span id="foot-count"></span>
-  <span>Source: <code>summary/site/data.js</code>, generated from the run JSONs in G1G2/ … G9/ on branch <code>summary</code>. Paired intervals use the t distribution with n − 1 degrees of freedom, as in <code>summary/collect.py</code>.</span>
+  <span>Source: <code>summary/site/data.js</code>, generated from the run JSONs in G1G2/ … G9/ and H1 Diagnosis/ on branch <code>summary</code>. Paired intervals use the t distribution with n − 1 degrees of freedom, as in <code>summary/collect.py</code>.</span>
 </div></footer>
 <div id="tip" hidden></div>
 
@@ -821,6 +841,60 @@ function drawH4() {
     const sp = document.createElement("span"); sp.appendChild(s); sp.append(k.label); lg.appendChild(sp);
   }
 }
+/* ---------- 08 H1 ---------- */
+const H1K = [
+  { k: "eva_gw", label: "EVA vs GW-EVA, same sample", short: "EVA–GW", g: "G5" },
+  { k: "gw_gw", label: "GW-EVA floor: disjoint samples", short: "GW floor", g: "G5", hollow: true },
+  { k: "eva_floor", label: "EVA floor: disjoint samples (H4)", short: "EVA floor", g: "G3", hollow: true },
+];
+function h1Vals(k, t) {
+  if (k === "eva_floor") return D.h4.filter((r) => r.kind === "floor" && r.task === t).map((r) => r.v);
+  return D.h1.filter((r) => r.task === t).map((r) => r[k]);
+}
+function drawH1() {
+  const c = document.getElementById("ch-h1"), W = width(c);
+  const rows = [];
+  ["sst2", "mrpc", "rte", "lowres"].forEach((t, ti) => {
+    for (const k of H1K) { const v = h1Vals(k.k, t); if (v.length) rows.push({ t, ti, k, v }); }
+  });
+  const L = W < 480 ? 100 : 170, R = 54, top = 6, rowH = 22, gap = 12;
+  const H = top + rows.length * rowH + 3 * gap + 34;
+  const x = scale(0, 1, L, W - R);
+  const svg = svgFor(c, W, H);
+  xAxis(svg, x, top, H - 34, [0, 0.2, 0.4, 0.6, 0.8, 1], null, (v) => v.toFixed(1));
+  let prev = null;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH + r.ti * gap + rowH / 2, col = color(r.k.g), m = meanSd(r.v);
+    if (r.t !== prev) txt(svg, 8, y + 4, SETTINGS[r.t], { class: "lab-strong" });
+    prev = r.t;
+    txt(svg, L - 8, y + 4, r.k.short, { "text-anchor": "end", "font-size": 11 });
+    el("line", { x1: x(m.m), x2: x(m.m), y1: y - 8, y2: y + 8, stroke: css("--ink"), "stroke-width": 2 }, svg);
+    for (const v of r.v) mark(svg, GROUPS[r.k.g].shape, x(v), y, 8, r.k.hollow ? css("--surface") : col, r.k.hollow ? col : css("--surface"), 1.5);
+    txt(svg, W - R + 8, y + 4, m.m.toFixed(3), { "font-family": "JetBrains Mono, monospace", "font-size": 11 });
+    const hit = el("rect", { x: 0, y: y - rowH / 2, width: W, height: rowH, class: "hit" }, svg);
+    hover(hit, `<b>${r.k.label}</b> · ${SETTINGS[r.t]}<br><span class="m">${m.m.toFixed(3)} ± ${(m.sd || 0).toFixed(3)} over ${m.n} seeds</span>${r.t === "lowres" && r.k.k === "gw_gw" ? "<br>floor samples from full SST-2 outside the 1k subset" : ""}`);
+  });
+  const lg = document.getElementById("lg-h1"); lg.innerHTML = "";
+  for (const k of H1K) {
+    const s = el("svg", { width: 16, height: 16, viewBox: "0 0 16 16", "aria-hidden": "true" });
+    mark(s, GROUPS[k.g].shape, 8, 8, 10, k.hollow ? css("--surface") : color(k.g), k.hollow ? color(k.g) : css("--surface"), 1.5);
+    const sp = document.createElement("span"); sp.appendChild(s); sp.append(k.label); lg.appendChild(sp);
+  }
+}
+function h1Table() {
+  const t = document.getElementById("tbl-h1");
+  let h = "<thead><tr><th>Task</th><th class=\"num\">EVA vs GW-EVA</th><th class=\"num\">GW-EVA floor</th><th class=\"num\">Difference, 95% CI</th><th class=\"num\">Layers ≥ floor</th><th class=\"num\">Mean angle</th><th class=\"num\">Pearson ‖g‖², ‖x‖²</th></tr></thead><tbody>";
+  for (const task of ["sst2", "mrpc", "rte", "lowres"]) {
+    const rs = D.h1.filter((r) => r.task === task);
+    if (!rs.length) continue;
+    const e = meanSd(rs.map((r) => r.eva_gw)), g = meanSd(rs.map((r) => r.gw_gw)), d = ci(rs.map((r) => r.eva_gw - r.gw_gw));
+    const above = rs.reduce((a, r) => a + r.above, 0), n = rs.reduce((a, r) => a + r.layers, 0);
+    const ang = meanSd(rs.map((r) => r.angle)).m, pr = meanSd(rs.map((r) => r.pearson)).m;
+    h += `<tr><td>${SETTINGS[task]} <span class="muted">(${rs.length} seeds)</span></td><td class="num">${e.m.toFixed(3)} ± ${e.sd.toFixed(3)}</td><td class="num">${g.m.toFixed(3)} ± ${g.sd.toFixed(3)}</td>`
+       + `<td class="num">${fmtCI(d, 3)}${d.sig ? " ✱" : ""}</td><td class="num">${above} / ${n}</td><td class="num">${ang.toFixed(1)}°</td><td class="num">${pr.toFixed(2)}</td></tr>`;
+  }
+  t.innerHTML = h + "</tbody>";
+}
 function isDark() {
   const t = document.documentElement.getAttribute("data-theme");
   return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
@@ -835,15 +909,14 @@ function ramp(t) {
   const a = h(stops[i]), b = h(stops[i + 1]);
   return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(",")})`;
 }
-function drawHeat() {
-  const c = document.getElementById("ch-heat"), W = width(c);
-  const types = ["q", "k", "v", "o", "ffn_in", "ffn_out"], kinds = [["floor", "Noise floor"], ["G8", "G8 wikitext-103"], ["G9", "G9 another task"]];
-  const lo = 0.3, hi = 1.0, cell = (k, t, d) => D.h4_layers.find((r) => r.type === t && r.depth === d)[k];
+function heatmap(cid, kinds, cell, lo, hi, gid, ticks, scaleLabel, tipLabel) {
+  const c = document.getElementById(cid), W = width(c);
+  const types = ["q", "k", "v", "o", "ffn_in", "ffn_out"], n = kinds.length;
   const narrow = W < 760, L = 54, gapX = 22;
-  const panelW = narrow ? W - L - 8 : (W - L - 2 * gapX - 8) / 3;
+  const panelW = narrow ? W - L - 8 : (W - L - (n - 1) * gapX - 8) / n;
   const cw = panelW / 12, ch = Math.min(22, Math.max(16, cw * 0.9));
   const panelH = 18 + types.length * ch + 22;
-  const H = (narrow ? 3 * panelH + 2 * 10 : panelH) + 44;
+  const H = (narrow ? n * panelH + (n - 1) * 10 : panelH) + 44;
   const svg = svgFor(c, W, H);
   kinds.forEach(([k, name], p) => {
     const ox = narrow ? L : L + p * (panelW + gapX), oy = narrow ? p * (panelH + 10) : 0;
@@ -852,7 +925,7 @@ function drawHeat() {
       if (p === 0 || narrow) txt(svg, ox - 6, oy + 18 + ti * ch + ch / 2 + 4, t, { "text-anchor": "end", "font-size": 11 });
       for (let d = 0; d < 12; d++) {
         const v = cell(k, t, d), r = el("rect", { x: ox + d * cw + 1, y: oy + 18 + ti * ch + 1, width: cw - 2, height: ch - 2, rx: 2, fill: ramp((v - lo) / (hi - lo)) }, svg);
-        hover(r, `<b>${name}</b><br>layer ${d}, ${t}<br><span class="m">overlap with G3 ${v.toFixed(3)}</span>`);
+        hover(r, `<b>${name}</b><br>layer ${d}, ${t}<br><span class="m">${tipLabel} ${v.toFixed(3)}</span>`);
       }
     });
     const tg = el("g", { class: "tick" }, svg);
@@ -860,12 +933,22 @@ function drawHeat() {
   });
   // colour scale
   const ly = H - 26, lx0 = L, lw = Math.min(260, W - L - 30);
-  const defs = el("defs", {}, svg), gr = el("linearGradient", { id: "h4ramp" }, defs);
+  const defs = el("defs", {}, svg), gr = el("linearGradient", { id: gid }, defs);
   for (let i = 0; i <= 10; i++) el("stop", { offset: i * 10 + "%", "stop-color": ramp(i / 10) }, gr);
-  el("rect", { x: lx0, y: ly, width: lw, height: 8, rx: 2, fill: "url(#h4ramp)" }, svg);
+  el("rect", { x: lx0, y: ly, width: lw, height: 8, rx: 2, fill: `url(#${gid})` }, svg);
   const tg = el("g", { class: "tick" }, svg);
-  for (const v of [0.3, 0.5, 0.7, 0.9, 1.0]) txt(tg, lx0 + (v - lo) / (hi - lo) * lw, ly + 22, v.toFixed(1), { "text-anchor": "middle" });
-  if (W >= 560) txt(svg, lx0 + lw + 10, ly + 8, "overlap with G3; x = layer 0–11", { "font-size": 11 });
+  for (const v of ticks) txt(tg, lx0 + (v - lo) / (hi - lo) * lw, ly + 22, v.toFixed(Number.isInteger(Math.round(v * 1000) / 100) ? 1 : 2), { "text-anchor": "middle" });
+  if (W >= 560) txt(svg, lx0 + lw + 10, ly + 8, scaleLabel, { "font-size": 11 });
+}
+function drawHeat() {
+  heatmap("ch-heat", [["floor", "Noise floor"], ["G8", "G8 wikitext-103"], ["G9", "G9 another task"]],
+    (k, t, d) => D.h4_layers.find((r) => r.type === t && r.depth === d)[k], 0.3, 1.0, "h4ramp",
+    [0.3, 0.5, 0.7, 0.9, 1.0], "overlap with G3; x = layer 0–11", "overlap with G3");
+}
+function drawH1Heat() {
+  heatmap("ch-h1heat", [["eva_gw", "EVA vs GW-EVA"], ["gw_gw", "GW-EVA floor"]],
+    (k, t, d) => D.h1_layers.find((r) => r.type === t && r.depth === d)[k], 0, 1.0, "h1ramp",
+    [0, 0.25, 0.5, 0.75, 1.0], "overlap; x = block 0–11", "overlap");
 }
 
 /* ---------- wiring ---------- */
@@ -875,8 +958,8 @@ const sb = document.getElementById("sel-base"); sb.value = state.base;
 sb.addEventListener("change", (e) => { state.base = e.target.value; save(); drawForest(); drawStrip(); });
 setupEarly();
 
-function drawAll() { drawForest(); drawStrip(); drawLowres(); drawEarly(); drawGrad(); drawH4(); drawHeat(); }
-mainTable(); lowresTable(); checksTable(); ratioTable(); renderEarly(); drawAll();
+function drawAll() { drawForest(); drawStrip(); drawLowres(); drawEarly(); drawGrad(); drawH1(); drawH1Heat(); drawH4(); drawHeat(); }
+mainTable(); lowresTable(); checksTable(); ratioTable(); h1Table(); renderEarly(); drawAll();
 let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(drawAll, 120); }).observe(document.querySelector("main"));
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { drawAll(); });
 new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });

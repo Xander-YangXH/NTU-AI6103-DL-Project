@@ -141,7 +141,7 @@ Paired differences (percentage points, 95% CI; `*` = interval excludes 0):
 
 | Hypothesis | Verdict |
 |---|---|
-| H1: Σ_g's subspace differs from EVA's | Not measured yet |
+| H1: Σ_g's subspace differs from EVA's | **Supported**: on the same calibration sample the top-8 subspaces overlap 0.49–0.69 against a GW–GW noise floor of 0.84–0.95, significant on all four tasks (`H1 Diagnosis/`) |
 | H2: GW-EVA beats EVA | **Not supported**: G5 − G3 non-significant everywhere, means slightly negative, and no lower early loss, although GW-EVA's step-0 gradient is 1.3–2.1× EVA's |
 | H3: cost-based allocation matters | **Not supported**: G4 − G3 and G6 − G5 non-significant; EVA with uniform ranks matches the original in low resource |
 | H4: how task-specific the inputs are | **Answered**: EVA calibrated on another task (G9) or on generic wikitext-103 text (G8) matches EVA on task data in accuracy, although its subspace overlaps by only 0.49–0.72 against a same-task noise floor of 0.92–0.95 |
@@ -169,6 +169,7 @@ Each member worked on their own branch with one folder per pair of groups, holdi
 | `G7/` | G7 LoRA-GA | `liyouran` |
 | `G8/` | G8 EVA-generic (wikitext-103 calibration in G3's token layout) and its subspace overlap with G3 | `eddy_G8` |
 | `G9/` | G9 EVA-cross and the H4 subspace overlap | `zjz_g9` |
+| `H1 Diagnosis/` | H1: GW-EVA's subspace against EVA's on the same calibration sample, with a GW–GW noise floor | `hanyanze` |
 | `summary/` | Cross-group tables (`collect.py`), figures, findings, next steps, report draft and the interactive results page (`site/`) | `summary` |
 
 ## 7. Compute

@@ -7,11 +7,11 @@ Written 2026-11-05, from the results in [`SUMMARY.md`](SUMMARY.md).
 **Status on 2026-11-20:**
 
 - **Step 2 is done.** hanyanze reran G5/G6 under the shared settings (11-18; low resource with 3 seeds). GW-EVA does not beat EVA: G5 − G3 is non-significant on every task, with slightly negative means (see [`SUMMARY.md`](SUMMARY.md) §2). On the decision table below, the story is now the analysis / negative-result one.
-- **Step 1 is partly done.** G9's cross-task overlap exists as a layer average (zjz, 11-07). The H1 measurement itself (GW-EVA vs EVA subspaces) and the noise floor are still missing.
+- **Step 1 is done** (hanyanze, 11-20, `H1 Diagnosis/`). On the same calibration sample, GW-EVA's top-8 subspace overlaps EVA's 0.49–0.69 against a GW–GW floor of 0.84–0.95, significant on all four tasks (SUMMARY finding 10). With step 2, this puts us in the "subspaces differ, no difference" row: the **analysis paper**. Small leftover: report the uncentred-activation overlap and an EVA–EVA floor from the same script, to separate centring from gradient weighting.
 - **Step 5 is partly answered from existing data.** `collect.py` now compares the first-500-step training loss at equal learning rates (SUMMARY finding 3): data-aware inits fit faster early on MRPC, GW-EVA is no faster than EVA, and in low resource EVA/GW-EVA fit more slowly in steps 51–200. Evaluating on the dev/val split at fixed step budgets still needs the `train.py` option.
 - **Step 4 is done** (11-20, `G1G2/results/control*/`): EVA prefers a lower learning rate in low resource (lr 2e-4: 90.87 vs 89.50 at 1e-3) and then trails LoRA by only 0.57; uniform ranks (ρ = 1) change nothing. Still open: the same learning-rate check for G5/G6 and G8.
 - **Step 7 is done.** eddy ran G8 (13 main + 5 low-resource runs, branch `eddy_G8`): generic-text calibration matches task-data EVA in accuracy, with subspace overlap 0.64–0.72.
-- **Noise floor done (part of step 1)**: EVA against itself on a disjoint sample of the same task overlaps 0.92–0.95, so G8/G9's 0.49–0.72 are real subspace changes. The H1 measurement itself is still open (hanyanze).
+- **Noise floor done (part of step 1)**: EVA against itself on a disjoint sample of the same task overlaps 0.92–0.95, so G8/G9's 0.49–0.72 are real subspace changes. H1 is now measured too (step 1 above).
 - **Step 3 is started.** G1 and G3 now have ten seeds on MRPC, RTE and low resource; G5 still needs seeds 5–9.
 - One G1 RTE seed (of ten) collapsed to a single class; G3's ten RTE seeds did not. This bears on step 6.
 - **Same-GPU and equal-lr checks done** (11-20): with both at lr 2e-4, EVA matches LoRA in low resource; the MRPC edge was a GPU artefact; on RTE at equal lr EVA is +2.1. Per-layer H4 overlaps are rebuilt in `G1G2/results/h4_layers/`.
@@ -30,7 +30,7 @@ Compute is cheap: under the shared protocol one run takes about 1–4 min on MRP
 
 ## P0: this week (decides the paper's story)
 
-### 1. H1 diagnostic (owner: hanyanze)
+### 1. H1 diagnostic (owner: hanyanze) — done 2026-11-20
 
 The code already exists. `G5G6/src/gw_eva/calibrate.py` computes the subspace overlap and principal angles between `eva_centered`, `activation_uncentered` and `gw_uncentered`, and the Pearson correlation of ‖g‖² with ‖x‖². The formal runs only enabled `gw_uncentered` (`study.py:117` sets `modes=['gw_uncentered']`), so no H1 numbers exist yet.
 

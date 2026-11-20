@@ -6,7 +6,7 @@
 
 ## Abstract
 
-EVA initialises LoRA's down-projection A with the principal components of each layer's input activations. Its optimality argument assumes that the gradient arriving at a layer's output is independent of that layer's input. We drop this assumption and show that, at initialisation, the expected squared gradient on B is exactly Tr(AΣ<sub>g</sub>Aᵀ) with Σ<sub>g</sub> = E[‖g‖² x xᵀ]. The maximiser is the top eigenspace of Σ<sub>g</sub>, which we call **GW-EVA**. A mini-batch version of the same identity places EVA, GW-EVA and LoRA-GA in one family. We implement GW-EVA on top of Hugging Face PEFT. We then test it against eight other initialisations on RoBERTa-base under one shared protocol: GLUE SST-2, MRPC and RTE, plus a 1,000-example SST-2 subset. All runs are paired by seed, about 230 runs in total. The theory holds: the measured step-0 gradient ratios match the prediction. GW-EVA raises the step-0 gradient 1.3–2.1× over EVA, and data-aware initialisations raise it 7–37× over LoRA. None of this translates into accuracy. GW-EVA − EVA is −0.15, −0.88, −1.23 and −0.46 points on the four settings, and every 95% interval contains 0. No initialisation beats plain LoRA at a tuned learning rate. EVA's 2.6-point deficit in low resource disappears when its learning rate is lowered. Calibrating EVA on generic text or another task moves 30–50% of its subspace but leaves accuracy unchanged. We conclude that at rank 8 on RoBERTa-base, which directions A starts from has little effect on the final accuracy. The quantities these methods optimise, larger initial gradients and faster early fitting, do not last.
+EVA initialises LoRA's down-projection A with the principal components of each layer's input activations. Its optimality argument assumes that the gradient arriving at a layer's output is independent of that layer's input. We drop this assumption and show that, at initialisation, the expected squared gradient on B is exactly Tr(AΣ<sub>g</sub>Aᵀ) with Σ<sub>g</sub> = E[‖g‖² x xᵀ]. The maximiser is the top eigenspace of Σ<sub>g</sub>, which we call **GW-EVA**. A mini-batch version of the same identity places EVA, GW-EVA and LoRA-GA in one family. We implement GW-EVA on top of Hugging Face PEFT. We then test it against eight other initialisations on RoBERTa-base under one shared protocol: GLUE SST-2, MRPC and RTE, plus a 1,000-example SST-2 subset. All runs are paired by seed, about 230 runs in total. The theory holds: the measured step-0 gradient ratios match the prediction. GW-EVA raises the step-0 gradient 1.3–2.1× over EVA, and data-aware initialisations raise it 7–37× over LoRA. GW-EVA's subspace is also genuinely different from EVA's: on the same calibration sample their top-8 subspaces overlap 0.49–0.69, against 0.84–0.95 between two independent GW-EVA estimates. None of this translates into accuracy. GW-EVA − EVA is −0.15, −0.88, −1.23 and −0.46 points on the four settings, and every 95% interval contains 0. No initialisation beats plain LoRA at a tuned learning rate. EVA's 2.6-point deficit in low resource disappears when its learning rate is lowered. Calibrating EVA on generic text or another task moves 30–50% of its subspace but leaves accuracy unchanged. We conclude that at rank 8 on RoBERTa-base, which directions A starts from has little effect on the final accuracy. The quantities these methods optimise, larger initial gradients and faster early fitting, do not last.
 
 ## 1. Introduction
 
@@ -167,9 +167,24 @@ All groups share the data split, the head warm-up and the seeds (G1–G4 and G8 
 
 On the three full-data tasks, every group except G7 lies within ±1.9 points of LoRA, and every interval against G1 contains 0. The best and worst of G2–G6, G8 and G9 differ by under 1.2 points on SST-2 and MRPC, less than the seed noise on RTE.
 
-### 5.2 GW-EVA versus EVA (H2)
+### 5.2 GW-EVA versus EVA (H1, H2)
 
-H2 is not supported. GW-EVA's step-0 gradient is larger, as designed: 1.46×, 2.27× and 2.00× EVA's on SST-2, MRPC and RTE, as same-seed means. But its accuracy is never significantly different, and all four mean differences are negative.
+**H1 is supported: GW-EVA picks a different subspace.** For each task and seed we sketch EVA (the centred activation covariance) and GW-EVA (Σ<sub>g</sub>, uncentred) on the same 1,024 training examples, using the classification-head checkpoint of the shared runs, and compare their top-8 subspaces in all 72 layers with the overlap metric of §5.6. The noise floor compares GW-EVA estimated on two disjoint 1,024-example samples of the same task.
+
+**Table 3.** H1: top-8 subspace overlap, 3 seeds per task. Difference = EVA–GW − floor, paired by seed, 95% CI.
+
+| Task | EVA vs GW-EVA | GW-EVA vs GW-EVA (floor) | Difference | Mean principal angle | Pearson(‖g‖², ‖x‖²) |
+|---|---|---|---|---|---|
+| SST-2 | 0.640 | 0.840 | −0.201 [−0.224, −0.178] | 34.8° | 0.11 |
+| MRPC | 0.522 | 0.868 | −0.346 [−0.439, −0.252] | 43.8° | 0.10 |
+| RTE | 0.493 | 0.866 | −0.373 [−0.396, −0.350] | 46.0° | 0.14 |
+| Low-res SST-2¹ | 0.688 | 0.947 | −0.259 [−0.295, −0.223] | 30.8° | 0.19 |
+
+¹ Both floor samples come from full SST-2 outside the 1k subset.
+
+The gap is significant on every task, and only 7 of 864 layer-seed pairs reach their floor. It is spread over all layer types and depths; the attention output projection differs most (0.48 on the full tasks, against 0.61 for k and v), as it does in H4. The per-layer curves are in [`H1 Diagnosis/results/h1_layerwise_overlap.png`](../H1%20Diagnosis/results/h1_layerwise_overlap.png). Per token, ‖g‖² is only weakly correlated with ‖x‖² (Pearson 0.10–0.19), so the gradient weighting is not a rescaled activation norm. The two halves of H1 thus come apart: the correlation with the input norm is weak, yet the weighting moves the subspace a lot.
+
+**H2 is not supported.** GW-EVA's step-0 gradient is larger, as designed: 1.46×, 2.27× and 2.00× EVA's on SST-2, MRPC and RTE, as same-seed means. But its accuracy is never significantly different, and all four mean differences are negative.
 
 H2's early-training claim fails too. At equal learning rates, G5 and G3 have the same training loss in steps 1–50 on every task. On SST-2, G5's loss is slightly higher afterwards (+0.018 in steps 51–200 and +0.021 in steps 201–500, both significant).
 
@@ -177,9 +192,9 @@ H2's early-training claim fails too. At equal learning rates, G5 and G3 have the
 
 **Figure 1.** [`figures/step0_vs_accuracy.png`](figures/step0_vs_accuracy.png): step-0 ‖∂L/∂B‖ against final accuracy, per group and task.
 
-The step-0 gradient on B grows 7–37× from LoRA to the data-aware initialisations while accuracy stays within a one-point band. The same-seed ratios decompose this growth (Table 3).
+The step-0 gradient on B grows 7–37× from LoRA to the data-aware initialisations while accuracy stays within a one-point band. The same-seed ratios decompose this growth (Table 4).
 
-**Table 3.** Same-seed ratios of the step-0 gradient norm, mean (range).
+**Table 4.** Same-seed ratios of the step-0 gradient norm, mean (range).
 
 | Task | G2 / G1 (predicted √3 = 1.73) | G3 / G2 (EVA's directions) | G5 / G3 (GW-EVA over EVA) |
 |---|---|---|---|
@@ -189,9 +204,9 @@ The step-0 gradient on B grows 7–37× from LoRA to the data-aware initialisati
 
 The magnitude-only ratio G2/G1 matches the √3 predicted in §3.2 to within 6%, which confirms the identity. EVA's directions then add another 4–8× at equal row norm, and GW-EVA a further 1.5–2.3×. Yet G2, which changes only the norm, matches G1 in accuracy. G3 and G5, which change the direction, match it as well.
 
-The gradient does buy a faster start. On MRPC, where all groups share lr 2e-4, EVA, GW-EVA and LoRA-GA have a significantly lower training loss than LoRA throughout the first 500 steps, as Table 4 shows. Their final F1 is not significantly different. G2's loss differs from G1's by at most 0.004.
+The gradient does buy a faster start. On MRPC, where all groups share lr 2e-4, EVA, GW-EVA and LoRA-GA have a significantly lower training loss than LoRA throughout the first 500 steps, as Table 5 shows. Their final F1 is not significantly different. G2's loss differs from G1's by at most 0.004.
 
-**Table 4.** MRPC, lr 2e-4: paired difference in mean training loss over each step window (group − G1; \* = excludes 0).
+**Table 5.** MRPC, lr 2e-4: paired difference in mean training loss over each step window (group − G1; \* = excludes 0).
 
 | | Steps 1–50 | Steps 51–200 | Steps 201–500 | Final F1 − G1 |
 |---|---|---|---|---|
@@ -205,9 +220,9 @@ A plausible reason why the gradient scale does not persist is Adam's per-coordin
 
 **Figure 2.** [`figures/lowres_lr.png`](figures/lowres_lr.png): low-resource accuracy against learning rate for G1, G3 and G8, on one GPU.
 
-Under the shared rule, which reuses the full-SST-2 learning rate, every spectral initialisation trails LoRA by 1.6–3.1 points (Table 2, last column). We reran the settings outside the shared protocol to find out why (Table 5).
+Under the shared rule, which reuses the full-SST-2 learning rate, every spectral initialisation trails LoRA by 1.6–3.1 points (Table 2, last column). We reran the settings outside the shared protocol to find out why (Table 6).
 
-**Table 5.** Low-resource SST-2, 5 seeds, all on L40S.
+**Table 6.** Low-resource SST-2, 5 seeds, all on L40S.
 
 | Run | lr 2e-4 | lr 5e-4 | lr 1e-3 |
 |---|---|---|---|
@@ -230,7 +245,7 @@ H3 is not supported. Allocating by parameter cost changes nothing on full data, 
 
 We measure the overlap between two initial A matrices as the mean squared cosine of the principal angles between their row spaces, averaged over the 72 layers. To separate real differences from sampling noise, the noise floor compares G3 with EVA computed on a disjoint 1,024-example sample of the same task.
 
-**Table 6.** Overlap with same-task, same-seed EVA (G3).
+**Table 7.** Overlap with same-task, same-seed EVA (G3).
 
 | Compared with G3 | SST-2 | MRPC | RTE |
 |---|---|---|---|
@@ -245,7 +260,7 @@ The calibration source moves 30–50% of the subspace, far beyond the noise floo
 - **Depth.** Layers 3–7 move most.
 - **Input format.** G8, which keeps G3's token layout and swaps only the words, overlaps more than G9, which changes both task and format. Most of that gap is on SST-2, where G9's calibration switches from single sentences to sentence pairs. Part of what looks like task content may be input format.
 
-Accuracy does not follow. Neither G8 nor G9 is ever significantly different from LoRA on full data. Against G3, the only significant difference is G8 on MRPC (−0.91 [−1.54, −0.28]), which rests on G8's small variance and does not survive any multiplicity correction. **H4 is answered:** EVA's subspace is task-specific, but at rank 8 the specificity does not matter for accuracy.
+GW-EVA moves the subspace about as far from EVA's (0.49–0.69, Table 3) as these calibration-source changes do. Accuracy does not follow. Neither G8 nor G9 is ever significantly different from LoRA on full data. Against G3, the only significant difference is G8 on MRPC (−0.91 [−1.54, −0.28]), which rests on G8's small variance and does not survive any multiplicity correction. **H4 is answered:** EVA's subspace is task-specific, but at rank 8 the specificity does not matter for accuracy.
 
 ### 5.7 Robustness: RTE collapse and GPU effects
 
@@ -267,13 +282,13 @@ With 15 MRPC seeds, EVA's apparent edge over LoRA is +0.50 [+0.08, +0.92] when G
 - the magnitude control (G2) shows that a larger gradient alone does nothing;
 - the early-loss curves show that a faster start does not survive to the end of training;
 - the low-resource controls show that EVA's apparent deficit is a learning-rate artefact;
-- the calibration-source controls show that the subspace can move by half without changing accuracy.
+- the calibration-source controls and the H1 diagnostic show that the subspace can move by a third to a half, through other calibration data or through gradient weighting, without changing accuracy.
 
 At rank 8 on RoBERTa-base, the final accuracy is largely insensitive to which directions A starts from.
 
 **Limitations.**
 
-1. **H1 is still open.** We have not measured how far the Σ<sub>g</sub> subspace is from the activation subspace. If the two nearly coincide, GW-EVA ≈ EVA explains the null result in H2. If they differ, the null result says that the difference does not matter. **TODO:** the overlap between the G5 and G3 initial A, with a noise floor.
+1. **What H1 separates.** H1 compares centred EVA with uncentred Σ<sub>g</sub>, so the gap mixes the gradient weighting with centring. It uses top-8 subspaces rather than G5's allocated ranks, and its floor is GW-EVA against itself; the EVA–EVA floor (0.92–0.95) comes from the H4 script. **TODO:** report the uncentred-activation overlap that the H1 run already sketches, and an EVA–EVA floor in the same script.
 2. **Scope.** One encoder model, rank 8, three GLUE tasks. Larger models, generative tasks, or lower ranks, where the adapter's capacity binds, may behave differently.
 3. **Statistics.** Three to five seeds per cell for most groups, and no multiplicity correction. Borderline single results such as G8 − G3 on MRPC should be read with care.
 4. **Heterogeneous hardware.** G3/G4 ran on A40, G9 on a laptop GPU, and G5/G6 did not record their GPU. Our same-GPU reruns cover the comparisons that change conclusions, but not all of them.
@@ -292,7 +307,7 @@ Removing EVA's independence assumption gives an exact step-0 objective, a new in
 |---|---|
 | **TODO** (`yxh`) | G1 / G2, the magnitude control and theory check, extra seeds, same-GPU and learning-rate controls, H4 noise floor and per-layer analysis, cross-group summary and results page |
 | **TODO** (`yinchenyu_g3g4`) | Shared data split and training pipeline, G3 EVA reproduction, G4 parameter-cost allocation, subspace-overlap metric |
-| **TODO** (`hanyanze`) | GW-EVA derivation and implementation, G5 / G6 |
+| **TODO** (`hanyanze`) | GW-EVA derivation and implementation, G5 / G6, H1 subspace diagnosis |
 | **TODO** (`liyouran`) | G7 LoRA-GA |
 | **TODO** (`eddy_G8`) | G8 EVA-generic, layout-preserving generic calibration, G8 overlap |
 | **TODO** (`zjz_g9`) | G9 EVA-cross, H4 overlap analysis |
@@ -329,3 +344,5 @@ python summary/collect.py          # all tables (summary/tables.md) and one row 
 python summary/figures.py          # Figures 1–3, PNG and PDF
 python summary/site/build_data.py  # data for the interactive results page, summary/site/index.html
 ```
+
+H1 has its own pipeline in `H1 Diagnosis/` (`scripts/run_h1.py` per task and seed, `scripts/summarize_h1.py` for the CSV, JSON and figure). It needs the shared runs' head checkpoints, which are not in the repository.

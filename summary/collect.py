@@ -360,6 +360,58 @@ def main():
             f"{t}: " + ", ".join(f"{k} {sum(r['mean'][k] for r in lay if r['task'] == t) / sum(1 for r in lay if r['task'] == t):.3f}"
                                  for k, _ in kinds) for t in ("sst2", "mrpc", "rte"))]
 
+    # H1 (hanyanze, "H1 Diagnosis/"): top-8 subspace of GW-EVA's Sigma_g against EVA's centred activation covariance,
+    # both sketched on the same 1,024 calibration examples, with a GW-vs-GW floor from two disjoint 1,024-example samples.
+    h1 = [json.load(open(p)) for p in sorted(glob.glob(os.path.join(ROOT, "H1 Diagnosis", "results", "*_seed*.json")))]
+    if h1:
+        def ci(d):
+            m, sd = mean_sd(d)
+            h = T95[len(d) - 1] * sd / math.sqrt(len(d)) if len(d) > 1 else float("nan")
+            return f"{m:+.3f} [{m - h:+.3f}, {m + h:+.3f}]"
+
+        def ms3(xs):
+            m, sd = mean_sd(xs)
+            return f"{m:.3f} ± {sd:.3f}"
+        out += ["", "## H1: GW-EVA's subspace against EVA's (rank 8, same calibration sample)", "",
+                "Each run sketches EVA (centred activation covariance) and GW-EVA (Σ_g = E[‖g‖² x xᵀ], uncentred) on the "
+                "same 1,024 training examples with the shared classification-head checkpoint, and compares their top-8 "
+                "subspaces in all 72 layers (mean squared cosine of the principal angles). The floor GW–GW compares "
+                "GW-EVA on two disjoint 1,024-example samples of the same task; for low-resource SST-2 both floor "
+                "samples come from full SST-2 outside the 1k subset. Difference: EVA–GW − GW–GW, paired by seed, 95% CI. "
+                "Pearson: per-token ‖g‖² against ‖x‖², mean over layers.", "",
+                "| Task | Seeds | EVA–GW | GW–GW (floor) | Difference | Layers with EVA–GW ≥ floor | Mean principal angle | Pearson ‖g‖², ‖x‖² |",
+                "|---|---|---|---|---|---|---|---|"]
+        names = {"sst2": "SST-2", "mrpc": "MRPC", "rte": "RTE", "sst2_lowres": "Low-res SST-2 1k"}
+        for t in ("sst2", "mrpc", "rte", "sst2_lowres"):
+            runs = [r for r in h1 if r["task"] == t]
+            if not runs:
+                continue
+            e = [r["mean_eva_gw"] for r in runs]
+            g = [r["mean_gw_gw"] for r in runs]
+            layers = [l for r in runs for l in r["per_layer"]]
+            above = sum(l["eva_gw"] >= l["gw_gw"] for l in layers)
+            ang = sum(sum(l["principal_angles_degrees"]) / len(l["principal_angles_degrees"]) for l in layers) / len(layers)
+            pr = [l["pearson"] for l in layers if l["pearson"] is not None]
+            out.append(f"| {names[t]} | {len(runs)} | {ms3(e)} | {ms3(g)} | {ci([a - b for a, b in zip(e, g)])} | "
+                       f"{above} / {len(layers)} | {ang:.1f}° | {sum(pr) / len(pr):.3f} |")
+        types = ["q", "k", "v", "o", "FFN input", "FFN output"]
+        full = [l for r in h1 if r["task"] != "sst2_lowres" for l in r["per_layer"]]
+
+        def avg(key, pred):
+            v = [l[key] for l in full if pred(l)]
+            return f"{sum(v) / len(v):.3f}"
+        out += ["", "Per layer type and depth, the three full tasks (9 runs):", "",
+                "| | All layers | " + " | ".join(types) + " | Blocks 0–3 | Blocks 4–7 | Blocks 8–11 |",
+                "|---|---|" + "---|" * (len(types) + 3)]
+        for key, label in (("eva_gw", "EVA–GW"), ("gw_gw", "GW–GW (floor)")):
+            out.append(f"| {label} | {avg(key, lambda l: True)} | "
+                       + " | ".join(avg(key, lambda l, t=t: l["layer_type"] == t) for t in types) + " | "
+                       + " | ".join(avg(key, lambda l, a=a: a <= l["block"] < a + 4) for a in (0, 4, 8)) + " |")
+        out += ["", "Both floors are high (EVA against EVA on a disjoint sample 0.92–0.95 in H4, GW–GW 0.84–0.95 here), "
+                    "so GW-EVA's subspace (0.49–0.69 from EVA per task) is about as far from EVA's as EVA calibrated on "
+                    "other data (G8 0.64–0.72, G9 0.49–0.66). H1 compares top-8 subspaces and H4 the groups' allocated "
+                    "ranks, so the two scales are close but not identical."]
+
     # Theory check: E||dL/dB||^2 = Tr(A Sigma_g A^T). For directions independent of Sigma_g it scales with the squared
     # row norm of A, so G2 (row norm 1) over G1 (Kaiming-uniform, row norm 1/sqrt(3)) should give sqrt(3) in norm.
     steps = defaultdict(dict)
