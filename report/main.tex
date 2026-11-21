@@ -48,7 +48,7 @@
     College of Computing and Data Science, Nanyang Technological University, Singapore\\
     {xuanhe002}@e.ntu.edu.sg, {chenyu014}@e.ntu.edu.sg, {hany0052}@e.ntu.edu.sg,\\
     {youran005}@e.ntu.edu.sg, {tianshuo001}@e.ntu.edu.sg, {junzhe003}@e.ntu.edu.sg\\
-    Code and all run files: \url{https://github.com/Xander-YangXH/NTU-AI6103-DL-Project}
+    Code and all result files: \url{https://github.com/Xander-YangXH/NTU-AI6103-DL-Project}
 }
 
 \begin{document}
@@ -158,7 +158,7 @@ G9 & Act.\ cov., cross-task & Count & 10/2/2/-- & H4 \\
 \label{tab:groups}
 \end{table}
 
-\textbf{Groups and hypotheses.} A $2\times2$ core, direction (EVA vs.\ GW-EVA) $\times$ allocation (count vs.\ cost) in G3--G6, is complemented by five reference groups (Table~\ref{tab:groups}). We test: \textbf{H1}, $\norm{g}_2^2$ correlates with $x$, so the top-$r$ eigenspace of $\Sg$ differs from EVA's; \textbf{H2}, at matched parameter count GW-EVA gives larger step-0 gradients, lower loss in steps 1--500 and a higher validation score than EVA; \textbf{H3}, parameter-cost allocation changes performance under a fixed budget; \textbf{H4}, EVA subspaces are corpus-specific, so calibrating on generic text or another task changes both the subspace and the accuracy.
+\textbf{Groups and hypotheses.} A $2\times2$ core, direction (EVA vs.\ GW-EVA) $\times$ allocation (count vs.\ cost) in G3--G6, is complemented by five reference groups (Table~\ref{tab:groups}). We test: \textbf{H1}, $\norm{g}_2^2$ correlates with $x$, so the top-$r$ eigenspace of $\Sg$ differs from EVA's; \textbf{H2}, at a comparable parameter count GW-EVA gives larger step-0 gradients, lower loss in steps 1--500 and a higher validation score than EVA; \textbf{H3}, parameter-cost allocation changes performance under a fixed budget; \textbf{H4}, EVA subspaces are corpus-specific, so calibrating on generic text or another task changes both the subspace and the accuracy.
 
 \textbf{Shared protocol.} RoBERTa-base \citep{liu2019roberta} on GLUE SST-2, MRPC and RTE \citep{wang2019glue}, plus a 1,000-example SST-2 subset (seed 2027). LoRA adapts all 72 attention ($q,k,v,o$) and FFN linear layers with nominal $r=8$, $\alpha/r=1$ and no dropout (budget 1,327,104 parameters). 10\% of each training set is held out as dev (seed 2026) and final runs train on the rest. Training uses AdamW \citep{kingma2015adam,loshchilov2019decoupled} with batch 32, maximum length 128, a linear schedule with 6\% warm-up, weight decay 0, \texttt{bf16} and no gradient clipping, for 3, 10, 10 and 20 epochs on SST-2, MRPC, RTE and low resource, after a one-epoch head warm-up at lr $10^{-3}$. G1--G7 each select their learning rate from $\{2,5,10\}\times10^{-4}$ on dev with seed 0; low resource reuses the SST-2 choice and G8/G9 reuse G3's. Calibration uses 1,024 training examples (1,000 in low resource), batch 16, $\tau=0.99$ and $\rho=2$. Seeds are 0--2 on SST-2 and 0--4 elsewhere (0--2 for G5/G6 in low resource). We report the last epoch on the official validation set (accuracy; positive-class F1 for MRPC).
 
@@ -197,11 +197,11 @@ G7 $-$ G1 (LoRA-GA vs.\ LoRA) & $+0.04$ [$-1.11$, $+1.19$] & $+0.49$ [$-0.44$, $
 \textbf{G5 $-$ G3 (H2: GW-EVA vs.\ EVA)} & $-0.15$ [$-1.07$, $+0.76$] & $-0.88$ [$-2.05$, $+0.29$] & $-1.23$ [$-4.09$, $+1.64$] & $-0.46$ [$-3.82$, $+2.90$] \\
 G4 $-$ G3 (H3: EVA, cost vs.\ count) & $-0.54$ [$-1.69$, $+0.62$] & $-0.52$ [$-1.56$, $+0.52$] & $-1.23$ [$-4.31$, $+1.85$] & -- \\
 G6 $-$ G5 (H3: GW-EVA, cost vs.\ count) & $+0.27$ [$-0.65$, $+1.18$] & $+0.27$ [$-0.75$, $+1.28$] & $-0.65$ [$-6.19$, $+4.89$] & $+1.53$ [$+0.94$, $+2.12$]$^{*}$ \\
-G8 $-$ G3 (H4: generic vs.\ task) & $-0.31$ [$-2.31$, $+1.70$] & $-0.91$ [$-1.54$, $-0.28$]$^{*}$ & $-2.74$ [$-6.65$, $+1.16$] & $+1.08$ [$-0.09$, $+2.24$] \\
+G8 $-$ G3 (H4: generic vs.\ task)$^{\ddagger}$ & $-0.31$ [$-2.31$, $+1.70$] & $-0.91$ [$-1.54$, $-0.28$]$^{*}$ & $-2.74$ [$-6.65$, $+1.16$] & $+1.08$ [$-0.09$, $+2.24$] \\
 G9 $-$ G3 (H4: cross-task vs.\ task) & $-0.19$ [$-1.63$, $+1.24$] & $-0.52$ [$-1.21$, $+0.17$] & $+0.87$ [$-3.31$, $+5.04$] & -- \\
 \bottomrule
 \end{tabular}
-\caption{Seed-paired validation differences in points, 95\% CI ($^{*}$: interval excludes zero).}
+\caption{Seed-paired validation differences in points, 95\% CI ($^{*}$: interval excludes zero). G3/G4 ran on A40, G5/G6 on RTX 4090 D, G9 on RTX 3050 Ti and the other groups on L40S, so contrasts across GPUs include hardware effects (Section~\ref{sec:gpu}). $^{\ddagger}$G8 on L40S vs.\ G3 on A40; against G3 rerun on L40S: MRPC $+0.17$ [$-0.62$, $+0.97$], low resource $+0.39$ [$-0.97$, $+1.75$].}
 \label{tab:paired}
 \end{table*}
 
@@ -213,7 +213,7 @@ G9 $-$ G3 (H4: cross-task vs.\ task) & $-0.19$ [$-1.63$, $+1.24$] & $-0.52$ [$-1
 \end{figure*}
 
 \subsection{Main Validation Performance}
-On the full-data tasks every group except G7 lies within $\pm1.9$ points of LoRA (G1), and every interval against G1 spans zero (Tables~\ref{tab:main} and~\ref{tab:paired}). Excluding G7 on RTE, the best and worst groups differ by less than 1.0 point on SST-2 and MRPC, and by less than the seed noise on RTE.
+On the full-data tasks every group except G7 lies within $\pm1.9$ points of LoRA (G1), and every interval against G1 spans zero (Tables~\ref{tab:main} and~\ref{tab:paired}). Excluding G7 on RTE, the best and worst groups differ by less than 1.0 point on SST-2 and MRPC; on RTE they span 3.6 points (72.06--75.67\%) against per-group seed sds of 1.0--2.5 points.
 
 \subsection{GW-EVA versus EVA (H1, H2)}
 
@@ -252,7 +252,7 @@ Aligned subspaces do speed up early fitting when learning rates match. On MRPC, 
 
 \subsection{Low Resource: Sensitivity to Learning Rate}
 
-Reusing the full-SST-2 learning rates ($10^{-3}$ for G3/G5/G8, $5\times10^{-4}$ for G1) leaves the spectral initialisations 1.56--3.10 points behind LoRA on 1,000-example SST-2 (Table~\ref{tab:paired}). A sweep over $\{2,5,10\}\times10^{-4}$ with 5 seeds on one L40S explains the gap (Table~\ref{tab:lowres}, Figure~\ref{fig:lowres}). LoRA is flat (91.44--91.47\%), whereas EVA rises from 89.50\% at $10^{-3}$ to 90.87\% at $2\times10^{-4}$, narrowing G3 $-$ G1 to an insignificant $-0.57$ [$-1.45$, $+0.30$]. Removing rank redistribution ($\rho=1$ vs.\ 2 at $10^{-3}$) changes accuracy by $-0.41$ [$-2.32$, $+1.50$]. At $10^{-3}$, EVA and GW-EVA have higher training loss than LoRA in steps 51--200 ($+0.09$ and $+0.15$): they fit more slowly at this rate.
+Reusing the full-SST-2 learning rates ($10^{-3}$ for G3/G5/G8, $5\times10^{-4}$ for G1) leaves EVA (G3) and GW-EVA (G5) 2.64 and 3.10 points behind LoRA on 1,000-example SST-2 (Table~\ref{tab:paired}). A sweep over $\{2,5,10\}\times10^{-4}$ with 5 seeds on one L40S explains the gap (Table~\ref{tab:lowres}, Figure~\ref{fig:lowres}). LoRA is flat (91.44--91.47\%), whereas EVA rises from 89.50\% at $10^{-3}$ to 90.87\% at $2\times10^{-4}$, narrowing G3 $-$ G1 to an insignificant $-0.57$ [$-1.45$, $+0.30$]. Removing rank redistribution ($\rho=1$ vs.\ 2 at $10^{-3}$) changes accuracy by $-0.41$ [$-2.32$, $+1.50$]. At $10^{-3}$, EVA and GW-EVA have higher training loss than LoRA in steps 51--200 ($+0.09$ and $+0.15$): they fit more slowly at this rate.
 
 \begin{table}[t]
 \centering
@@ -268,7 +268,7 @@ G3 EVA ($\rho=1$) & -- & -- & 89.08$\pm$0.42 \\
 G8 EVA-generic & 90.41$\pm$1.15 & 90.28$\pm$0.69 & 89.89$\pm$0.52 \\
 \bottomrule
 \end{tabular}
-\caption{Low-resource SST-2 accuracy (\%, mean $\pm$ sd, 5 seeds on L40S) by learning rate. $\rho=1$ disables rank redistribution.}
+\caption{Low-resource SST-2 accuracy (\%, mean $\pm$ sd, 5 seeds on L40S) by learning rate. $\rho=1$ disables rank redistribution. G3 at $10^{-3}$ reruns the A40 setting of Table~\ref{tab:main} (88.81\%) on L40S.}
 \label{tab:lowres}
 \end{table}
 
@@ -287,7 +287,8 @@ G8 EVA-generic & 90.41$\pm$1.15 & 90.28$\pm$0.69 & 89.89$\pm$0.52 \\
 \end{figure*}
 
 \subsection{Calibration-Corpus Specificity (H4)}
-Against G3, EVA computed on a disjoint same-task sample overlaps 0.919, 0.951 and 0.951 on SST-2, MRPC and RTE (the floor); G8 (WikiText-103 in the target layout) overlaps 0.642, 0.716 and 0.694; G9 (another GLUE task) 0.493, 0.662 and 0.662 (its MRPC and RTE values compare the same pair of subspaces); random orthonormal bases overlap 0.010. The shift is led by attention output projections (0.516 for G8 and 0.501 for G9 vs.\ a 0.89 floor) and layers 3--7. Keeping the target layout (G8) retains more overlap than changing task and format (G9), notably on SST-2, where G9 switches from single sentences to sentence pairs. Scores barely move: neither G8 nor G9 differs significantly from LoRA on full data, and against G3 only G8 on MRPC reaches nominal significance ($-0.91$ [$-1.54$, $-0.28$]) before multiplicity adjustment. \textbf{H4 is partially supported}: EVA subspaces reflect corpus and format, but at rank 8 the effect on final scores varies by task.
+\label{sec:h4}
+Against G3, EVA computed on a disjoint same-task sample overlaps 0.919, 0.951 and 0.951 on SST-2, MRPC and RTE (the floor); G8 (WikiText-103 in the target layout) overlaps 0.642, 0.716 and 0.694; G9 (another GLUE task) 0.493, 0.662 and 0.662 (its MRPC and RTE values compare the same pair of subspaces); random orthonormal bases overlap 0.010. The shift is led by attention output projections (0.516 for G8 and 0.501 for G9 vs.\ a 0.89 floor) and layers 3--7. Keeping the target layout (G8) retains more overlap than changing task and format (G9), notably on SST-2, where G9 switches from single sentences to sentence pairs. Scores do not move: neither G8 nor G9 differs significantly from LoRA on full data. Against G3, G8 on MRPC is nominally significant ($-0.91$ [$-1.54$, $-0.28$]), but this pairs G8's L40S runs with G3's A40 runs; against G3 rerun on L40S the difference is $+0.17$ [$-0.62$, $+0.97$], and in low resource $+0.39$ [$-0.97$, $+1.75$] instead of $+1.08$. \textbf{H4 is partially supported}: EVA subspaces reflect corpus and format, but at rank 8 this does not change final scores.
 
 \subsection{Parameter-Cost Rank Allocation (H3)}
 
@@ -297,12 +298,12 @@ Against G3, EVA computed on a disjoint same-task sample overlaps 0.919, 0.951 an
 \subsection{Training Stability and Hardware}
 \textbf{RTE collapse.} G7 (LoRA-GA) averages $56.68\pm8.85\%$ on RTE: one seed predicts a single class for all 277 validation examples and two are near chance, while it matches the other groups on SST-2 and MRPC. Plain LoRA also collapses on 1 of 10 seeds at $5\times10^{-4}$ and on none at $2\times10^{-4}$. At a matched $2\times10^{-4}$ over 10 seeds, EVA beats LoRA on RTE by $+2.13$ [$+0.97$, $+3.29$] ($+3.03$ [$+1.59$, $+4.47$] on the five L40S pairs), but at LoRA's tuned $5\times10^{-4}$ the difference is $+2.92$ [$-1.83$, $+7.68$]. EVA's RTE advantage is thus stability at conservative learning rates, not higher peak accuracy.
 
-\textbf{GPU effects.} Rerunning G3 with identical code and seeds on L40S instead of A40 moves single low-resource seeds by up to 2.5 points, through \texttt{bf16} differences in the head warm-up, and lowers G3's MRPC mean by 1.08 [$-2.43$, $+0.27$]. Over 15 MRPC seeds, EVA's apparent $+0.50$ F1 edge [$+0.08$, $+0.92$] with mixed A40/L40S runs shrinks to $+0.14$ [$-0.24$, $+0.51$] when all seeds run on L40S.
+\label{sec:gpu}\textbf{GPU effects.} Rerunning G3 with identical code and seeds on L40S instead of A40 moves single low-resource seeds by up to 2.5 points, through \texttt{bf16} differences in the head warm-up, and lowers G3's MRPC mean by 1.08 [$-2.43$, $+0.27$]. Over 15 MRPC seeds, EVA's apparent $+0.50$ F1 edge [$+0.08$, $+0.92$] with mixed A40/L40S runs shrinks to $+0.14$ [$-0.24$, $+0.51$] when all seeds run on L40S, and the only nominally significant H4 contrast (G8 $-$ G3 on MRPC) also vanishes on a common GPU (Section~\ref{sec:h4}).
 
 %=====================================================================
 \section{Discussion and Limitations}
 
-Four findings show that the step-0 gradient on $B$ is an incomplete proxy for final accuracy at rank 8: (i)~the orthonormal control G2 reproduces the $\sqrt{3}$ scale effect without changing accuracy; (ii)~faster early loss reduction on MRPC fades before convergence; (iii)~EVA's low-resource deficit reflects learning-rate sensitivity; and (iv)~gradient weighting and corpus substitution both reduce subspace overlap without a consistent change in scores. In short, H1 is supported, H2 and H3 are not, and H4 is partially supported.
+Four findings show that the step-0 gradient on $B$ is an incomplete proxy for final accuracy at rank 8: (i)~the orthonormal control G2 reproduces the $\sqrt{3}$ scale effect without changing accuracy; (ii)~faster early loss reduction on MRPC fades before convergence; (iii)~EVA's low-resource deficit reflects learning-rate sensitivity; and (iv)~gradient weighting and corpus substitution both reduce subspace overlap without a significant change in final scores. In short, H1 is supported, H2 and H3 are not, and H4 is partially supported.
 
 \textbf{Limitations.} \emph{Scope}: one encoder, three GLUE classification tasks and rank 8, where adapter capacity may let training reorient a suboptimal subspace; larger generative models or ranks $r\in\{1,2\}$ would show when the initial orientation becomes critical. \emph{Estimator and mechanism}: H1 compares centred EVA with uncentred $\Sg$, so fixing the centring would isolate the gradient weighting, and SGD runs or update-norm logging would test the AdamW explanation. \emph{Infrastructure}: GPUs differ between groups, G5/G6 use a separate data loader, G7 uses older libraries and weight decay 0.01 in the head warm-up, and rank-count groups stay within 6.5\% of the parameter budget. Single-GPU controls cover the conclusions that are hardware-sensitive, but GW-EVA still lacks a low-resource learning-rate sweep.
 

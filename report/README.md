@@ -1,6 +1,6 @@
 # report/ — 项目报告（AAAI-24 模板）
 
-当前修订稿 `main.tex` 是第三版（6 页版）：在第二版基础上压缩到课程要求的篇幅（AAAI 格式，正文最多 6 页，不含参考文献），内容和数字与第二版一致。使用 AAAI-24 CameraReady 模板。
+当前修订稿 `main.tex` 是第四版：在第三版（6 页版，把第二版压缩到课程要求的篇幅：AAAI 格式，正文最多 6 页，不含参考文献）基础上，按组员审阅意见修正了跨 GPU 配对造成的结论偏差。使用 AAAI-24 CameraReady 模板。
 
 主结果来自各组的逐次运行记录，汇总入口为 `summary/all_runs.csv` 和 `summary/tables.md`。H1 子空间诊断见 `H1 Diagnosis/results/`，G5/G6 硬件记录见 `G5G6/results/provenance.json`。
 
@@ -19,12 +19,12 @@
 | 文件 | 报告中的位置 | 生成脚本 |
 |---|---|---|
 | `h1_overlap.pdf` | 图 1：H1，EVA 与 GW-EVA 的子空间重合度 | `summary/figures.py` |
-| `step0_vs_accuracy.pdf` | 图 2：第 0 步梯度与精度 | `summary/figures.py` |
+| `step0_vs_accuracy.pdf` | 图 2：第 0 步梯度与精度 | `report/figures/make_step0_vs_accuracy.py`（数据和画法同 `summary/figures.py`，只改纵轴标题和标签位置） |
 | `lowres_lr.pdf` | 图 3：低资源下精度与学习率的关系 | `summary/figures.py` |
 | `g34_rank_heatmap_diff.pdf` | 图 4：H3，G4 − G3 逐层秩差 | `G3G4/jobs/plot_ranks.py` |
 | `h4_layers.pdf` | 第三版未使用（受篇幅限制，H4 的逐层结果改为正文叙述） | `summary/figures.py` |
 
-在仓库根目录运行 `python summary/figures.py --report` 可生成图 1–3 和 `h4_layers.pdf` 的报告版 PDF。图 4 在 `G3G4/` 中运行 `python jobs/plot_ranks.py` 后，将 `results/g34_rank_heatmap_diff.pdf` 复制到 `report/figures/`。
+在仓库根目录运行 `python summary/figures.py --report` 可生成图 1–3 和 `h4_layers.pdf` 的报告版 PDF。第四版的图 2 改由 `report/figures/make_step0_vs_accuracy.py` 生成：需要在含 `summary/` 和各组结果的分支（如 main）根目录运行 `python report/figures/make_step0_vs_accuracy.py . report/figures`。图 4 在 `G3G4/` 中运行 `python jobs/plot_ranks.py` 后，将 `results/g34_rank_heatmap_diff.pdf` 复制到 `report/figures/`。
 
 ## 编译
 
@@ -93,6 +93,24 @@ pdflatex main
 - **图**：删去 H4 逐层图 `h4_layers.pdf`（逐层结论保留在正文）；其余 4 张保留，H3 热力图缩到 0.82 倍页宽。
 - **文字**：摘要、引言、背景、方法、讨论和结论压缩措辞；GW-EVA 五个步骤和对照组说明改为段落；贡献表改为段落。
 - **小修正**：贡献部分去掉 `[LI YOURAN]` 的方括号和多余逗号，`Yin Chenyu` 统一为大写。
+
+## 第四版相对第三版的修改（组员审阅意见）
+
+各组的 GPU 不同：G3/G4 在 A40，G5/G6 在 RTX 4090 D，G9 在 RTX 3050 Ti，其余组在 L40S。跨 GPU 配对会把硬件差异混进组间差。以下数字都用仓库里的运行结果复算过。
+
+- **H4（5.5 节）**：原文说 G8 − G3 在 MRPC 上名义显著（−0.91 [−1.54, −0.28]）。但这是 G8（L40S）对 G3（A40）的跨 GPU 配对。换成 G3 在 L40S 上重跑的 5 个种子后，结果变为 +0.17 [−0.62, +0.97]，低资源从 +1.08 变为 +0.39 [−0.97, +1.75]。结论改为：校准语料改变子空间，但不改变最终分数。
+- **Table 3**：标题注明各组所用 GPU；G8 − G3 一行加脚注，给出同 GPU 下的结果。
+- **5.7 节 GPU effects**：补一句“上述 H4 唯一的名义显著差异，在同一 GPU 上消失”。
+- **5.1 节**：删去 RTE 上“组间差小于种子噪声”的说法。除 G7 外，RTE 组间相差 3.6 分（72.06–75.67），各组种子标准差为 1.0–2.5，正文直接给出这两组数字。
+- **5.4 节**：低资源落后 LoRA 的范围从“1.56–3.10”改为“G3、G5 分别落后 2.64 和 3.10”。原范围里的 1.56 不在 Table 3 中，且其中一组用的不是 10⁻³。
+- **Table 5 标题**：注明 G3 在 10⁻³ 下的 89.50 是 Table 2 中 A40 设置（88.81）在 L40S 上的重跑结果。
+- **H2 措辞**：“at matched parameter count”改为“at a comparable parameter count”（G5 与 G3 的参数量并不相等）。
+- **首页**：“Code and all run files”改为“Code and all result files”（日志和 cache 未进 git）。
+- **讨论 (iv)**：“without a consistent change in scores”改为“without a significant change in final scores”。
+
+- **Figure 2**：SST-2 子图中 G3、G4、G8、G9，以及 MRPC 子图中 G4、G8、G9 的标签原先互相重叠，现在手动错开并加引线。数据、配色和字体都不变，生成脚本是 `figures/make_step0_vs_accuracy.py`。
+
+篇幅不变：正文第 1–6 页，参考文献在第 7 页另起一页。
 
 ## 提交前待办
 
