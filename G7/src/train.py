@@ -1,7 +1,7 @@
 """One team-protocol G7 run: head warm-up, LoRA-GA, training, last-epoch JSON.
 
 The data and training loop follow shared source commit 26616379899f0abce7d693e227ad4e03138312ab.
-Run only through Slurm. Completed result JSONs are skipped on resubmission.
+Needs a CUDA GPU (Slurm or not). Completed result JSONs are skipped on resubmission.
 """
 import argparse
 import json
@@ -90,8 +90,8 @@ def main():
     parser.add_argument("--out", default="results")
     parser.add_argument("--cache", default="cache")
     args = parser.parse_args()
-    if "SLURM_JOB_ID" not in os.environ or not torch.cuda.is_available():
-        raise RuntimeError("Training and inference must run on a Slurm GPU node")
+    if not torch.cuda.is_available():
+        raise RuntimeError("G7 training and inference must run on a CUDA GPU")
     torch.set_num_threads(2)
     run_id = f"{args.stage}_{args.group}_{args.task}_lr{args.lr:g}_s{args.seed}"
     out_path = Path(args.out) / args.stage / (run_id + ".json")
@@ -186,7 +186,7 @@ def main():
         time_s=dict(load=t1-t0, head_warmup=t2-t1, init=t3-t2, train_eval=t4-t3,
                     final_eval=t5-t4, total=t5-t0),
         peak_mem_gb=torch.cuda.max_memory_allocated() / 2**30,
-        cfg=CFG, host=socket.gethostname(), slurm_job=os.environ["SLURM_JOB_ID"],
+        cfg=CFG, host=socket.gethostname(), slurm_job=os.environ.get("SLURM_JOB_ID"),
         gpu=torch.cuda.get_device_name(),
         versions={module.__name__: module.__version__ for module in
                   (torch, __import__("transformers"), __import__("peft"))},

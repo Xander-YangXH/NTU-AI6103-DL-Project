@@ -15,7 +15,7 @@ AI6103 Deep Learning 小组项目（Option 2：在已有代码库上做改进）
 | **进度（2026-11-20）** | G1–G9 九组实验和 H1 诊断全部完成并已合并，共约 230 次运行，按种子配对 |
 | **主要结果** | 理论成立，GW-EVA 选出的子空间也确实不同于 EVA；但在调好学习率后，GW-EVA 和其他感知数据的初始化都没有在最终精度上胜过普通 LoRA |
 | **论文主线** | 分析型论文：“梯度加权的子空间不同，但不影响最终精度；收益只在早期，而且是暂时的” |
-| **先看这些** | [报告初稿（英文）](summary/REPORT_DRAFT.md) · [跨组汇总](summary/SUMMARY.zh-CN.md) · [全部表格](summary/tables.md) · [交互式结果页面](#6-交互式结果页面) |
+| **先看这些** | [报告初稿（英文）](summary/REPORT_DRAFT.md) · [跨组汇总](summary/SUMMARY.zh-CN.md) · [全部表格](summary/tables.md) · [交互式结果页面](#6-交互式结果页面) · [代码运行说明](RUN.zh-CN.md) |
 
 假设检验结论：**H1 成立**（子空间不同），**H2 不成立**（GW-EVA 与 EVA 精度相同），**H3 不成立**（秩分配方式没有影响），**H4 已回答**（子空间是任务相关的，但精度不依赖它）。详见[第 5 节](#5-结果)。
 
@@ -257,7 +257,9 @@ python summary/site/build_data.py
 
 ## 9. 复现
 
-在仓库根目录用 Python 3 运行（`figures.py` 还需要 matplotlib）：
+**完整说明见 [`RUN.zh-CN.md`](RUN.zh-CN.md)：** 包括所有组共用的环境（[`requirements.txt`](requirements.txt)）、数据准备、覆盖每一组的冒烟测试（`tools/smoke_test.py`），以及各组的运行命令。
+
+重新生成表格、图和页面不需要 GPU。在仓库根目录用 Python 3 运行（`figures.py` 还需要 matplotlib）：
 
 ```bash
 python summary/collect.py          # summary/tables.md 和 summary/all_runs.csv
@@ -265,7 +267,7 @@ python summary/figures.py          # summary/figures/*.png 和 *.pdf（图 1–4
 python summary/site/build_data.py  # 结果页面用的 summary/site/data.js
 ```
 
-这些脚本只读取仓库里的结果 JSON。重新跑实验本身需要各组的环境（`G*/requirements.txt`）和 GPU 作业，见各组 README。H1 还需要共享实验的分类头检查点，它们不在 git 里。
+这些脚本只读取仓库里的结果 JSON。重新跑实验需要 GPU、根目录的 `requirements.txt`，以及下载好的模型和数据，每一步见 [`RUN.zh-CN.md`](RUN.zh-CN.md)。H1 还需要 G5/G6 study 生成的分类头检查点，它们不在 git 里。
 
 ## 10. 计算资源
 

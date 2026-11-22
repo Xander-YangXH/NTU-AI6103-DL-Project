@@ -15,7 +15,7 @@ AI6103 Deep Learning group project (Option 2: improve on an existing codebase), 
 | **Status (2026-11-20)** | All nine groups (G1–G9) and the H1 diagnosis are done and merged; about 230 runs, paired by seed |
 | **Main result** | The theory holds and GW-EVA picks a genuinely different subspace from EVA, but neither GW-EVA nor any other data-aware initialisation beats plain LoRA on final accuracy at a tuned learning rate |
 | **Paper story** | Analysis paper: "the gradient-weighted subspace is different, but it does not matter for the final accuracy; the benefits are early and transient" |
-| **Read first** | [Report draft](summary/REPORT_DRAFT.md) · [Cross-group summary](summary/SUMMARY.md) · [All tables](summary/tables.md) · [Interactive results page](#6-interactive-results-page) |
+| **Read first** | [Report draft](summary/REPORT_DRAFT.md) · [Cross-group summary](summary/SUMMARY.md) · [All tables](summary/tables.md) · [Interactive results page](#6-interactive-results-page) · [How to run the code](RUN.md) |
 
 Hypothesis verdicts: **H1 supported** (the subspaces differ), **H2 not supported** (GW-EVA = EVA in accuracy), **H3 not supported** (allocation does not matter), **H4 answered** (the subspace is task-specific but accuracy does not depend on it). Details in [§5](#5-results).
 
@@ -257,7 +257,9 @@ Each member worked on their own branch with one folder per pair of groups, holdi
 
 ## 9. Reproduce
 
-From the repository root, with Python 3 (`figures.py` also needs matplotlib):
+**[`RUN.md`](RUN.md) is the full guide:** one environment for every group ([`requirements.txt`](requirements.txt)), data preparation, a smoke test of every group (`tools/smoke_test.py`), and the commands for each group's runs.
+
+Rebuilding the tables, figures and page needs no GPU. From the repository root, with Python 3 (`figures.py` also needs matplotlib):
 
 ```bash
 python summary/collect.py          # summary/tables.md and summary/all_runs.csv
@@ -265,7 +267,7 @@ python summary/figures.py          # summary/figures/*.png and *.pdf (Figures 1�
 python summary/site/build_data.py  # summary/site/data.js for the results page
 ```
 
-These read only the result JSONs in the repository. Rerunning the experiments themselves needs each group's environment (`G*/requirements.txt`) and GPU jobs; see the group READMEs. H1 additionally needs the shared runs' classification-head checkpoints, which are not in git.
+These read only the result JSONs in the repository. Rerunning the experiments needs a GPU, the root `requirements.txt` and the downloaded model and data; [`RUN.md`](RUN.md) gives every step. H1 also needs the classification-head checkpoints that the G5/G6 study writes; they are not in git.
 
 ## 10. Compute
 

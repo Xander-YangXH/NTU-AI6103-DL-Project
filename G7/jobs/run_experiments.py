@@ -50,8 +50,6 @@ def run_stage(stage, settings):
 
 
 def main():
-    if "SLURM_JOB_ID" not in os.environ:
-        raise RuntimeError("Submit jobs/run_g7.sbatch through sbatch")
     (ROOT / "logs").mkdir(exist_ok=True)
     run_stage("tune", [(task, lr, 0) for task in SEEDS for lr in GRID])
     chosen = {}

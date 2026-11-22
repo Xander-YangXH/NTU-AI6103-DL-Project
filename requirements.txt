@@ -1,0 +1,15 @@
+# One environment for every group (G1-G9, H1) and the summary scripts; see RUN.md.
+# Python 3.11 or 3.12. Install PyTorch first, matching your CUDA driver, e.g. for CUDA 12.8:
+#   pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cu128
+# (CPU-only or macOS: pip install torch==2.11.0). Then: pip install -r requirements.txt
+torch==2.11.0
+transformers==5.21.0
+peft==0.21.2
+datasets==5.1.0
+huggingface_hub
+tokenizers
+numpy
+scipy
+matplotlib
+tqdm
+requests
